@@ -5,7 +5,9 @@ from datetime import datetime
 from app.models.models import (
     User, UserSession, PasswordReset, ActivityLog, SystemSetting, Notification, Role,
     NetworkDevice, NetworkSubnet, SecurityPolicy, ReportRequest,
-    DeviceInventory, NetworkInterface, VlanInventory, WirelessAccessPoint, DeviceHealth, DeviceSyncLog
+    DeviceInventory, NetworkInterface, VlanInventory, WirelessAccessPoint, DeviceHealth, DeviceSyncLog,
+    VisitorRequest, GuestAccess, StudentStatus, ExamSession, ExamAccessLog,
+    SecurityAlert, SecurityRecommendation, GeneratedReport, AnalyticsSnapshot
 )
 
 class UserRepo:
@@ -396,5 +398,312 @@ class JuniperRepo:
     @staticmethod
     def get_sync_logs(db: Session, limit: int = 20):
         return db.query(DeviceSyncLog).order_by(desc(DeviceSyncLog.created_at)).limit(limit).all()
+
+
+class VisitorRepo:
+    @staticmethod
+    def get_by_id(db: Session, request_id: int) -> VisitorRequest:
+        return db.query(VisitorRequest).filter(VisitorRequest.id == request_id).first()
+
+    @staticmethod
+    def create(db: Session, request: VisitorRequest) -> VisitorRequest:
+        db.add(request)
+        return request
+
+    @staticmethod
+    def get_requests(
+        db: Session,
+        visitor_type: str = None,
+        status: str = None,
+        search: str = None,
+        skip: int = 0,
+        limit: int = 50
+    ):
+        query = db.query(VisitorRequest)
+        if visitor_type:
+            query = query.filter(VisitorRequest.visitor_type == visitor_type)
+        if status:
+            query = query.filter(VisitorRequest.status == status)
+        if search:
+            query = query.filter(
+                (VisitorRequest.visitor_name.like(f"%{search}%")) |
+                (VisitorRequest.email.like(f"%{search}%")) |
+                (VisitorRequest.phone_number.like(f"%{search}%"))
+            )
+        total = query.count()
+        items = query.order_by(desc(VisitorRequest.created_at)).offset(skip).limit(limit).all()
+        return items, total
+
+    @staticmethod
+    def get_guest_access_by_request_id(db: Session, request_id: int) -> GuestAccess:
+        return db.query(GuestAccess).filter(GuestAccess.visitor_request_id == request_id).first()
+
+    @staticmethod
+    def create_guest_access(db: Session, guest: GuestAccess) -> GuestAccess:
+        db.add(guest)
+        return guest
+
+    @staticmethod
+    def get_guest_access_by_username(db: Session, username: str) -> GuestAccess:
+        return db.query(GuestAccess).filter(GuestAccess.username == username).first()
+
+    @staticmethod
+    def get_guest_access_list(
+        db: Session,
+        status: str = None,
+        skip: int = 0,
+        limit: int = 50
+    ):
+        query = db.query(GuestAccess)
+        if status:
+            query = query.filter(GuestAccess.status == status)
+        total = query.count()
+        items = query.order_by(desc(GuestAccess.created_at)).offset(skip).limit(limit).all()
+        return items, total
+
+
+class StudentStatusRepo:
+    @staticmethod
+    def get_by_student_id(db: Session, student_id: int) -> StudentStatus:
+        return db.query(StudentStatus).filter(StudentStatus.student_id == student_id).first()
+
+    @staticmethod
+    def upsert(db: Session, status_data: dict) -> StudentStatus:
+        status_obj = db.query(StudentStatus).filter(StudentStatus.student_id == status_data["student_id"]).first()
+        if not status_obj:
+            status_obj = StudentStatus(**status_data)
+            db.add(status_obj)
+        else:
+            for k, v in status_data.items():
+                setattr(status_obj, k, v)
+        db.flush()
+        return status_obj
+
+
+class ExamRepo:
+    @staticmethod
+    def get_session_by_id(db: Session, session_id: int) -> ExamSession:
+        return db.query(ExamSession).filter(ExamSession.id == session_id).first()
+
+    @staticmethod
+    def create_session(db: Session, session: ExamSession) -> ExamSession:
+        db.add(session)
+        return session
+
+    @staticmethod
+    def delete_session(db: Session, session: ExamSession):
+        db.delete(session)
+
+    @staticmethod
+    def get_sessions(
+        db: Session,
+        status: str = None,
+        search: str = None,
+        skip: int = 0,
+        limit: int = 50
+    ):
+        query = db.query(ExamSession)
+        if status:
+            query = query.filter(ExamSession.status == status)
+        if search:
+            query = query.filter(
+                (ExamSession.exam_name.like(f"%{search}%")) |
+                (ExamSession.course_code.like(f"%{search}%")) |
+                (ExamSession.classroom.like(f"%{search}%"))
+            )
+        total = query.count()
+        items = query.order_by(desc(ExamSession.created_at)).offset(skip).limit(limit).all()
+        return items, total
+
+    @staticmethod
+    def get_access_logs(
+        db: Session,
+        exam_session_id: int = None,
+        student_id: int = None,
+        status: str = None,
+        skip: int = 0,
+        limit: int = 50
+    ):
+        query = db.query(ExamAccessLog)
+        if exam_session_id is not None:
+            query = query.filter(ExamAccessLog.exam_session_id == exam_session_id)
+        if student_id is not None:
+            query = query.filter(ExamAccessLog.student_id == student_id)
+        if status:
+            query = query.filter(ExamAccessLog.status == status)
+        total = query.count()
+        items = query.order_by(desc(ExamAccessLog.login_time)).offset(skip).limit(limit).all()
+        return items, total
+
+    @staticmethod
+    def get_active_access_log(db: Session, exam_session_id: int, student_id: int) -> ExamAccessLog:
+        return db.query(ExamAccessLog).filter(
+            ExamAccessLog.exam_session_id == exam_session_id,
+            ExamAccessLog.student_id == student_id,
+            ExamAccessLog.logout_time.is_(None)
+        ).first()
+
+    @staticmethod
+    def create_access_log(db: Session, log: ExamAccessLog) -> ExamAccessLog:
+        db.add(log)
+        return log
+
+
+class SecurityAlertRepo:
+    @staticmethod
+    def get_alerts(
+        db: Session,
+        status: str = None,
+        severity: str = None,
+        search: str = None,
+        skip: int = 0,
+        limit: int = 20
+    ):
+        query = db.query(SecurityAlert)
+        if status:
+            query = query.filter(SecurityAlert.status == status)
+        if severity:
+            query = query.filter(SecurityAlert.severity == severity)
+        if search:
+            query = query.filter(
+                (SecurityAlert.title.like(f"%{search}%")) |
+                (SecurityAlert.description.like(f"%{search}%")) |
+                (SecurityAlert.alert_type.like(f"%{search}%"))
+            )
+        total = query.count()
+        items = query.order_by(desc(SecurityAlert.created_at)).offset(skip).limit(limit).all()
+        return items, total
+
+    @staticmethod
+    def get_by_id(db: Session, alert_id: int) -> SecurityAlert:
+        return db.query(SecurityAlert).filter(SecurityAlert.id == alert_id).first()
+
+    @staticmethod
+    def create(db: Session, alert: SecurityAlert) -> SecurityAlert:
+        db.add(alert)
+        db.commit()
+        db.refresh(alert)
+        return alert
+
+    @staticmethod
+    def update(db: Session, alert: SecurityAlert, updates: dict) -> SecurityAlert:
+        for k, v in updates.items():
+            setattr(alert, k, v)
+        db.commit()
+        db.refresh(alert)
+        return alert
+
+    @staticmethod
+    def get_recent_active_by_type_and_device(db: Session, alert_type: str, device_id: int, window_hours: int = 1) -> SecurityAlert:
+        from datetime import datetime, timedelta
+        cutoff = datetime.utcnow() - timedelta(hours=window_hours)
+        return db.query(SecurityAlert).filter(
+            SecurityAlert.alert_type == alert_type,
+            SecurityAlert.device_id == device_id,
+            SecurityAlert.status == 'Active',
+            SecurityAlert.created_at >= cutoff
+        ).order_by(desc(SecurityAlert.created_at)).first()
+
+
+class SecurityRecommendationRepo:
+    @staticmethod
+    def get_recommendations(
+        db: Session,
+        status: str = None,
+        priority: str = None,
+        search: str = None,
+        skip: int = 0,
+        limit: int = 50
+    ):
+        query = db.query(SecurityRecommendation)
+        if status:
+            query = query.filter(SecurityRecommendation.status == status)
+        if priority:
+            query = query.filter(SecurityRecommendation.priority == priority)
+        if search:
+            query = query.filter(SecurityRecommendation.recommendation.like(f"%{search}%"))
+        total = query.count()
+        items = query.order_by(desc(SecurityRecommendation.created_at)).offset(skip).limit(limit).all()
+        return items, total
+
+    @staticmethod
+    def get_by_id(db: Session, rec_id: int) -> SecurityRecommendation:
+        return db.query(SecurityRecommendation).filter(SecurityRecommendation.id == rec_id).first()
+
+    @staticmethod
+    def create(db: Session, rec: SecurityRecommendation) -> SecurityRecommendation:
+        db.add(rec)
+        db.commit()
+        db.refresh(rec)
+        return rec
+
+    @staticmethod
+    def update(db: Session, rec: SecurityRecommendation, updates: dict) -> SecurityRecommendation:
+        for k, v in updates.items():
+            setattr(rec, k, v)
+        db.commit()
+        db.refresh(rec)
+        return rec
+
+
+class GeneratedReportRepo:
+    @staticmethod
+    def get_reports(
+        db: Session,
+        search: str = None,
+        skip: int = 0,
+        limit: int = 20
+    ):
+        query = db.query(GeneratedReport)
+        if search:
+            query = query.filter(
+                (GeneratedReport.report_name.like(f"%{search}%")) |
+                (GeneratedReport.report_type.like(f"%{search}%")) |
+                (GeneratedReport.file_format.like(f"%{search}%"))
+            )
+        total = query.count()
+        items = query.order_by(desc(GeneratedReport.generated_at)).offset(skip).limit(limit).all()
+        return items, total
+
+    @staticmethod
+    def get_by_id(db: Session, report_id: int) -> GeneratedReport:
+        return db.query(GeneratedReport).filter(GeneratedReport.id == report_id).first()
+
+    @staticmethod
+    def create(db: Session, report: GeneratedReport) -> GeneratedReport:
+        db.add(report)
+        db.commit()
+        db.refresh(report)
+        return report
+
+    @staticmethod
+    def update(db: Session, report: GeneratedReport, updates: dict) -> GeneratedReport:
+        for k, v in updates.items():
+            setattr(report, k, v)
+        db.commit()
+        db.refresh(report)
+        return report
+
+
+class AnalyticsSnapshotRepo:
+    @staticmethod
+    def get_snapshots(
+        db: Session,
+        skip: int = 0,
+        limit: int = 50
+    ):
+        query = db.query(AnalyticsSnapshot)
+        total = query.count()
+        items = query.order_by(desc(AnalyticsSnapshot.captured_at)).offset(skip).limit(limit).all()
+        return items, total
+
+    @staticmethod
+    def create(db: Session, snapshot: AnalyticsSnapshot) -> AnalyticsSnapshot:
+        db.add(snapshot)
+        db.commit()
+        db.refresh(snapshot)
+        return snapshot
+
+
 
 

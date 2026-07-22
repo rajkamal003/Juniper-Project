@@ -56,6 +56,10 @@ export const AuthProvider = ({ children }) => {
         }
       }
     } catch {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      sessionStorage.removeItem('access_token');
+      sessionStorage.removeItem('refresh_token');
       setUser(null);
       setSessionMetadata(null);
     } finally {
@@ -81,6 +85,7 @@ export const AuthProvider = ({ children }) => {
     // Listen for global session expiration events (from API interceptor)
     const handleSessionExpired = () => {
       setUser(null);
+      setSessionMetadata(null);
       toast.error('Session expired. Please log in again.');
     };
     
@@ -162,6 +167,12 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('refresh_token');
       sessionStorage.removeItem('access_token');
       sessionStorage.removeItem('refresh_token');
+      
+      if (localStorage.getItem('remember_me_enabled') !== 'true') {
+        localStorage.removeItem('remember_me_email');
+        localStorage.removeItem('remember_me_password');
+      }
+
       setUser(null);
       setSessionMetadata(null);
       setLoading(false);

@@ -41,6 +41,8 @@ import ExamModePage from './pages/ExamModePage';
 import StudentStatusPage from './pages/StudentStatusPage';
 import VisitorRequestsPage from './pages/VisitorRequestsPage';
 import VisitorAccessPage from './pages/VisitorAccessPage';
+import AnalyticsDashboardPage from './pages/AnalyticsDashboardPage';
+import SecurityAlertsPage from './pages/SecurityAlertsPage';
 
 // Route guards
 const ProtectedRoute = ({ children }) => {
@@ -271,6 +273,22 @@ const AppContent = () => {
         </RoleGuard>
       } />
 
+      <Route path="/analytics" element={
+        <RoleGuard allowedRoles={['Super Admin']}>
+          <DashboardLayout>
+            <AnalyticsDashboardPage />
+          </DashboardLayout>
+        </RoleGuard>
+      } />
+
+      <Route path="/security-alerts" element={
+        <RoleGuard allowedRoles={['Super Admin']}>
+          <DashboardLayout>
+            <SecurityAlertsPage />
+          </DashboardLayout>
+        </RoleGuard>
+      } />
+
       <Route path="/reports" element={
         <RoleGuard allowedRoles={['Super Admin']}>
           <DashboardLayout>
@@ -323,7 +341,7 @@ const AppContent = () => {
       } />
 
       <Route path="/exam-mode" element={
-        <RoleGuard allowedRoles={['Student']}>
+        <RoleGuard allowedRoles={['Super Admin', 'Faculty', 'Student']}>
           <DashboardLayout>
             <ExamModePage />
           </DashboardLayout>

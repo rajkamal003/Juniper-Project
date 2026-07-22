@@ -1,7 +1,7 @@
 # backend/app/schemas/schemas.py
 from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
-from typing import Optional, Any, Union
-from datetime import datetime
+from typing import Optional, Any, Union, List
+from datetime import datetime, date
 import re
 
 class UserBase(BaseModel):
@@ -584,6 +584,205 @@ class DeviceSyncLogResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# --- Visitor Module Schemas ---
+
+class VisitorRequestCreate(BaseModel):
+    visitor_name: str = Field(..., min_length=2, max_length=100)
+    visitor_type: str = Field(..., min_length=2, max_length=50) # Parent, Guest, Vendor, etc.
+    phone_number: str
+    email: EmailStr
+    purpose: str = Field(..., min_length=5)
+    host_faculty: Optional[str] = None
+    visit_date: date
+    expected_arrival: str = Field(..., pattern=r'^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$') # HH:MM format
+    expected_departure: str = Field(..., pattern=r'^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$') # HH:MM format
+
+    @field_validator('phone_number')
+    @classmethod
+    def validate_phone(cls, v):
+        if not re.match(r'^\+?[0-9\s\-()]{7,20}$', v):
+            raise ValueError('Invalid phone number format')
+        return v
+
+class VisitorRequestResponse(BaseModel):
+    id: int
+    visitor_name: str
+    visitor_type: str
+    phone_number: str
+    email: EmailStr
+    purpose: str
+    host_faculty: Optional[str] = None
+    visit_date: date
+    expected_arrival: str
+    expected_departure: str
+    status: str
+    approval_by: Optional[int] = None
+    approved_at: Optional[datetime] = None
+    rejection_reason: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class GuestAccessResponse(BaseModel):
+    id: int
+    visitor_request_id: Optional[int] = None
+    username: str
+    temporary_password: Optional[str] = None # Transient plaintext password shown only once
+    ssid: str
+    vlan: int
+    expires_at: datetime
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class StudentStatusResponse(BaseModel):
+    id: int
+    student_id: int
+    attendance_status: str
+    current_location: Optional[str] = None
+    last_seen: datetime
+    current_course: Optional[str] = None
+    remarks: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+# --- Exam Module Schemas ---
+
+class ExamSessionCreate(BaseModel):
+    course_code: str = Field(..., min_length=3, max_length=15, pattern=r'^[A-Z0-9\-]+$')
+    exam_name: str = Field(..., min_length=3, max_length=100)
+    classroom: str = Field(..., min_length=2, max_length=50)
+    start_time: datetime
+    end_time: datetime
+
+    @model_validator(mode='after')
+    def validate_times(self) -> 'ExamSessionCreate':
+        if self.start_time >= self.end_time:
+            raise ValueError('start_time must be earlier than end_time')
+        return self
+
+class ExamSessionResponse(BaseModel):
+    id: int
+    course_code: str
+    exam_name: str
+    classroom: str
+    faculty_id: Optional[int] = None
+    start_time: datetime
+    end_time: datetime
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class ExamAccessRequest(BaseModel):
+    exam_session_id: int
+    student_id: int
+    device_name: Optional[str] = None
+    mac_address: str = Field(..., pattern=r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$')
+    logout: Optional[bool] = False
+
+class ExamAccessLogResponse(BaseModel):
+    id: int
+    exam_session_id: int
+    student_id: int
+    login_time: datetime
+    logout_time: Optional[datetime] = None
+    device_name: Optional[str] = None
+    mac_address: Optional[str] = None
+    status: str
+
+    class Config:
+        from_attributes = True
+
+
+class SecurityRecommendationResponse(BaseModel):
+    id: int
+    alert_id: Optional[int] = None
+    recommendation: str
+    priority: str
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class SecurityAlertResponse(BaseModel):
+    id: int
+    alert_type: str
+    severity: str
+    title: str
+    description: Optional[str] = None
+    device_id: Optional[int] = None
+    user_id: Optional[int] = None
+    status: str
+    confidence_score: float
+    created_at: datetime
+    recommendations: List[SecurityRecommendationResponse] = []
+
+    class Config:
+        from_attributes = True
+
+
+class SecurityAlertUpdate(BaseModel):
+    status: str = Field(..., pattern=r'^(Active|Acknowledged|Resolved|Closed)$')
+
+
+class SecurityRecommendationUpdate(BaseModel):
+    status: str = Field(..., pattern=r'^(Pending|Accepted|Implemented|Ignored)$')
+
+
+class GeneratedReportResponse(BaseModel):
+    id: int
+    report_name: str
+    report_type: str
+    generated_by: Optional[int] = None
+    file_name: str
+    file_size: int
+    file_format: str
+    generation_duration: float
+    download_count: int
+    generated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class GeneratedReportCreate(BaseModel):
+    report_name: str
+    report_type: str = Field(..., pattern=r'^(Security Summary|Login Activity|Visitor Activity|Exam Sessions|Device Inventory|Device Health|Firewall Policies|Alert History)$')
+    file_format: str = Field(..., pattern=r'^(PDF|CSV|Excel)$')
+
+
+class AnalyticsSnapshotResponse(BaseModel):
+    id: int
+    total_users: int
+    active_devices: int
+    online_devices: int
+    visitor_count: int
+    exam_sessions: int
+    failed_logins: int
+    alerts_generated: int
+    online_access_points: int
+    offline_access_points: int
+    online_switches: int
+    offline_switches: int
+    online_firewalls: int
+    offline_firewalls: int
+    captured_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 
 
 

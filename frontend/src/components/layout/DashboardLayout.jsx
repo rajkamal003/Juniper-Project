@@ -47,12 +47,15 @@ export const DashboardLayout = ({ children }) => {
       case 'Super Admin':
         return [
           { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+          { name: 'Security Analytics', icon: Shield, path: '/analytics' },
+          { name: 'Security Alerts', icon: AlertOctagon, path: '/security-alerts' },
           { name: 'Users', icon: Users, path: '/users' },
           { name: 'Devices', icon: Cpu, path: '/devices' },
           { name: 'Network', icon: Globe, path: '/network' },
           { name: 'Firewall', icon: AlertOctagon, path: '/firewall' },
           { name: 'Reports', icon: FileSpreadsheet, path: '/reports' },
           { name: 'Settings', icon: Settings, path: '/settings' },
+          { name: 'Exam Mode', icon: Award, path: '/exam-mode' },
           { name: 'Profile', icon: User, path: '/profile' }
         ];
       case 'Faculty':
@@ -60,6 +63,7 @@ export const DashboardLayout = ({ children }) => {
           { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
           { name: 'Students', icon: Users, path: '/students' },
           { name: 'Attendance', icon: Calendar, path: '/attendance' },
+          { name: 'Exam Mode', icon: Award, path: '/exam-mode' },
           { name: 'Profile', icon: User, path: '/profile' }
         ];
       case 'Student':

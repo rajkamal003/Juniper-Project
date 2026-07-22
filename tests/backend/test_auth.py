@@ -307,3 +307,67 @@ def test_password_reset_flow_success(client, db):
     })
     assert resp_login.status_code == 200
     assert "access_token" in resp_login.json()
+
+def test_remember_me_functionality(client, db):
+    # 1. Register User
+    register_payload = {
+        "fullname": "Student User",
+        "email": "student@securecampus.com",
+        "phone": "+919988776655",
+        "role_id": 3,
+        "password": "Password123!",
+        "confirm_password": "Password123!",
+        "roll_number": "22CSE1042",
+        "department": "CSE",
+        "duration": "2"
+    }
+    client.post("/api/auth/register", json=register_payload)
+
+    # 2. Login with Remember Me = True
+    resp_remember = client.post("/api/auth/login", json={
+        "email": "student@securecampus.com",
+        "password": "Password123!",
+        "remember_me": True
+    })
+    assert resp_remember.status_code == 200
+    data_remember = resp_remember.json()
+    assert "access_token" in data_remember
+    assert "refresh_token" in data_remember
+    
+    # Verify claims inside access/refresh token
+    from app.utils.auth_utils import decode_access_token, decode_refresh_token
+    access_payload = decode_access_token(data_remember["access_token"])
+    refresh_payload = decode_refresh_token(data_remember["refresh_token"])
+    assert access_payload.get("remember_me") is True
+    assert refresh_payload.get("remember_me") is True
+
+    # 3. Login with Remember Me = False
+    resp_no_remember = client.post("/api/auth/login", json={
+        "email": "student@securecampus.com",
+        "password": "Password123!",
+        "remember_me": False
+    })
+    assert resp_no_remember.status_code == 200
+    data_no_remember = resp_no_remember.json()
+    access_payload_no = decode_access_token(data_no_remember["access_token"])
+    refresh_payload_no = decode_refresh_token(data_no_remember["refresh_token"])
+    assert access_payload_no.get("remember_me") is False
+    assert refresh_payload_no.get("remember_me") is False
+
+    # 4. Refresh token rotation test for Remember Me = True
+    resp_refresh_remember = client.post("/api/auth/refresh", json={
+        "refresh_token": data_remember["refresh_token"]
+    })
+    assert resp_refresh_remember.status_code == 200
+    data_ref_rem = resp_refresh_remember.json()
+    ref_payload_rem = decode_refresh_token(data_ref_rem["refresh_token"])
+    assert ref_payload_rem.get("remember_me") is True
+
+    # 5. Refresh token rotation test for Remember Me = False
+    resp_refresh_no_remember = client.post("/api/auth/refresh", json={
+        "refresh_token": data_no_remember["refresh_token"]
+    })
+    assert resp_refresh_no_remember.status_code == 200
+    data_ref_no_rem = resp_refresh_no_remember.json()
+    ref_payload_no_rem = decode_refresh_token(data_ref_no_rem["refresh_token"])
+    assert ref_payload_no_rem.get("remember_me") is False

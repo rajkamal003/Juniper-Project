@@ -9,6 +9,9 @@ from app.routes.firewall_routes import router as firewall_router
 from app.routes.report_routes import router as report_router
 from app.routes.settings_routes import router as settings_router
 from app.routes.juniper_routes import router as juniper_router
+from app.routes.visitor_routes import router as visitor_router
+from app.routes.exam_routes import router as exam_router
+from app.routes.analytics_routes import router as analytics_router
 from app.config.config import settings
 
 # Initialize FastAPI
@@ -37,6 +40,9 @@ app.include_router(firewall_router)
 app.include_router(report_router)
 app.include_router(settings_router)
 app.include_router(juniper_router)
+app.include_router(visitor_router)
+app.include_router(exam_router)
+app.include_router(analytics_router)
 
 @app.on_event("startup")
 def run_db_migrations():
