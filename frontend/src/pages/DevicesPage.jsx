@@ -1,7 +1,7 @@
 // frontend/src/pages/DevicesPage.jsx
 import React, { useState, useEffect } from 'react';
 import { 
-  Network, Plus, Trash2, Edit, RefreshCw, X, Shield, Server, Wifi, 
+  Network, Plus, Trash2, Edit, RefreshCw, X, Shield, Server, Wifi, WifiOff,
   Cpu, HardDrive, Thermometer, Clock, Database, Radio, ToggleLeft, Activity, CheckCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -679,19 +679,23 @@ export const DevicesPage = () => {
                   <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider font-mono">Device Image & Stats</h4>
                   
                   {/* Large Product Image with Fallback */}
-                  <div className="w-full h-36 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-center p-4 relative overflow-hidden group select-none">
+                  <div className="w-full h-52 bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl border border-slate-200 flex items-center justify-center p-6 relative overflow-hidden group select-none">
                     <img 
-                      src={selectedDevice.img_front} 
-                      alt={selectedDevice.model}
+                      src={viewMode === 'rear' ? selectedDevice.img_rear : selectedDevice.img_front} 
+                      alt={`${selectedDevice.model} ${viewMode === 'rear' ? 'Rear' : 'Front'} Panel`}
                       onError={(e) => {
                         e.target.style.display = 'none';
                         e.target.nextSibling.style.display = 'flex';
                       }}
-                      className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
+                      className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-md"
                     />
                     <div className="hidden flex-col items-center justify-center text-slate-400" style={{ display: 'none' }}>
                       <WifiOff className="w-8 h-8 text-slate-300 mb-2" />
                       <span className="text-[10px] font-bold uppercase tracking-wider">No Image Available</span>
+                    </div>
+                    {/* Panel label badge */}
+                    <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-white/80 border border-slate-200 text-[9px] font-bold uppercase tracking-wider text-slate-500 shadow-xs">
+                      {viewMode === 'rear' ? 'Rear Panel' : 'Front Panel'}
                     </div>
                   </div>
 

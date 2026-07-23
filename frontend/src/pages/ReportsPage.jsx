@@ -147,13 +147,13 @@ export const ReportsPage = () => {
         title="Audit Reports Console"
         subtitle="Compile, configure, and export rule-based campus analytics and security logs"
       >
-        <Button
-          variant="secondary"
+        <button
           onClick={fetchReports}
-          className="h-10 w-10 p-0 flex items-center justify-center"
+          className="h-10 w-10 flex items-center justify-center rounded-xl bg-white border-2 border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-slate-400 hover:text-slate-800 transition-all shadow-sm cursor-pointer"
+          title="Refresh Reports"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-        </Button>
+        </button>
       </PageHeader>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -292,13 +292,13 @@ export const ReportsPage = () => {
                   {new Date(report.generated_at).toLocaleString()}
                 </td>
                 <td className="px-5 py-3">
-                  <Button
-                    variant="secondary"
+                  <button
                     onClick={() => handleDownload(report.id, report.report_name + '.' + report.file_format.toLowerCase(), report.file_format)}
-                    className="h-8 w-8 p-0 flex items-center justify-center text-blue-600 hover:bg-slate-50 cursor-pointer"
+                    className="h-8 w-8 p-0 flex items-center justify-center rounded-lg bg-blue-50 border border-blue-200 text-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-150 cursor-pointer"
+                    title="Download Report"
                   >
                     <Download className="w-3.5 h-3.5" />
-                  </Button>
+                  </button>
                 </td>
               </>
             )}

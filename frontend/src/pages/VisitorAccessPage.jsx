@@ -61,7 +61,7 @@ export const VisitorAccessPage = () => {
         <button
           onClick={fetchGuestAccess}
           disabled={loading}
-          className="flex items-center justify-center p-2 rounded-lg border border-[#334155] bg-slate-900/50 hover:bg-slate-800 text-brand-secondary hover:text-brand-text transition-colors"
+          className="flex items-center justify-center p-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
           title="Refresh Wi-Fi Status"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -69,9 +69,9 @@ export const VisitorAccessPage = () => {
       </PageHeader>
 
       {loading ? (
-        <div className="p-12 text-center border border-[#334155]/60 bg-slate-950/20 rounded-2xl flex flex-col items-center justify-center gap-3">
-          <RefreshCw className="w-8 h-8 text-brand-primary animate-spin" />
-          <p className="text-xs text-brand-secondary">Retrieving temporary guest network lease...</p>
+        <div className="p-12 text-center border border-slate-200 bg-slate-50 rounded-2xl flex flex-col items-center justify-center gap-3">
+          <RefreshCw className="w-8 h-8 text-blue-600 animate-spin" />
+          <p className="text-xs text-slate-500">Retrieving temporary guest network lease...</p>
         </div>
       ) : error ? (
         <EmptyState
@@ -97,18 +97,18 @@ export const VisitorAccessPage = () => {
 
             <Card className="p-5 select-none space-y-3">
               <SectionTitle>Temporary Network SSID Parameters</SectionTitle>
-              <div className="space-y-3 text-xs opacity-65">
+              <div className="space-y-3 text-xs text-slate-500">
                 <div className="flex justify-between items-center">
                   <span>SSID Name</span>
-                  <span className="font-bold text-brand-text">{access.ssid}</span>
+                  <span className="font-bold text-slate-800">{access.ssid}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span>VLAN Assignment</span>
-                  <span className="font-semibold text-brand-text font-mono">VLAN {access.vlan}</span>
+                  <span className="font-semibold text-slate-800 font-mono">VLAN {access.vlan}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span>Lease Expiry</span>
-                  <span className="font-semibold text-brand-text font-mono">{formatDate(access.expires_at)}</span>
+                  <span className="font-semibold text-slate-800 font-mono">{formatDate(access.expires_at)}</span>
                 </div>
               </div>
             </Card>
@@ -117,29 +117,29 @@ export const VisitorAccessPage = () => {
           {/* Access log details */}
           <div className="md:col-span-2">
             <Card className="p-6 space-y-6">
-              <div className="border-b border-[#334155]/50 pb-4">
-                <h3 className="text-sm font-extrabold text-brand-text">Guest Wi-Fi Credentials</h3>
-                <p className="text-[11px] text-brand-secondary mt-1">Use the temporary login credentials below to connect to the campus internet.</p>
+              <div className="border-b border-slate-100 pb-4">
+                <h3 className="text-sm font-extrabold text-slate-800">Guest Wi-Fi Credentials</h3>
+                <p className="text-[11px] text-slate-500 mt-1">Use the temporary login credentials below to connect to the campus internet.</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="p-4 rounded-xl bg-slate-950/30 border border-[#334155]/30">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-brand-secondary">Wi-Fi Username</span>
-                  <p className="font-mono font-bold text-brand-text mt-1 text-sm">{access.username}</p>
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Wi-Fi Username</span>
+                  <p className="font-mono font-bold text-slate-800 mt-1 text-sm">{access.username}</p>
                 </div>
 
-                <div className="p-4 rounded-xl bg-slate-950/30 border border-[#334155]/30">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-brand-secondary">Wi-Fi Password</span>
-                  <p className="font-mono font-bold text-brand-text mt-1 text-sm">
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Wi-Fi Password</span>
+                  <p className="font-mono font-bold text-slate-800 mt-1 text-sm">
                     {access.temporary_password || '•••••••• (Encrypted)'}
                   </p>
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10 text-[11px] text-[#94a3b8] leading-relaxed flex gap-2">
-                <Clock className="w-4 h-4 text-brand-primary shrink-0 mt-0.5" />
+              <div className="p-4 rounded-xl bg-blue-50 border border-blue-100 text-[11px] text-slate-600 leading-relaxed flex gap-2">
+                <Clock className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-semibold text-brand-text">Lease Notice: </span>
+                  <span className="font-semibold text-slate-800">Lease Notice: </span>
                   Your password is only shown plaintext during approval. Hashed passwords are saved in the database for compliance. This session will expire at {formatDate(access.expires_at)}.
                 </div>
               </div>

@@ -11,11 +11,11 @@ export const AppUsageGrid = ({ apps }) => {
           key={app.name}
           onMouseEnter={() => setHoveredApp(app.name)}
           onMouseLeave={() => setHoveredApp(null)}
-          className="p-3.5 rounded-xl border border-[#334155]/20 bg-slate-950/25 space-y-3 transition-all duration-300 hover:border-[#334155]/40 hover:bg-slate-900/30"
+          className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-3 transition-all duration-300 hover:border-slate-300 hover:shadow-md cursor-default"
           style={{
             boxShadow: hoveredApp === app.name 
-              ? `0 4px 20px -2px rgba(15, 23, 42, 0.5), 0 0 10px ${app.color}15`
-              : 'none'
+              ? `0 4px 20px -2px rgba(0,0,0,0.08), 0 0 10px ${app.color}18`
+              : '0 1px 3px rgba(0,0,0,0.04)'
           }}
         >
           <div className="flex justify-between items-center select-none">
@@ -23,34 +23,34 @@ export const AppUsageGrid = ({ apps }) => {
               <div 
                 className="p-2 rounded-xl flex items-center justify-center transition-all duration-300"
                 style={{ 
-                  backgroundColor: hoveredApp === app.name ? `${app.color}25` : `${app.color}12`, 
+                  backgroundColor: hoveredApp === app.name ? `${app.color}20` : `${app.color}12`, 
                   color: app.color,
-                  boxShadow: hoveredApp === app.name ? `0 0 8px ${app.color}40` : 'none'
+                  boxShadow: hoveredApp === app.name ? `0 0 8px ${app.color}30` : 'none'
                 }}
               >
                 <app.icon className="w-4 h-4" />
               </div>
               <div className="text-left">
-                <p className="font-extrabold text-[11px] text-brand-text leading-tight">{app.name}</p>
-                <p className="text-[9px] text-brand-secondary mt-0.5">{app.timeUsed} active</p>
+                <p className="font-extrabold text-[11px] text-slate-800 leading-tight">{app.name}</p>
+                <p className="text-[9px] text-slate-400 mt-0.5">{app.timeUsed} active</p>
               </div>
             </div>
             <div className="text-right">
-              <p className="font-extrabold text-[11px] text-brand-text leading-tight">{app.percentage}%</p>
-              <p className="text-[9px] text-brand-secondary mt-0.5">{app.dataUsed}</p>
+              <p className="font-extrabold text-[11px] text-slate-800 leading-tight">{app.percentage}%</p>
+              <p className="text-[9px] text-slate-400 mt-0.5">{app.dataUsed}</p>
             </div>
           </div>
 
-          {/* Progress Bar Container */}
-          <div className="w-full h-2 bg-slate-800/60 rounded-full overflow-hidden relative">
+          {/* Progress Bar */}
+          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden relative">
             <div 
-              className="h-full rounded-full transition-all duration-1000 ease-out origin-left"
+              className="h-full rounded-full transition-all duration-1000 ease-out"
               style={{ 
                 width: `${app.percentage}%`,
-                background: `linear-gradient(90deg, ${app.color}cc, ${app.color})`,
+                background: `linear-gradient(90deg, ${app.color}bb, ${app.color})`,
                 boxShadow: hoveredApp === app.name 
-                  ? `0 0 12px ${app.color}, 0 0 16px ${app.color}80` 
-                  : `0 0 4px ${app.color}60`,
+                  ? `0 0 8px ${app.color}80` 
+                  : `0 0 3px ${app.color}40`,
                 transform: hoveredApp === app.name ? 'scaleY(1.25)' : 'none',
                 transformOrigin: 'left'
               }}

@@ -67,13 +67,14 @@ export const SettingsPage = () => {
         subtitle="Manage campus network configurations, user session parameters, security presets, and platform layouts"
       >
         <div className="flex gap-2">
-          <Button
-            variant="secondary"
+          <button
             onClick={fetchSettings}
-            className="h-10 w-10 p-0 flex items-center justify-center"
+            disabled={loading}
+            className="h-10 w-10 flex items-center justify-center rounded-xl bg-white border-2 border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-slate-400 hover:text-slate-800 transition-all shadow-sm cursor-pointer disabled:opacity-50"
+            title="Refresh Settings"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </Button>
+          </button>
           <Button
             variant="primary"
             onClick={handleSaveSettings}
@@ -86,7 +87,7 @@ export const SettingsPage = () => {
         </div>
       </PageHeader>
 
-      <div className="bg-emerald-500/10 border border-emerald-500/20 text-brand-success p-4 rounded-xl text-xs text-left select-none mb-6">
+      <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 p-4 rounded-xl text-xs text-left select-none mb-6">
         <p className="font-semibold">Enterprise Live Config Mode</p>
         <p className="mt-0.5 opacity-80">All configuration parameters below persist live across session validation rules and registration controllers.</p>
       </div>
@@ -101,11 +102,11 @@ export const SettingsPage = () => {
           <div className="space-y-3 pt-2 text-xs opacity-80">
             <div>
               <label className="block text-[9px] font-bold text-brand-secondary uppercase tracking-wider mb-1">Full Operator Name</label>
-              <input type="text" disabled value="Super Admin" className="w-full h-9 px-3 bg-slate-900/40 border border-[#334155]/40 rounded-lg cursor-not-allowed outline-none text-brand-text" />
+              <input type="text" disabled value="Super Admin" className="w-full h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg cursor-not-allowed outline-none text-slate-800" />
             </div>
             <div>
               <label className="block text-[9px] font-bold text-brand-secondary uppercase tracking-wider mb-1">Associated Contact Email</label>
-              <input type="email" disabled value="admin@securecampus.com" className="w-full h-9 px-3 bg-slate-900/40 border border-[#334155]/40 rounded-lg cursor-not-allowed outline-none text-brand-text" />
+              <input type="email" disabled value="admin@securecampus.com" className="w-full h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg cursor-not-allowed outline-none text-slate-800" />
             </div>
           </div>
         </Card>
@@ -122,7 +123,7 @@ export const SettingsPage = () => {
               <select
                 value={config.theme}
                 onChange={(e) => setConfig({ ...config, theme: e.target.value })}
-                className="w-full h-9 px-3 bg-slate-900/40 border border-[#334155] rounded-lg text-xs text-brand-text outline-none focus:border-brand-primary"
+                className="w-full h-9 px-3 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 outline-none focus:border-blue-400"
               >
                 <option value="dark">Dark Theme</option>
                 <option value="light">Light Theme</option>
@@ -162,7 +163,7 @@ export const SettingsPage = () => {
                 type="number"
                 value={config.otp_expiry}
                 onChange={(e) => setConfig({ ...config, otp_expiry: parseInt(e.target.value, 10) || 300 })}
-                className="w-full h-9 px-3 bg-slate-900/40 border border-[#334155] rounded-lg text-xs text-brand-text outline-none focus:border-brand-primary"
+                className="w-full h-9 px-3 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 outline-none focus:border-blue-400"
               />
             </div>
           </div>
@@ -180,7 +181,7 @@ export const SettingsPage = () => {
               <select
                 value={config.account_approval_mode}
                 onChange={(e) => setConfig({ ...config, account_approval_mode: e.target.value })}
-                className="w-full h-9 px-3 bg-slate-900/40 border border-[#334155] rounded-lg text-xs text-brand-text outline-none focus:border-brand-primary"
+                className="w-full h-9 px-3 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 outline-none focus:border-blue-400"
               >
                 <option value="AUTO">AUTO (Auto-Approve New Accounts)</option>
                 <option value="ADMIN">ADMIN (Require Manual Verification)</option>
@@ -211,7 +212,7 @@ export const SettingsPage = () => {
                 type="number"
                 value={config.session_timeout}
                 onChange={(e) => setConfig({ ...config, session_timeout: parseInt(e.target.value, 10) || 900 })}
-                className="w-full h-9 px-3 bg-slate-900/40 border border-[#334155] rounded-lg text-xs text-brand-text outline-none focus:border-brand-primary"
+                className="w-full h-9 px-3 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 outline-none focus:border-blue-400"
               />
             </div>
           </div>

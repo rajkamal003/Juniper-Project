@@ -17,34 +17,19 @@ export const Button = ({
   className = '',
   ...props
 }) => {
-  const baseStyle = "h-12 px-6 rounded-xl font-semibold text-btn flex items-center justify-center gap-2.5 transition-colors duration-150 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus-ring-dynamic select-none cursor-pointer shadow-xs";
-  
+  const baseStyle = "h-12 px-6 rounded-xl font-semibold text-btn flex items-center justify-center gap-2.5 transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none focus:outline-none select-none cursor-pointer";
+
   const variants = {
-    primary: "text-white shadow-blue-500/20 hover:shadow-md",
-    secondary: "border shadow-xs",
-    danger: "bg-red-600 hover:bg-red-700 text-white shadow-red-500/20 hover:shadow-md",
-    success: "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20 hover:shadow-md",
-    ghost: "bg-transparent hover:bg-black/5 dark:hover:bg-white/10 shadow-none"
+    primary: "text-white shadow-sm hover:shadow-md hover:brightness-110",
+    secondary: "bg-white border-2 border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 shadow-sm",
+    danger: "bg-red-600 hover:bg-red-700 text-white shadow-sm shadow-red-500/20 hover:shadow-md",
+    success: "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-500/20 hover:shadow-md",
+    ghost: "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-800"
   };
 
-  const getCustomStyle = () => {
+  const getStyle = () => {
     if (variant === 'primary') {
-      return {
-        backgroundColor: 'var(--color-primary)',
-        color: '#ffffff'
-      };
-    }
-    if (variant === 'secondary') {
-      return {
-        backgroundColor: 'var(--bg-surface)',
-        borderColor: 'var(--border-color)',
-        color: 'var(--text-main)'
-      };
-    }
-    if (variant === 'ghost') {
-      return {
-        color: 'var(--text-secondary)'
-      };
+      return { backgroundColor: 'var(--color-primary)', color: '#ffffff' };
     }
     return {};
   };
@@ -56,8 +41,8 @@ export const Button = ({
       disabled={disabled || loading}
       whileHover={disabled || loading ? undefined : buttonHoverProps.whileHover}
       whileTap={disabled || loading ? undefined : buttonHoverProps.whileTap}
-      style={getCustomStyle()}
-      className={`${baseStyle} ${variants[variant]} ${className}`}
+      style={getStyle()}
+      className={`${baseStyle} ${variants[variant] ?? ''} ${className}`}
       {...props}
     >
       {loading ? (

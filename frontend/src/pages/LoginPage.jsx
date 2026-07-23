@@ -406,18 +406,18 @@ export const LoginPage = ({ roleContext }) => {
 
               {/* Remembered Accounts Dropdown */}
               {isDropdownOpen && rememberedAccounts.length > 0 && (
-                <div className="absolute left-0 right-0 top-full mt-1.5 z-50 max-h-56 overflow-y-auto bg-slate-900 border border-[#334155] rounded-xl shadow-2xl divide-y divide-[#334155]/40 select-none">
+                <div className="absolute left-0 right-0 top-full mt-1.5 z-50 max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl divide-y divide-slate-100 select-none">
                   {rememberedAccounts.map((acc, index) => (
                     <div
                       key={index}
                       onClick={() => handleSelectAccount(acc)}
-                      className="p-3 flex justify-between items-center cursor-pointer hover:bg-slate-800/60 transition-colors"
+                      className="p-3 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors"
                     >
                       <div className="min-w-0 text-left">
-                        <p className="font-semibold text-xs text-brand-text truncate">
+                        <p className="font-semibold text-xs text-slate-800 truncate">
                           {acc.displayName ? `${acc.displayName} (${acc.email})` : acc.email}
                         </p>
-                        <p className="text-[9px] text-brand-secondary mt-0.5 font-mono">
+                        <p className="text-[9px] text-slate-500 mt-0.5 font-mono">
                           Last seen: {new Date(acc.lastLogin).toLocaleString(undefined, {
                             month: 'short',
                             day: 'numeric',
@@ -429,7 +429,7 @@ export const LoginPage = ({ roleContext }) => {
                       <button
                         type="button"
                         onClick={(e) => handleDeleteAccount(e, acc.email)}
-                        className="p-1 hover:bg-red-500/10 text-brand-secondary hover:text-red-400 rounded-lg transition-colors"
+                        className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg transition-colors"
                         title="Delete saved account"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -437,11 +437,11 @@ export const LoginPage = ({ roleContext }) => {
                     </div>
                   ))}
 
-                  <div className="p-2 bg-slate-950/20 text-center">
+                  <div className="p-2 bg-slate-50 text-center">
                     <button
                       type="button"
                       onClick={handleClearAll}
-                      className="text-[10px] font-bold text-red-400 hover:text-red-300 hover:underline transition-colors uppercase tracking-wider"
+                      className="text-[10px] font-bold text-red-500 hover:text-red-600 hover:underline transition-colors uppercase tracking-wider"
                     >
                       Clear all saved accounts
                     </button>

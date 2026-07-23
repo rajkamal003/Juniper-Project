@@ -247,7 +247,7 @@ export const UserManagementPage = () => {
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full flex flex-col md:flex-row items-start md:items-center justify-between p-6 rounded-2xl border border-[#334155]/60 bg-slate-900/10 gap-4 select-none"
+        className="w-full flex flex-col md:flex-row items-start md:items-center justify-between p-6 rounded-2xl border border-slate-200 bg-slate-50 gap-4 select-none"
       >
         <div className="space-y-1">
           <div className="flex items-center gap-2">
@@ -260,7 +260,7 @@ export const UserManagementPage = () => {
         </div>
 
         {systemSettings && (
-          <div className="flex items-center gap-4 shrink-0 bg-slate-950/40 p-3 rounded-xl border border-[#334155]/40 w-full md:w-auto justify-between md:justify-start">
+          <div className="flex items-center gap-4 shrink-0 bg-white p-3 rounded-xl border border-slate-200 w-full md:w-auto justify-between md:justify-start">
             <div className="text-left">
               <p className="text-[10px] text-brand-secondary font-bold uppercase tracking-wider">Approval Mode</p>
               <span className="text-xs font-semibold text-brand-text">
@@ -301,7 +301,7 @@ export const UserManagementPage = () => {
                   placeholder="Search by Name, Email, Phone, Roll, Employee ID..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="h-10 w-full pl-10 pr-4 bg-slate-900/40 border border-[#334155] rounded-xl text-xs text-brand-text outline-none focus-ring-blue placeholder-slate-600 font-semibold"
+                  className="h-10 w-full pl-10 pr-4 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-blue-400 placeholder-slate-400 font-semibold"
                 />
               </div>
             </div>
@@ -314,7 +314,7 @@ export const UserManagementPage = () => {
               <select
                 value={roleId}
                 onChange={(e) => setRoleId(e.target.value)}
-                className="h-10 w-full px-3.5 bg-slate-900/40 border border-[#334155] rounded-xl focus-ring-blue text-xs text-brand-text outline-none font-semibold"
+                className="h-10 w-full px-3.5 bg-white border border-slate-200 rounded-xl focus:border-blue-400 text-xs text-slate-800 outline-none font-semibold"
               >
                 <option value="">All Roles</option>
                 <option value="1">Super Admin</option>
@@ -340,7 +340,7 @@ export const UserManagementPage = () => {
                   setPage(1);
                   fetchUsers();
                 }}
-                className="h-10 w-10 border border-[#334155] bg-slate-900/20 text-[#94a3b8] hover:text-[#f8fafc] rounded-xl flex items-center justify-center transition-colors focus:outline-none shrink-0"
+                className="h-10 w-10 border border-slate-200 bg-white text-slate-500 hover:text-slate-800 rounded-xl flex items-center justify-center transition-colors focus:outline-none shrink-0 cursor-pointer"
                 title="Reset Filters"
               >
                 <RefreshCw className="w-4 h-4" />
@@ -359,7 +359,7 @@ export const UserManagementPage = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-9 w-full px-3 bg-slate-900/20 border border-[#334155]/50 rounded-xl focus-ring-blue text-xs text-brand-text outline-none font-semibold"
+                className="h-9 w-full px-3 bg-white border border-slate-200 rounded-xl focus:border-blue-400 text-xs text-slate-800 outline-none font-semibold"
               >
                 <option value="">All Statuses</option>
                 <option value="Active">Active</option>
@@ -378,7 +378,7 @@ export const UserManagementPage = () => {
               <select
                 value={deptFilter}
                 onChange={(e) => setDeptFilter(e.target.value)}
-                className="h-9 w-full px-3 bg-slate-900/20 border border-[#334155]/50 rounded-xl focus-ring-blue text-xs text-brand-text outline-none font-semibold"
+                className="h-9 w-full px-3 bg-white border border-slate-200 rounded-xl focus:border-blue-400 text-xs text-slate-800 outline-none font-semibold"
               >
                 <option value="">All Departments</option>
                 {DEPARTMENTS.map((d, i) => (
@@ -478,7 +478,7 @@ export const UserManagementPage = () => {
               type="text"
               value={tempPassword}
               onChange={(e) => setTempPassword(e.target.value)}
-              className="h-9 w-full px-3.5 bg-slate-950/40 border border-[#334155] rounded-xl text-xs text-brand-text outline-none focus-ring-blue font-semibold font-mono"
+              className="h-9 w-full px-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-blue-400 font-semibold font-mono"
             />
             <p className="text-[10px] text-brand-secondary mt-1">
               Minimum 8 characters containing uppercase, lowercase, numbers, and symbols.

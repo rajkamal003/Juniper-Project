@@ -191,23 +191,23 @@ export const UserDetailsPage = () => {
 
             <div className="flex gap-2 justify-center mt-4">
               <StatusBadge status={user.account_status} />
-              <span className="text-[10px] font-bold text-brand-secondary bg-slate-800 px-2 py-0.5 border border-slate-700/50 rounded-md uppercase tracking-wider">
+              <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 border border-slate-200 rounded-md uppercase tracking-wider">
                 {getRoleLabel(user.role?.role_name)}
               </span>
             </div>
 
-            <div className="mt-6 border-t border-[#334155]/20 pt-4 space-y-3 text-xs text-left">
+            <div className="mt-6 border-t border-slate-100 pt-4 space-y-3 text-xs text-left">
               <div className="flex justify-between">
-                <span className="text-brand-secondary">Mobile Phone</span>
-                <span className="font-semibold text-brand-text">{user.phone}</span>
+                <span className="text-slate-500">Mobile Phone</span>
+                <span className="font-semibold text-slate-800">{user.phone}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-brand-secondary">Department</span>
-                <span className="font-semibold text-brand-text">{user.department || '—'}</span>
+                <span className="text-slate-500">Department</span>
+                <span className="font-semibold text-slate-800">{user.department || '—'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-brand-secondary">Registration Date</span>
-                <span className="font-semibold text-brand-text">
+                <span className="text-slate-500">Registration Date</span>
+                <span className="font-semibold text-slate-800">
                   {new Date(user.created_at).toLocaleDateString()}
                 </span>
               </div>
@@ -218,7 +218,7 @@ export const UserDetailsPage = () => {
         {/* Right column: granular credentials & uploaded files */}
         <div className="md:col-span-2 space-y-6">
           <Card className="max-w-none p-6">
-            <h4 className="text-xs font-bold text-brand-text uppercase tracking-wider mb-6 border-b border-[#334155]/20 pb-3 select-none">
+            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-6 border-b border-slate-100 pb-3 select-none">
               Identities & Document Attachments
             </h4>
 
@@ -227,7 +227,7 @@ export const UserDetailsPage = () => {
               {user.role_id === 2 && (
                 <div className="space-y-1">
                   <p className="text-brand-secondary font-bold uppercase tracking-wider text-[10px]">Employee Identification Code</p>
-                  <p className="font-mono text-brand-text font-bold text-sm bg-slate-950/40 p-2.5 rounded-xl border border-slate-800">
+                  <p className="font-mono text-slate-800 font-bold text-sm bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                     {user.employee_id || 'Not Assigned'}
                   </p>
                 </div>
@@ -236,7 +236,7 @@ export const UserDetailsPage = () => {
               {user.role_id === 3 && (
                 <div className="space-y-1">
                   <p className="text-brand-secondary font-bold uppercase tracking-wider text-[10px]">Student Roll Number</p>
-                  <p className="font-mono text-brand-text font-bold text-sm bg-slate-950/40 p-2.5 rounded-xl border border-slate-800">
+                  <p className="font-mono text-slate-800 font-bold text-sm bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                     {user.roll_number || 'Not Assigned'}
                   </p>
                 </div>
@@ -246,13 +246,13 @@ export const UserDetailsPage = () => {
                 <>
                   <div className="space-y-1">
                     <p className="text-brand-secondary font-bold uppercase tracking-wider text-[10px]">Parent Linked Roll Number</p>
-                    <p className="font-mono text-brand-text font-bold text-sm bg-slate-950/40 p-2.5 rounded-xl border border-slate-800">
+                    <p className="font-mono text-slate-800 font-bold text-sm bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                       {user.parent_student_roll || 'Not Assigned'}
                     </p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-brand-secondary font-bold uppercase tracking-wider text-[10px]">Student Relationship</p>
-                    <p className="text-brand-text font-semibold text-sm bg-slate-950/40 p-2.5 rounded-xl border border-slate-800">
+                    <p className="text-slate-800 font-semibold text-sm bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                       {user.relationship || 'Not Specified'}
                     </p>
                   </div>
@@ -263,13 +263,13 @@ export const UserDetailsPage = () => {
                 <>
                   <div className="space-y-1">
                     <p className="text-brand-secondary font-bold uppercase tracking-wider text-[10px]">Visit Purpose</p>
-                    <p className="text-brand-text font-semibold text-sm bg-slate-950/40 p-2.5 rounded-xl border border-slate-800">
+                    <p className="text-slate-800 font-semibold text-sm bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                       {user.purpose || 'General Campus Visit'}
                     </p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-brand-secondary font-bold uppercase tracking-wider text-[10px]">Proposed Stay Duration</p>
-                    <p className="text-brand-text font-semibold text-sm bg-slate-950/40 p-2.5 rounded-xl border border-slate-800">
+                    <p className="text-slate-800 font-semibold text-sm bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                       {user.duration || 'Not Specified'}
                     </p>
                   </div>
@@ -286,23 +286,23 @@ export const UserDetailsPage = () => {
               {user.college_id_upload ? (
                 <div className="space-y-4">
                   {isDocumentImage(user.college_id_upload) ? (
-                    <div className="w-full max-w-md rounded-xl border border-[#334155]/50 overflow-hidden bg-slate-950/60 p-2 mx-auto">
+                    <div className="w-full max-w-md rounded-xl border border-slate-200 overflow-hidden bg-slate-50 p-2 mx-auto">
                       <img src={user.college_id_upload} alt="ID Document Preview" className="w-full h-auto rounded-lg object-contain max-h-[300px]" />
                     </div>
                   ) : (
-                    <div className="flex items-center gap-3 p-4 bg-slate-950/40 rounded-xl border border-slate-800 max-w-md mx-auto">
-                      <div className="p-2.5 bg-red-500/10 text-brand-danger rounded-lg">
+                    <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 max-w-md mx-auto">
+                      <div className="p-2.5 bg-red-50 text-red-500 rounded-lg">
                         <FileText className="w-6 h-6" />
                       </div>
                       <div className="text-left grow min-w-0">
-                        <p className="text-xs font-bold text-brand-text truncate">Verification_Doc_{user.id}.pdf</p>
-                        <p className="text-[10px] text-brand-secondary">PDF Document File</p>
+                        <p className="text-xs font-bold text-slate-800 truncate">Verification_Doc_{user.id}.pdf</p>
+                        <p className="text-[10px] text-slate-500">PDF Document File</p>
                       </div>
                       <a
                         href={user.college_id_upload}
                         target="_blank"
                         rel="noreferrer"
-                        className="p-2 text-[#94a3b8] hover:text-[#f8fafc] hover:bg-slate-800/50 rounded-lg transition-colors shrink-0"
+                        className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors shrink-0"
                         title="Download Document"
                       >
                         <Download className="w-4 h-4" />
@@ -323,14 +323,14 @@ export const UserDetailsPage = () => {
       {/* Session History Log Table */}
       {isAdmin && (
         <Card className="max-w-none p-6 mt-6">
-          <h4 className="text-xs font-bold text-brand-text uppercase tracking-wider mb-6 border-b border-[#334155]/20 pb-3 select-none">
+          <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-6 border-b border-slate-100 pb-3 select-none">
             User Network Sessions & Traffic Logs
           </h4>
           
-          <div className="overflow-x-auto rounded-xl border border-[#334155]/20">
+          <div className="overflow-x-auto rounded-xl border border-slate-200">
             <table className="w-full text-left border-collapse text-xs select-none">
               <thead>
-                <tr className="bg-slate-900/60 border-b border-[#334155]/20 text-[10px] uppercase font-bold text-brand-secondary tracking-wider">
+                <tr className="bg-slate-50 border-b border-slate-200 text-[10px] uppercase font-bold text-slate-500 tracking-wider">
                   <th className="p-3">Login Time</th>
                   <th className="p-3">IP Address</th>
                   <th className="p-3">MAC Address</th>
@@ -340,10 +340,10 @@ export const UserDetailsPage = () => {
                   <th className="p-3">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#334155]/10">
+              <tbody className="divide-y divide-slate-100">
                 {sessions.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="p-8 text-center text-brand-secondary italic">
+                    <td colSpan="7" className="p-8 text-center text-slate-500 italic">
                       No network session logs recorded for this user.
                     </td>
                   </tr>
@@ -362,21 +362,21 @@ export const UserDetailsPage = () => {
                     }
 
                     return (
-                      <tr key={s.session_id} className="hover:bg-slate-900/10">
-                        <td className="p-3 font-mono font-medium text-brand-text">
+                      <tr key={s.session_id} className="hover:bg-slate-50">
+                        <td className="p-3 font-mono font-medium text-slate-800">
                           {new Date(s.login_time).toLocaleString()}
                         </td>
-                        <td className="p-3 font-mono font-semibold text-brand-text">{s.ip_address || '—'}</td>
-                        <td className="p-3 font-mono text-brand-secondary">{s.mac_address || '—'}</td>
+                        <td className="p-3 font-mono font-semibold text-slate-800">{s.ip_address || '—'}</td>
+                        <td className="p-3 font-mono text-slate-500">{s.mac_address || '—'}</td>
                         <td className="p-3">
-                          <span className="font-semibold text-brand-text block">{s.access_point || 'AP-MainHall-01'}</span>
-                          <span className="text-[10px] text-brand-secondary block font-mono">{s.ssid || 'SecureCampus-WiFi'}</span>
+                          <span className="font-semibold text-slate-800 block">{s.access_point || 'AP-MainHall-01'}</span>
+                          <span className="text-[10px] text-slate-500 block font-mono">{s.ssid || 'SecureCampus-WiFi'}</span>
                         </td>
-                        <td className="p-3 font-medium text-brand-text">{durStr}</td>
+                        <td className="p-3 font-medium text-slate-800">{durStr}</td>
                         <td className="p-3 font-mono">
-                          <span className="text-emerald-400 font-bold">{allowedSites} allowed</span>
-                          <span className="text-brand-secondary mx-1">/</span>
-                          <span className="text-red-400 font-bold">{blockedSites} blocked</span>
+                          <span className="text-emerald-600 font-bold">{allowedSites} allowed</span>
+                          <span className="text-slate-400 mx-1">/</span>
+                          <span className="text-red-500 font-bold">{blockedSites} blocked</span>
                         </td>
                         <td className="p-3">
                           <StatusBadge status={s.status === 'Active' ? 'Active' : 'Closed'} />
@@ -431,7 +431,7 @@ export const UserDetailsPage = () => {
               type="text"
               value={tempPassword}
               onChange={(e) => setTempPassword(e.target.value)}
-              className="h-9 w-full px-3 bg-slate-950/40 border border-[#334155] rounded-xl text-xs text-brand-text outline-none focus-ring-blue font-semibold font-mono"
+              className="h-9 w-full px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-blue-400 font-semibold font-mono"
             />
           </div>
         )}
