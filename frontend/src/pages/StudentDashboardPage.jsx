@@ -81,7 +81,7 @@ export const StudentDashboardPage = () => {
         <button
           onClick={handleRefresh}
           disabled={isRefreshing}
-          className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#334155] bg-slate-900/50 hover:bg-slate-800 text-brand-secondary hover:text-brand-text transition-colors text-xs font-semibold cursor-pointer"
+          className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800 transition-colors text-xs font-semibold cursor-pointer"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
           <span>Refresh Telemetry</span>
@@ -219,21 +219,21 @@ export const StudentDashboardPage = () => {
             <div className="space-y-3">
               <div>
                 <div className="flex justify-between text-[11px] mb-1">
-                  <span className="text-brand-secondary">Weekly WiFi Data Budget</span>
-                  <span className="text-brand-text font-bold">12.5 GB / 20.0 GB (62%)</span>
+                  <span className="text-slate-500">Daily Academic WiFi Quota</span>
+                  <span className="text-slate-800 font-bold">{telemetry.todayUsage} / 10.0 GB</span>
                 </div>
-                <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-brand-primary rounded-full" style={{ width: '62%' }} />
+                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-brand-primary rounded-full" style={{ width: `${Math.min(100, (parseFloat(telemetry.todayUsage) / 10.0) * 100)}%` }} />
                 </div>
               </div>
 
               <div>
                 <div className="flex justify-between text-[11px] mb-1">
-                  <span className="text-brand-secondary">Monthly Data Bandwidth Cap</span>
-                  <span className="text-brand-text font-bold">38.4 GB / 80.0 GB (48%)</span>
+                  <span className="text-slate-500">Monthly SSID Bandwidth Cap</span>
+                  <span className="text-slate-800 font-bold">{telemetry.monthlyUsage} / 250.0 GB</span>
                 </div>
-                <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: '48%' }} />
+                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.min(100, (parseFloat(telemetry.monthlyUsage) / 250.0) * 100)}%` }} />
                 </div>
               </div>
             </div>
@@ -279,44 +279,43 @@ export const StudentDashboardPage = () => {
           </Card>
 
           {/* Security Banner Card */}
-          <Card className="p-5 bg-blue-500/5 border-blue-500/20 text-blue-400">
+          <Card className="p-5 bg-blue-50 border-blue-100 text-blue-600">
             <h4 className="font-bold text-xs flex items-center gap-1.5 uppercase tracking-wider">
               🛡️ Student Network Profile
             </h4>
-            <p className="text-[10px] text-brand-secondary mt-2 leading-relaxed">
+            <p className="text-[10px] text-slate-500 mt-2 leading-relaxed">
               Student WiFi sessions are regulated through SecureCampus AI firewalls. Access is permitted across education resources. Attempting to bypass restricted domains will generate automatic security flags.
             </p>
           </Card>
         </div>
-
       </div>
 
-      {/* Row 4: Recent Sessions Logs */}
-      <Card className="p-6">
-        <h3 className="text-xs font-extrabold uppercase tracking-wider text-brand-text mb-4">Connection History</h3>
+        {/* Row 4: Recent Sessions Logs */}
+      <Card className="p-6 bg-white border border-slate-200 shadow-xs">
+        <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800 mb-4">Connection History</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left border-collapse">
             <thead>
-              <tr className="border-b border-[#334155]/20 text-brand-secondary uppercase font-semibold">
+              <tr className="border-b border-slate-200 text-slate-500 uppercase font-semibold">
                 <th className="pb-3 px-3">Session Start</th>
                 <th className="pb-3 px-3">Session End</th>
                 <th className="pb-3 px-3">Duration</th>
                 <th className="pb-3 px-3 text-right">AP Location Subnet</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#334155]/10">
+            <tbody className="divide-y divide-slate-100">
               {recentSessions.map((sess, idx) => (
-                <tr key={idx} className="hover:bg-slate-900/30 transition-colors">
-                  <td className="py-3 px-3 font-semibold text-brand-text">{sess.login}</td>
+                <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                  <td className="py-3 px-3 font-semibold text-slate-800">{sess.login}</td>
                   <td className="py-3 px-3 font-semibold">
                     {sess.logout === 'Active Session' ? (
-                      <span className="text-emerald-400 animate-pulse">Active Session</span>
+                      <span className="text-emerald-600 animate-pulse font-bold">Active Session</span>
                     ) : (
-                      <span className="text-brand-secondary">{sess.logout}</span>
+                      <span className="text-slate-500">{sess.logout}</span>
                     )}
                   </td>
-                  <td className="py-3 px-3 font-mono text-brand-secondary">{sess.duration}</td>
-                  <td className="py-3 px-3 text-right text-brand-secondary">{sess.location}</td>
+                  <td className="py-3 px-3 font-mono text-slate-500">{sess.duration}</td>
+                  <td className="py-3 px-3 text-right text-slate-500">{sess.location}</td>
                 </tr>
               ))}
             </tbody>

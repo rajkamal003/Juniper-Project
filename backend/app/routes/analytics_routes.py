@@ -14,7 +14,7 @@ from app.repositories.repos import (
     UserRepo, JuniperRepo, VisitorRepo, ExamRepo
 )
 from app.services.services import AISecurityService
-from app.models.models import SecurityAlert, SecurityRecommendation, DeviceInventory
+from app.models.models import SecurityAlert, SecurityRecommendation, DeviceInventory, User, UserSession
 
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
 
@@ -47,6 +47,10 @@ def get_security_dashboard_metrics(
     active_alerts = db.query(SecurityAlert).filter(SecurityAlert.status == 'Active').count()
     unresolved_recommendations = db.query(SecurityRecommendation).filter(SecurityRecommendation.status == 'Pending').count()
     
+    # Total Users and Active Sessions counts
+    total_users = db.query(User).count()
+    active_sessions = db.query(UserSession).filter(UserSession.status == 'Active').count()
+
     # Recent alerts
     recent_alerts, _ = SecurityAlertRepo.get_alerts(db, status='Active', limit=5)
     
@@ -86,7 +90,9 @@ def get_security_dashboard_metrics(
             "recent_alerts": [SecurityAlertResponse.model_validate(a) for a in recent_alerts],
             "active_recommendations": [SecurityRecommendationResponse.model_validate(r) for r in active_recs],
             "device_risk_scores": device_risk_list,
-            "historical_snapshots": snapshots_data
+            "historical_snapshots": snapshots_data,
+            "total_users": total_users,
+            "active_sessions_count": active_sessions
         }
     )
 

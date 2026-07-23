@@ -107,7 +107,7 @@ export const ParentDashboardPage = () => {
         <button
           onClick={handleRefresh}
           disabled={isRefreshing}
-          className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#334155] bg-slate-900/50 hover:bg-slate-800 text-brand-secondary hover:text-brand-text transition-colors text-xs font-semibold cursor-pointer"
+          className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800 transition-colors text-xs font-semibold cursor-pointer"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
           <span>Refresh Telemetry</span>
@@ -231,24 +231,24 @@ export const ParentDashboardPage = () => {
               </div>
             </div>
 
-            {/* Custom Interactive Mock Data Charts */}
+             {/* Custom Interactive Mock Data Charts */}
             <div className="space-y-3">
               <div>
                 <div className="flex justify-between text-[11px] mb-1">
-                  <span className="text-brand-secondary">Daily WiFi Session Target</span>
-                  <span className="text-brand-text font-bold">{telemetry.todayUsage} / 6.0 GB</span>
+                  <span className="text-slate-500">Daily WiFi Session Target</span>
+                  <span className="text-slate-800 font-bold">{telemetry.todayUsage} / 6.0 GB</span>
                 </div>
-                <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                   <div className="h-full bg-brand-primary rounded-full" style={{ width: `${Math.min(100, (parseFloat(telemetry.todayUsage) / 6.0) * 100)}%` }} />
                 </div>
               </div>
 
               <div>
                 <div className="flex justify-between text-[11px] mb-1">
-                  <span className="text-brand-secondary">Monthly Data Bandwidth Cap</span>
-                  <span className="text-brand-text font-bold">{telemetry.monthlyUsage} / 150.0 GB</span>
+                  <span className="text-slate-500">Monthly Data Bandwidth Cap</span>
+                  <span className="text-slate-800 font-bold">{telemetry.monthlyUsage} / 150.0 GB</span>
                 </div>
-                <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                   <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.min(100, (parseFloat(telemetry.monthlyUsage) / 150.0) * 100)}%` }} />
                 </div>
               </div>
@@ -309,34 +309,32 @@ export const ParentDashboardPage = () => {
           </Card>
         </div>
 
-      </div>
-
-      {/* Row 4: Recent Sessions Logs */}
+      </div>       {/* Row 4: Recent Sessions Logs */}
       <Card className="p-6">
-        <h3 className="text-xs font-extrabold uppercase tracking-wider text-brand-text mb-4">Recent Connection Sessions Logs</h3>
+        <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800 mb-4">Recent Connection Sessions Logs</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left border-collapse">
             <thead>
-              <tr className="border-b border-[#334155]/20 text-brand-secondary uppercase font-semibold">
+              <tr className="border-b border-slate-200 text-slate-500 uppercase font-semibold">
                 <th className="pb-3 px-3">Session Start</th>
                 <th className="pb-3 px-3">Session End</th>
                 <th className="pb-3 px-3">Duration</th>
                 <th className="pb-3 px-3 text-right">AP Location Subnet</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#334155]/10">
+            <tbody className="divide-y divide-slate-100">
               {recentSessions.map((sess, idx) => (
-                <tr key={idx} className="hover:bg-slate-900/30 transition-colors">
-                  <td className="py-3 px-3 font-semibold text-brand-text">{sess.login}</td>
+                <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                  <td className="py-3 px-3 font-semibold text-slate-800">{sess.login}</td>
                   <td className="py-3 px-3 font-semibold">
                     {sess.logout === 'Active Session' ? (
-                      <span className="text-emerald-400 animate-pulse">Active Session</span>
+                      <span className="text-emerald-600 animate-pulse font-bold">Active Session</span>
                     ) : (
-                      <span className="text-brand-secondary">{sess.logout}</span>
+                      <span className="text-slate-500">{sess.logout}</span>
                     )}
                   </td>
-                  <td className="py-3 px-3 font-mono text-brand-secondary">{sess.duration}</td>
-                  <td className="py-3 px-3 text-right text-brand-secondary">{sess.location}</td>
+                  <td className="py-3 px-3 font-mono text-slate-500">{sess.duration}</td>
+                  <td className="py-3 px-3 text-right text-slate-500">{sess.location}</td>
                 </tr>
               ))}
             </tbody>

@@ -87,6 +87,50 @@ def admin_create_user(
     pwd = payload.password or "Temp@Access123"
     hashed = hash_password(pwd)
     
+    roll_number = payload.roll_number
+    if payload.role_id == 5 and not roll_number:
+        import random
+        for _ in range(50):
+            candidate = f"GST-{random.randint(1000, 9999)}"
+            if not UserRepo.get_by_roll_number(db, candidate):
+                roll_number = candidate
+                break
+        if not roll_number:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to generate a unique Guest ID."
+            )
+        
+    employee_id = payload.employee_id
+    if payload.role_id == 1 and not employee_id:
+        import random
+        for _ in range(50):
+            candidate = f"ADM-{random.randint(100, 999)}"
+            if not UserRepo.get_by_employee_id(db, candidate):
+                employee_id = candidate
+                break
+        if not employee_id:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to generate a unique Admin ID."
+            )
+
+    # Validate duplicates
+    if roll_number:
+        existing_roll = UserRepo.get_by_roll_number(db, roll_number.strip())
+        if existing_roll:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This Student/Guest ID is already registered."
+            )
+    if employee_id:
+        existing_emp = UserRepo.get_by_employee_id(db, employee_id.strip())
+        if existing_emp:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This Faculty/Admin ID is already registered."
+            )
+        
     new_user = User(
         fullname=payload.fullname,
         email=payload.email,
@@ -97,8 +141,8 @@ def admin_create_user(
         is_verified=True, # Admin created users are pre-verified
         is_first_login=True, # Force user to change password on first login
         department=payload.department,
-        roll_number=payload.roll_number,
-        employee_id=payload.employee_id,
+        roll_number=roll_number,
+        employee_id=employee_id,
         parent_student_roll=payload.parent_student_roll,
         relationship=payload.relationship,
         purpose=payload.purpose,
@@ -393,3 +437,14 @@ def update_system_settings(
     updates = payload.model_dump(exclude_unset=True)
     updated_settings = SettingRepo.update(db, settings_instance, updates)
     return updated_settings
+
+
+# 14. Get Sessions of a Specific User (Admin Only)
+@router.get("/{user_id}/sessions", response_model=list[SessionResponse])
+def get_specific_user_sessions(
+    user_id: int,
+    db: Session = Depends(get_db),
+    admin = Depends(require_admin)
+):
+    sessions = db.query(UserSession).filter(UserSession.user_id == user_id).order_by(UserSession.login_time.desc()).all()
+    return sessions

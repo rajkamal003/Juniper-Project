@@ -77,7 +77,7 @@ export const StudentStatusPage = () => {
                 <div className="px-3.5 py-1.5 rounded-xl bg-brand-primary/10 border border-brand-primary/30 text-center sm:text-right">
                   <span className="text-[9px] font-bold text-brand-secondary uppercase tracking-widest block">Student ID</span>
                   <span className="text-sm font-mono font-extrabold text-brand-primary">
-                    {studentStatus?.roll_number || user?.parent_student_roll || "22B91A0512"}
+                    {studentStatus?.roll_number || user?.parent_student_roll || "2300090273"}
                   </span>
                 </div>
               </div>
@@ -87,7 +87,7 @@ export const StudentStatusPage = () => {
                 <div className="flex justify-between items-center py-1.5 border-b border-[#334155]/10">
                   <span className="text-brand-secondary">Student ID</span>
                   <span className="font-mono font-bold text-brand-text">
-                    {studentStatus?.roll_number || user?.parent_student_roll || "22B91A0512"}
+                    {studentStatus?.roll_number || user?.parent_student_roll || "2300090273"}
                   </span>
                 </div>
 

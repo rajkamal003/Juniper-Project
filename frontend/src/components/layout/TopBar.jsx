@@ -265,14 +265,6 @@ export const ProfileMenu = () => {
                 <User className="w-4.5 h-4.5" style={{ color: 'var(--color-primary)' }} />
                 <span>My Account</span>
               </button>
-              <button
-                onClick={() => { setIsOpen(false); navigate('/settings'); }}
-                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-nav font-medium text-left transition-colors hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer"
-                style={{ color: 'var(--text-main)' }}
-              >
-                <Settings className="w-4.5 h-4.5" style={{ color: 'var(--color-primary)' }} />
-                <span>Settings</span>
-              </button>
             </div>
  
             <div className="border-t border-gray-200/20 p-1 mt-1">

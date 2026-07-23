@@ -68,7 +68,13 @@ class UserRegister(UserBase):
 
         # 3. Check conditional fields and formats by role_id
         # 2: Faculty, 3: Student, 4: Parent Visitor, 5: Guest
-        if self.role_id == 2: # Faculty
+        if self.role_id == 1: # Admin
+            if self.employee_id and self.employee_id.strip():
+                emp_clean = self.employee_id.strip()
+                if not re.match(r'^ADM-[0-9]{3}$', emp_clean):
+                    raise ValueError("Admin ID must match ADM-XXX format (e.g. ADM-001).")
+
+        elif self.role_id == 2: # Faculty
             if not self.employee_id or not self.employee_id.strip():
                 raise ValueError("Faculty ID is required for Faculty")
             emp_clean = self.employee_id.strip()
@@ -91,10 +97,17 @@ class UserRegister(UserBase):
         elif self.role_id == 4: # Parent Visitor
             if not self.parent_student_roll or not self.parent_student_roll.strip():
                 raise ValueError("Student Roll Number is required for Parents")
+            parent_roll_clean = self.parent_student_roll.strip()
+            if not re.match(r'^[0-9]{10}$', parent_roll_clean):
+                raise ValueError("Linked Student Roll Number must be exactly 10 digits numbers only.")
             if not self.relationship or not self.relationship.strip():
                 raise ValueError("Relationship is required for Parents")
 
         elif self.role_id == 5: # Guest
+            if self.roll_number and self.roll_number.strip():
+                roll_clean = self.roll_number.strip()
+                if not re.match(r'^GST-[0-9]{4}$', roll_clean):
+                    raise ValueError("Guest ID must match GST-XXXX format (e.g. GST-9021).")
             if not self.purpose or not self.purpose.strip():
                 raise ValueError("Purpose of visit is required for Guests")
             if not self.duration or not self.duration.strip() or self.duration not in ['2 Hours', '4 Hours', '8 Hours', '1 Day']:
@@ -220,6 +233,22 @@ class UserUpdate(BaseModel):
     profile_image: Optional[str] = None
     college_id_upload: Optional[str] = None
 
+    @model_validator(mode='after')
+    def validate_id_formats(self) -> 'UserUpdate':
+        if self.employee_id is not None:
+            emp_clean = self.employee_id.strip()
+            if emp_clean and not re.match(r'^[0-9]{4,5}$', emp_clean):
+                raise ValueError("Faculty ID must be exactly 4 or 5 digits numbers only.")
+        if self.roll_number is not None:
+            roll_clean = self.roll_number.strip()
+            if roll_clean and not re.match(r'^[0-9]{10}$', roll_clean):
+                raise ValueError("Student ID must be exactly 10 digits numbers only.")
+        if self.parent_student_roll is not None:
+            parent_roll_clean = self.parent_student_roll.strip()
+            if parent_roll_clean and not re.match(r'^[0-9]{10}$', parent_roll_clean):
+                raise ValueError("Student Roll Number must be exactly 10 digits numbers only.")
+        return self
+
 class StatusUpdateRequest(BaseModel):
     account_status: str
 
@@ -343,6 +372,39 @@ class UserCreateByAdmin(BaseModel):
         if not re.match(r'^\+?[0-9\s\-()]{7,20}$', v):
             raise ValueError("Invalid phone number format")
         return v
+
+    @model_validator(mode='after')
+    def validate_role_fields_admin(self) -> 'UserCreateByAdmin':
+        role = self.role_id
+        if role == 1: # Admin
+            if self.employee_id and self.employee_id.strip():
+                emp_clean = self.employee_id.strip()
+                if not re.match(r'^ADM-[0-9]{3}$', emp_clean):
+                    raise ValueError("Admin ID must match ADM-XXX format (e.g. ADM-001).")
+        elif role == 2: # Faculty
+            if not self.employee_id or not self.employee_id.strip():
+                raise ValueError("Employee ID is required for Faculty")
+            emp_clean = self.employee_id.strip()
+            if not re.match(r'^[0-9]{4,5}$', emp_clean):
+                raise ValueError("Faculty ID must be exactly 4 or 5 digits numbers only.")
+        elif role == 3: # Student
+            if not self.roll_number or not self.roll_number.strip():
+                raise ValueError("Student ID is required for Students")
+            roll_clean = self.roll_number.strip()
+            if not re.match(r'^[0-9]{10}$', roll_clean):
+                raise ValueError("Student ID must be exactly 10 digits numbers only.")
+        elif role == 4: # Parent
+            if not self.parent_student_roll or not self.parent_student_roll.strip():
+                raise ValueError("Linked Student Roll Number is required for Parents")
+            parent_roll_clean = self.parent_student_roll.strip()
+            if not re.match(r'^[0-9]{10}$', parent_roll_clean):
+                raise ValueError("Linked Student Roll Number must be exactly 10 digits numbers only.")
+        elif role == 5: # Guest
+            if self.roll_number and self.roll_number.strip():
+                roll_clean = self.roll_number.strip()
+                if not re.match(r'^GST-[0-9]{4}$', roll_clean):
+                    raise ValueError("Guest ID must match GST-XXXX format (e.g. GST-9021).")
+        return self
 
 # --- Unified Response Wrappers ---
 class SuccessResponse(BaseModel):

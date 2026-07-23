@@ -534,7 +534,7 @@ export const DevicesPage = () => {
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="h-10 px-3 bg-slate-900 border border-[#334155] rounded-xl text-xs text-brand-text font-semibold outline-none"
+              className="h-10 px-3 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 font-semibold outline-none"
             >
               <option value="">All Types</option>
               <option value="Firewall">Firewall</option>
@@ -544,7 +544,7 @@ export const DevicesPage = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-10 px-3 bg-slate-900 border border-[#334155] rounded-xl text-xs text-brand-text font-semibold outline-none"
+              className="h-10 px-3 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 font-semibold outline-none"
             >
               <option value="">All Statuses</option>
               <option value="Online">Online</option>
@@ -570,38 +570,38 @@ export const DevicesPage = () => {
                   onClick={() => { setSelectedDevice(dev); setViewMode('front'); }}
                   className={`p-4 rounded-2xl border transition-all cursor-pointer text-left relative overflow-hidden ${
                     isSelected 
-                      ? 'bg-slate-900 border-brand-primary/50 shadow-lg scale-[1.01]' 
-                      : 'bg-slate-900/40 border-[#334155]/40 hover:bg-slate-900/60'
+                      ? 'bg-white border-blue-500 shadow-md scale-[1.01]' 
+                      : 'bg-white border-slate-200 hover:bg-slate-50'
                   }`}
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2.5 rounded-xl border ${isSelected ? 'bg-brand-primary/10 border-brand-primary/20 text-brand-primary' : 'bg-slate-800/80 border-[#334155]/50 text-slate-400'}`}>
+                      <div className={`p-2.5 rounded-xl border ${isSelected ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
                         <DeviceIcon className="w-4.5 h-4.5" />
                       </div>
                       <div>
-                        <h4 className="text-sm font-extrabold text-brand-text leading-tight">{dev.device_name}</h4>
-                        <p className="text-[10px] text-brand-secondary mt-0.5">{dev.model} • {dev.device_type}</p>
+                        <h4 className="text-sm font-extrabold text-slate-800 leading-tight">{dev.device_name}</h4>
+                        <p className="text-[10px] text-slate-500 mt-0.5">{dev.model} • {dev.device_type}</p>
                       </div>
                     </div>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] font-bold">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 text-[9px] font-bold">
                       <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
                       <span>{dev.status}</span>
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-[#334155]/20 text-[10px] text-brand-secondary font-mono">
+                  <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-100 text-[10px] text-slate-500 font-mono">
                     <div>
-                      <span className="block text-[8px] uppercase tracking-wider text-slate-500">CPU</span>
-                      <span className="font-bold text-brand-text">{dev.cpu}%</span>
+                      <span className="block text-[8px] uppercase tracking-wider text-slate-400">CPU</span>
+                      <span className="font-bold text-slate-700">{dev.cpu}%</span>
                     </div>
                     <div>
-                      <span className="block text-[8px] uppercase tracking-wider text-slate-500">Temp</span>
-                      <span className="font-bold text-brand-text">{dev.temp}°C</span>
+                      <span className="block text-[8px] uppercase tracking-wider text-slate-400">Temp</span>
+                      <span className="font-bold text-slate-700">{dev.temp}°C</span>
                     </div>
                     <div>
-                      <span className="block text-[8px] uppercase tracking-wider text-slate-500">IP Address</span>
-                      <span className="font-bold text-brand-primary truncate block">{dev.ip_address}</span>
+                      <span className="block text-[8px] uppercase tracking-wider text-slate-400">IP Address</span>
+                      <span className="font-bold text-blue-600 truncate block">{dev.ip_address}</span>
                     </div>
                   </div>
                 </div>
@@ -613,17 +613,17 @@ export const DevicesPage = () => {
         {/* Right Side: Detailed Device Inspector (2 Cols) */}
         <div className="lg:col-span-2 space-y-6">
           {selectedDevice ? (
-            <div className="bg-slate-900 border border-[#334155] rounded-3xl p-6 shadow-xl space-y-6">
+            <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-6">
               {/* Header Title */}
-              <div className="flex justify-between items-start border-b border-[#334155]/30 pb-4">
+              <div className="flex justify-between items-start border-b border-slate-100 pb-4">
                 <div>
                   <div className="flex items-center gap-3">
-                    <h2 className="text-xl font-extrabold text-brand-text tracking-tight">{selectedDevice.model}</h2>
-                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 border border-slate-700">
+                    <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">{selectedDevice.model}</h2>
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
                       {selectedDevice.device_type}
                     </span>
                   </div>
-                  <p className="text-xs text-brand-secondary mt-1">{selectedDevice.desc}</p>
+                  <p className="text-xs text-slate-500 mt-1">{selectedDevice.desc}</p>
                 </div>
 
                 <div className="flex gap-2">
@@ -641,14 +641,14 @@ export const DevicesPage = () => {
               {/* Front/Rear View Toggle Box */}
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider font-mono">Chassis Chassis Diagram</span>
-                  <div className="bg-slate-950 p-0.5 rounded-xl border border-slate-800 flex">
+                  <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider font-mono">Chassis Diagram</span>
+                  <div className="bg-slate-100 p-0.5 rounded-xl border border-slate-200 flex">
                     <button
                       onClick={() => setViewMode('front')}
                       className={`px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-wide uppercase transition-colors cursor-pointer ${
                         viewMode === 'front' 
-                          ? 'bg-brand-primary text-white font-extrabold' 
-                          : 'text-brand-secondary hover:text-brand-text'
+                          ? 'bg-blue-600 text-white font-extrabold' 
+                          : 'text-slate-500 hover:text-slate-800'
                       }`}
                     >
                       Front Panel
@@ -657,8 +657,8 @@ export const DevicesPage = () => {
                       onClick={() => setViewMode('rear')}
                       className={`px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-wide uppercase transition-colors cursor-pointer ${
                         viewMode === 'rear' 
-                          ? 'bg-brand-primary text-white font-extrabold' 
-                          : 'text-brand-secondary hover:text-brand-text'
+                          ? 'bg-blue-600 text-white font-extrabold' 
+                          : 'text-slate-500 hover:text-slate-800'
                       }`}
                     >
                       Rear Panel
@@ -667,7 +667,7 @@ export const DevicesPage = () => {
                 </div>
 
                 {/* Device Chassis Box */}
-                <div className="p-1 rounded-2xl bg-slate-950 border border-slate-800/80">
+                <div className="p-1 rounded-2xl bg-slate-50 border border-slate-200">
                   {renderDeviceChassis(selectedDevice.model, viewMode)}
                 </div>
               </div>
@@ -679,20 +679,19 @@ export const DevicesPage = () => {
                   <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider font-mono">Device Image & Stats</h4>
                   
                   {/* Large Product Image with Fallback */}
-                  <div className="w-full h-36 bg-slate-950/80 rounded-2xl border border-slate-800 flex items-center justify-center p-4 relative overflow-hidden group select-none">
+                  <div className="w-full h-36 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-center p-4 relative overflow-hidden group select-none">
                     <img 
                       src={selectedDevice.img_front} 
                       alt={selectedDevice.model}
                       onError={(e) => {
-                        // Replace broken image with a stylish SVG placeholder
                         e.target.style.display = 'none';
                         e.target.nextSibling.style.display = 'flex';
                       }}
                       className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
                     />
-                    <div className="hidden flex-col items-center justify-center text-[#94a3b8]" style={{ display: 'none' }}>
-                      <Network className="w-8 h-8 text-brand-primary mb-2 opacity-80" />
-                      <span className="text-[10px] font-bold uppercase tracking-wider">{selectedDevice.model} Placeholder</span>
+                    <div className="hidden flex-col items-center justify-center text-slate-400" style={{ display: 'none' }}>
+                      <WifiOff className="w-8 h-8 text-slate-300 mb-2" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider">No Image Available</span>
                     </div>
                   </div>
 
@@ -700,15 +699,15 @@ export const DevicesPage = () => {
                     {/* CPU metric */}
                     <div>
                       <div className="flex justify-between text-xs font-semibold mb-1.5">
-                        <span className="text-brand-secondary flex items-center gap-1.5">
-                          <Cpu className="w-3.5 h-3.5 text-brand-primary animate-pulse" />
+                        <span className="text-slate-500 flex items-center gap-1.5">
+                          <Cpu className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
                           <span>CPU Utilization</span>
                         </span>
-                        <span className="font-mono text-brand-text">{selectedDevice.cpu}%</span>
+                        <span className="font-mono text-slate-800">{selectedDevice.cpu}%</span>
                       </div>
-                      <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden">
+                      <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-brand-primary rounded-full transition-all duration-500" 
+                          className="h-full bg-blue-600 rounded-full transition-all duration-500" 
                           style={{ width: `${selectedDevice.cpu}%` }}
                         />
                       </div>
@@ -717,13 +716,13 @@ export const DevicesPage = () => {
                     {/* RAM metric */}
                     <div>
                       <div className="flex justify-between text-xs font-semibold mb-1.5">
-                        <span className="text-brand-secondary flex items-center gap-1.5">
-                          <HardDrive className="w-3.5 h-3.5 text-purple-400" />
+                        <span className="text-slate-500 flex items-center gap-1.5">
+                          <HardDrive className="w-3.5 h-3.5 text-purple-600" />
                           <span>RAM Utilization</span>
                         </span>
-                        <span className="font-mono text-brand-text">{selectedDevice.ram}%</span>
+                        <span className="font-mono text-slate-800">{selectedDevice.ram}%</span>
                       </div>
-                      <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden">
+                      <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                         <div 
                           className="h-full bg-purple-500 rounded-full transition-all duration-500" 
                           style={{ width: `${selectedDevice.ram}%` }}
@@ -734,13 +733,13 @@ export const DevicesPage = () => {
                     {/* Temp metric */}
                     <div>
                       <div className="flex justify-between text-xs font-semibold mb-1.5">
-                        <span className="text-brand-secondary flex items-center gap-1.5">
+                        <span className="text-slate-500 flex items-center gap-1.5">
                           <Thermometer className="w-3.5 h-3.5 text-amber-500" />
                           <span>Chassis Temperature</span>
                         </span>
-                        <span className="font-mono text-brand-text">{selectedDevice.temp}°C</span>
+                        <span className="font-mono text-slate-800">{selectedDevice.temp}°C</span>
                       </div>
-                      <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden">
+                      <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                         <div 
                           className={`h-full rounded-full transition-all duration-500 ${
                             selectedDevice.temp > 50 ? 'bg-red-500' : selectedDevice.temp > 40 ? 'bg-amber-500' : 'bg-emerald-500'
@@ -756,131 +755,164 @@ export const DevicesPage = () => {
                 <div className="space-y-4 font-mono text-xs">
                   <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider font-mono">Device Details</h4>
                   
-                  <div className="bg-slate-950 rounded-2xl p-4 border border-slate-800/80 space-y-3 text-left">
-                    <div className="flex justify-between border-b border-slate-800/60 pb-1.5">
+                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-3 text-left">
+                    <div className="flex justify-between border-b border-slate-100 pb-1.5">
                       <span className="text-slate-500 uppercase text-[9px] tracking-wider font-bold">Manufacturer</span>
-                      <span className="text-brand-text font-bold">{selectedDevice.manufacturer || 'Juniper Networks'}</span>
+                      <span className="text-slate-800 font-bold">{selectedDevice.manufacturer || 'Juniper Networks'}</span>
                     </div>
-                    <div className="flex justify-between border-b border-slate-800/60 pb-1.5">
+                    <div className="flex justify-between border-b border-slate-100 pb-1.5">
                       <span className="text-slate-500 uppercase text-[9px] tracking-wider font-bold">Firmware</span>
-                      <span className="text-brand-text font-bold">{selectedDevice.firmware || 'Junos OS 21.4R3'}</span>
+                      <span className="text-slate-800 font-bold">{selectedDevice.firmware || 'Junos OS 21.4R3'}</span>
                     </div>
-                    <div className="flex justify-between border-b border-slate-800/60 pb-1.5">
+                    <div className="flex justify-between border-b border-slate-100 pb-1.5">
                       <span className="text-slate-500 uppercase text-[9px] tracking-wider font-bold">Serial Number</span>
-                      <span className="text-brand-text font-bold">{selectedDevice.serial}</span>
+                      <span className="text-slate-800 font-bold">{selectedDevice.serial}</span>
                     </div>
-                    <div className="flex justify-between border-b border-slate-800/60 pb-1.5">
+                    <div className="flex justify-between border-b border-slate-100 pb-1.5">
                       <span className="text-slate-500 uppercase text-[9px] tracking-wider font-bold">Device Uptime</span>
-                      <span className="text-brand-text font-bold">{selectedDevice.uptime}</span>
+                      <span className="text-slate-800 font-bold">{selectedDevice.uptime}</span>
                     </div>
-                    <div className="flex justify-between border-b border-slate-800/60 pb-1.5">
+                    <div className="flex justify-between border-b border-slate-100 pb-1.5">
                       <span className="text-slate-500 uppercase text-[9px] tracking-wider font-bold">Connected Clients</span>
-                      <span className="text-brand-text font-bold">{selectedDevice.clients}</span>
+                      <span className="text-slate-800 font-bold">{selectedDevice.clients}</span>
                     </div>
-                    <div className="flex justify-between border-b border-slate-800/60 pb-1.5">
+                    <div className="flex justify-between border-b border-slate-100 pb-1.5">
                       <span className="text-slate-500 uppercase text-[9px] tracking-wider font-bold">Throughput</span>
-                      <span className="text-brand-primary font-bold">{selectedDevice.throughput}</span>
+                      <span className="text-blue-600 font-bold">{selectedDevice.throughput}</span>
                     </div>
-                    <div className="flex justify-between border-b border-slate-800/60 pb-1.5">
+                    <div className="flex justify-between border-b border-slate-100 pb-1.5">
                       <span className="text-slate-500 uppercase text-[9px] tracking-wider font-bold">IP Address</span>
-                      <span className="text-brand-primary font-bold">{selectedDevice.ip_address}</span>
+                      <span className="text-blue-600 font-bold">{selectedDevice.ip_address}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-500 uppercase text-[9px] tracking-wider font-bold">MAC Address</span>
-                      <span className="text-brand-text font-bold">{selectedDevice.mac_address}</span>
+                      <span className="text-slate-800 font-bold">{selectedDevice.mac_address}</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="bg-slate-900 border border-slate-850 h-96 rounded-3xl flex flex-col items-center justify-center text-slate-400">
-              <Network className="w-12 h-12 text-slate-600 mb-4" />
-              <p>Select a Juniper device to inspect details.</p>
+            <div className="bg-white border border-slate-200 h-96 rounded-3xl flex flex-col items-center justify-center text-slate-400 shadow-xs">
+              <Network className="w-12 h-12 text-slate-300 mb-4" />
+              <p className="text-slate-500 text-sm font-semibold">Select a Juniper device to inspect details.</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Network Topology Section */}
-      <div className="bg-slate-900 border border-[#334155] rounded-3xl p-6 shadow-xl space-y-6 select-none mt-6">
+      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-6 select-none mt-6">
+        <style>{`
+          @keyframes packetFlow {
+            0% { left: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { left: 100%; opacity: 0; }
+          }
+          .animate-packet {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 6px;
+            background-color: #3b82f6;
+            border-radius: 50%;
+            animation: packetFlow 1.8s linear infinite;
+          }
+        `}</style>
         <div>
-          <h3 className="text-lg font-extrabold text-brand-text tracking-tight flex items-center gap-2">
-            <Network className="w-5 h-5 text-brand-primary" />
+          <h3 className="text-lg font-extrabold text-slate-800 tracking-tight flex items-center gap-2">
+            <Network className="w-5 h-5 text-blue-600" />
             <span>Mist AI Live Campus Topology Map</span>
           </h3>
-          <p className="text-xs text-brand-secondary mt-1">Hierarchical visualization of security gateways, switches, access points, and clients</p>
+          <p className="text-xs text-slate-500 mt-1">Hierarchical visualization of security gateways, switches, access points, and clients</p>
         </div>
 
         <div className="overflow-x-auto py-4">
-          <div className="min-w-[800px] flex items-center justify-between gap-6 px-4">
+          <div className="min-w-[800px] flex items-center justify-between gap-4 px-4">
             
             {/* Internet */}
             <div className="flex flex-col items-center w-24">
-              <div className="w-12 h-12 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold text-xs">
+              <div className="w-12 h-12 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs shadow-xs">
                 🌐
               </div>
-              <span className="text-[10px] font-bold text-brand-text mt-2">Internet</span>
-              <span className="text-[8px] text-brand-secondary">Gateway WAN</span>
+              <span className="text-[10px] font-bold text-slate-700 mt-2">Internet</span>
+              <span className="text-[8px] text-slate-400">Gateway WAN</span>
             </div>
 
-            <div className="text-brand-primary text-lg font-bold animate-pulse">⇛</div>
+            {/* Connection: Internet -> SRX300 */}
+            <div className="relative w-16 h-1 shrink-0 bg-slate-100 rounded">
+              <div className="animate-packet" style={{ animationDelay: '0s' }} />
+            </div>
 
             {/* Firewall SRX300 */}
             <div className="flex flex-col items-center w-28">
-              <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 font-bold text-[9px] text-center px-1">
+              <div className="w-12 h-12 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center text-red-600 font-bold text-[9px] text-center px-1 shadow-xs">
                 SRX300
               </div>
-              <span className="text-[10px] font-bold text-brand-text mt-2">SRX300 Gateway</span>
-              <span className="text-[8px] text-red-400">Firewall Active</span>
+              <span className="text-[10px] font-bold text-slate-700 mt-2">SRX300 Gateway</span>
+              <span className="text-[8px] text-red-500">Firewall Active</span>
             </div>
 
-            <div className="text-brand-primary text-lg font-bold animate-pulse">⇛</div>
+            {/* Connection: SRX300 -> EX4100 */}
+            <div className="relative w-16 h-1 shrink-0 bg-slate-100 rounded">
+              <div className="animate-packet" style={{ animationDelay: '0.36s' }} />
+            </div>
 
             {/* Core EX4100 */}
             <div className="flex flex-col items-center w-28">
-              <div className="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 font-bold text-[9px] text-center px-1">
+              <div className="w-12 h-12 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 font-bold text-[9px] text-center px-1 shadow-xs">
                 EX4100
               </div>
-              <span className="text-[10px] font-bold text-brand-text mt-2">EX4100 Switch</span>
-              <span className="text-[8px] text-brand-secondary">2 Uplinks Active</span>
+              <span className="text-[10px] font-bold text-slate-700 mt-2">EX4100 Switch</span>
+              <span className="text-[8px] text-slate-400 font-bold text-purple-600">Core Layer</span>
             </div>
 
-            <div className="text-brand-primary text-lg font-bold animate-pulse">⇛</div>
+            {/* Connection: EX4100 -> EX2300-C */}
+            <div className="relative w-16 h-1 shrink-0 bg-slate-100 rounded">
+              <div className="animate-packet" style={{ animationDelay: '0.72s' }} />
+            </div>
 
             {/* Agg EX2300-C */}
             <div className="flex flex-col items-center w-28">
-              <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-[9px] text-center px-1">
+              <div className="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-[9px] text-center px-1 shadow-xs">
                 EX2300-C
               </div>
-              <span className="text-[10px] font-bold text-brand-text mt-2">EX2300-C Switch</span>
-              <span className="text-[8px] text-brand-secondary">Distribution Layer</span>
+              <span className="text-[10px] font-bold text-slate-700 mt-2">EX2300-C Switch</span>
+              <span className="text-[8px] text-slate-400 font-bold text-indigo-600">Distribution</span>
             </div>
 
-            <div className="text-brand-primary text-lg font-bold animate-pulse">⇛</div>
+            {/* Connection: EX2300-C -> APs */}
+            <div className="relative w-16 h-1 shrink-0 bg-slate-100 rounded">
+              <div className="animate-packet" style={{ animationDelay: '1.08s' }} />
+            </div>
 
             {/* APs */}
             <div className="flex flex-col items-center w-28">
               <div className="flex gap-1.5">
-                <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-[8px]">
+                <div className="w-8 h-8 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-[8px] shadow-xs">
                   AP32
                 </div>
-                <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-[8px]">
+                <div className="w-8 h-8 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-[8px] shadow-xs">
                   AP36
                 </div>
               </div>
-              <span className="text-[10px] font-bold text-brand-text mt-2">Mist APs</span>
-              <span className="text-[8px] text-emerald-400">Wi-Fi 6 / 6E Active</span>
+              <span className="text-[10px] font-bold text-slate-700 mt-2">Mist APs</span>
+              <span className="text-[8px] text-emerald-600">Wi-Fi 6 / 6E Active</span>
             </div>
 
-            <div className="text-brand-primary text-lg font-bold animate-pulse">⇛</div>
+            {/* Connection: APs -> Users */}
+            <div className="relative w-16 h-1 shrink-0 bg-slate-100 rounded">
+              <div className="animate-packet" style={{ animationDelay: '1.44s' }} />
+            </div>
 
             {/* Clients */}
-            <div className="flex flex-col items-center w-36 bg-slate-950/40 p-2.5 rounded-2xl border border-slate-800/80">
-              <span className="text-[9px] font-extrabold uppercase text-slate-500 mb-1.5 tracking-wider block">Connected Subnets</span>
+            <div className="flex flex-col items-center w-36 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-xs">
+              <span className="text-[9px] font-extrabold uppercase text-slate-400 mb-1.5 tracking-wider block">Connected Subnets</span>
               <div className="flex flex-wrap gap-1 justify-center max-w-[150px]">
                 {['Students', 'Faculty', 'Parents', 'Guests', 'IoT Devices', 'Printers', 'CCTV'].map((client) => (
-                  <span key={client} className="text-[7px] bg-slate-800 text-brand-secondary px-1.5 py-0.5 rounded border border-slate-700 font-bold">
+                  <span key={client} className="text-[7px] bg-white text-slate-600 px-1.5 py-0.5 rounded border border-slate-200 font-bold">
                     {client}
                   </span>
                 ))}
@@ -894,8 +926,8 @@ export const DevicesPage = () => {
       {/* Edit Telemetry Modal */}
       {isTelemetryModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-[#0f172a]/80 backdrop-blur-sm" onClick={() => setIsTelemetryModalOpen(false)} />
-          <div className="relative w-full max-w-md bg-slate-900 border border-[#334155] rounded-3xl p-6 shadow-2xl z-10 text-left">
+          <div className="absolute inset-0 bg-[#0f172a]/60 backdrop-blur-xs" onClick={() => setIsTelemetryModalOpen(false)} />
+          <div className="relative w-full max-w-md bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl z-10 text-left">
             <div className="flex justify-between items-start mb-5">
               <h3 className="text-base font-bold text-brand-text flex items-center gap-2">
                 <Activity className="w-5 h-5 text-brand-primary" />
@@ -908,55 +940,54 @@ export const DevicesPage = () => {
 
             <form onSubmit={handleSaveTelemetry} className="space-y-4">
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">CPU Utilization (%)</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">CPU Utilization (%)</label>
                 <input 
                   type="number" 
                   min="0" 
                   max="100"
                   value={telemetryForm.cpu}
                   onChange={(e) => setTelemetryForm({ ...telemetryForm, cpu: e.target.value })}
-                  className="w-full h-11 px-4 bg-slate-950 border border-slate-800 rounded-xl text-brand-text text-sm outline-none focus:border-brand-primary"
+                  className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-slate-800 text-sm outline-none focus:border-blue-500"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">RAM Utilization (%)</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">RAM Utilization (%)</label>
                 <input 
                   type="number" 
                   min="0" 
                   max="100"
                   value={telemetryForm.ram}
                   onChange={(e) => setTelemetryForm({ ...telemetryForm, ram: e.target.value })}
-                  className="w-full h-11 px-4 bg-slate-950 border border-slate-800 rounded-xl text-brand-text text-sm outline-none focus:border-brand-primary"
+                  className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-slate-800 text-sm outline-none focus:border-blue-500"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Chassis Temp (°C)</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Chassis Temp (°C)</label>
                 <input 
                   type="number" 
                   min="0" 
                   max="100"
                   value={telemetryForm.temp}
                   onChange={(e) => setTelemetryForm({ ...telemetryForm, temp: e.target.value })}
-                  className="w-full h-11 px-4 bg-slate-950 border border-slate-800 rounded-xl text-brand-text text-sm outline-none focus:border-brand-primary"
+                  className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-slate-800 text-sm outline-none focus:border-blue-500"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Uptime String</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Uptime String</label>
                 <input 
                   type="text" 
                   value={telemetryForm.uptime}
                   onChange={(e) => setTelemetryForm({ ...telemetryForm, uptime: e.target.value })}
-                  className="w-full h-11 px-4 bg-slate-950 border border-slate-800 rounded-xl text-brand-text text-sm outline-none focus:border-brand-primary"
+                  className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-slate-800 text-sm outline-none focus:border-blue-500"
                   required
                 />
               </div>
-
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Serial Number</label>
                 <input 

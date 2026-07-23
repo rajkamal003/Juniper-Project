@@ -43,9 +43,9 @@ def seed_admin():
             
             if not admin_exists:
                 cursor.execute(
-                    "INSERT INTO users (fullname, email, phone, password_hash, role_id, account_status, is_verified, is_first_login) "
-                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s);",
-                    ("Super Admin", admin_email, "+1234567890", hashed_pass, 1, "Active", True, False)
+                    "INSERT INTO users (fullname, email, phone, password_hash, role_id, account_status, is_verified, is_first_login, employee_id) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);",
+                    ("Super Admin", admin_email, "+1234567890", hashed_pass, 1, "Active", True, False, "ADM-001")
                 )
                 print("Super Admin user created successfully!")
                 print(f"Email: {admin_email}")

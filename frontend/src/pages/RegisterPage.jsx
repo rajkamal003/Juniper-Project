@@ -78,6 +78,8 @@ const registerSchema = z.object({
   } else if (roleId === 4) {
     if (!data.parent_student_roll || !data.parent_student_roll.trim()) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Student Roll Number is required", path: ["parent_student_roll"] });
+    } else if (!/^[0-9]{10}$/.test(data.parent_student_roll.trim())) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Student Roll Number must be exactly 10 digits numbers only", path: ["parent_student_roll"] });
     }
     if (!data.relationship || !data.relationship.trim()) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Relationship status is required", path: ["relationship"] });

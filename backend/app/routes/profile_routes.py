@@ -52,7 +52,7 @@ def get_profile(
     role_specific = {}
     if role_name == "Student":
         role_specific = {
-            "student_id": user.roll_number or "22B91A0512",
+            "student_id": user.roll_number or "2300090273",
             "department": user.department or "Computer Science & Engineering",
             "year": "III Year",
             "registered_devices": 3,
@@ -67,7 +67,7 @@ def get_profile(
         }
     elif role_name == "Faculty":
         role_specific = {
-            "faculty_id": user.employee_id or "F10432",
+            "faculty_id": user.employee_id or "2158",
             "department": user.department or "Electronics & Communications",
             "designation": "Associate Professor",
             "registered_devices": 2,
@@ -81,7 +81,7 @@ def get_profile(
         }
     elif role_name == "Parent Visitor":
         role_specific = {
-            "linked_student_id": user.parent_student_roll or "22B91A0512",
+            "linked_student_id": user.parent_student_roll or "2300090273",
             "relationship": user.relationship or "Father",
             "student_department": "Computer Science & Engineering",
             "current_connected_device": device_name,
@@ -93,7 +93,7 @@ def get_profile(
         }
     elif role_name == "Guest":
         role_specific = {
-            "guest_id": f"G-{user.id}",
+            "guest_id": user.roll_number or "GST-9021",
             "purpose_of_visit": user.purpose or "Campus Event / Seminar",
             "visit_duration": user.duration or "4 Hours",
             "session_expiry_time": (datetime.utcnow() + timedelta(hours=2)).strftime("%Y-%m-%d %H:%M:%S"),
@@ -104,7 +104,7 @@ def get_profile(
         }
     elif role_name == "Super Admin":
         role_specific = {
-            "admin_id": f"ADM-{user.id:04d}",
+            "admin_id": user.employee_id or "ADM-001",
             "designation": "Security Administrator",
             "managed_devices": 145,
             "current_active_sessions": db.query(UserSession).filter(UserSession.status == "Active").count() or 5,

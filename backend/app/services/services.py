@@ -84,24 +84,70 @@ class AuthService:
                 detail="This phone number is already registered."
             )
 
+        # Prepare roll_number & employee_id
+        roll_number = payload.roll_number.strip() if (payload.roll_number and payload.roll_number.strip()) else None
+        employee_id = payload.employee_id.strip() if (payload.employee_id and payload.employee_id.strip()) else None
+
+        if payload.role_id == 5 and not roll_number:
+            import random
+            for _ in range(50):
+                candidate = f"GST-{random.randint(1000, 9999)}"
+                if not UserRepo.get_by_roll_number(db, candidate):
+                    roll_number = candidate
+                    break
+            if not roll_number:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to generate a unique Guest ID."
+                )
+
+        if payload.role_id == 1 and not employee_id:
+            import random
+            for _ in range(50):
+                candidate = f"ADM-{random.randint(100, 999)}"
+                if not UserRepo.get_by_employee_id(db, candidate):
+                    employee_id = candidate
+                    break
+            if not employee_id:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to generate a unique Admin ID."
+                )
+
         # Check duplicate Student ID (roll_number)
-        if payload.role_id == 3 and payload.roll_number:
-            roll_clean = payload.roll_number.strip()
-            existing_student = UserRepo.get_by_roll_number(db, roll_clean)
+        if payload.role_id == 3 and roll_number:
+            existing_student = UserRepo.get_by_roll_number(db, roll_number)
             if existing_student:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail="This Student ID is already registered."
                 )
 
+        # Check duplicate Guest ID (roll_number)
+        if payload.role_id == 5 and roll_number:
+            existing_guest = UserRepo.get_by_roll_number(db, roll_number)
+            if existing_guest:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="This Guest ID is already registered."
+                )
+
         # Check duplicate Faculty ID (employee_id)
-        if payload.role_id == 2 and payload.employee_id:
-            emp_clean = payload.employee_id.strip()
-            existing_faculty = UserRepo.get_by_employee_id(db, emp_clean)
+        if payload.role_id == 2 and employee_id:
+            existing_faculty = UserRepo.get_by_employee_id(db, employee_id)
             if existing_faculty:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail="This ID already exists."
+                )
+
+        # Check duplicate Admin ID (employee_id)
+        if payload.role_id == 1 and employee_id:
+            existing_admin = UserRepo.get_by_employee_id(db, employee_id)
+            if existing_admin:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="This Admin ID is already registered."
                 )
 
         # Get system settings for approval mode
@@ -119,8 +165,8 @@ class AuthService:
             role_id=payload.role_id,
             account_status=initial_status,
             department=payload.department.strip() if (payload.department and payload.department.strip()) else None,
-            roll_number=payload.roll_number.strip() if (payload.roll_number and payload.roll_number.strip()) else None,
-            employee_id=payload.employee_id.strip() if (payload.employee_id and payload.employee_id.strip()) else None,
+            roll_number=roll_number,
+            employee_id=employee_id,
             parent_student_roll=payload.parent_student_roll.strip() if (payload.parent_student_roll and payload.parent_student_roll.strip()) else None,
             relationship=payload.relationship,
             purpose=payload.purpose,
@@ -1586,31 +1632,31 @@ class ReportGenerationService:
             ]
         elif report_type == "Login Activity":
             headers = ["Session ID", "User ID", "Login Time", "Logout Time", "OS", "Browser", "IP Address", "Status"]
-            sessions = db.query(UserSession).order_by(desc(UserSession.login_time)).limit(100).all()
+            sessions = db.query(UserSession).order_by(UserSession.login_time.desc()).limit(100).all()
             rows = [[s.session_id, s.user_id, str(s.login_time), str(s.logout_time or 'Active'), s.operating_system, s.browser, s.ip_address, s.status] for s in sessions]
         elif report_type == "Visitor Activity":
-            headers = ["Visitor ID", "Name", "Type", "Purpose", "Host Faculty ID", "Approved At", "Status"]
-            visitors = db.query(VisitorRequest).order_by(desc(VisitorRequest.created_at)).limit(100).all()
-            rows = [[v.id, v.visitor_name, v.visitor_type, v.purpose, v.host_faculty_id, str(v.approved_at or 'Pending'), v.status] for v in visitors]
+            headers = ["Visitor ID", "Name", "Type", "Purpose", "Host Faculty", "Approved At", "Status"]
+            visitors = db.query(VisitorRequest).order_by(VisitorRequest.created_at.desc()).limit(100).all()
+            rows = [[v.id, v.visitor_name, v.visitor_type, v.purpose, v.host_faculty or '—', str(v.approved_at or 'Pending'), v.status] for v in visitors]
         elif report_type == "Exam Sessions":
             headers = ["Session ID", "Course Code", "Exam Name", "Room", "Start Time", "End Time", "Status"]
-            exams = db.query(ExamSession).order_by(desc(ExamSession.created_at)).limit(100).all()
+            exams = db.query(ExamSession).order_by(ExamSession.created_at.desc()).limit(100).all()
             rows = [[e.id, e.course_code, e.exam_name, e.classroom, str(e.start_time), str(e.end_time), e.status] for e in exams]
         elif report_type == "Device Inventory":
             headers = ["Device ID", "Hostname", "Model", "Device Type", "Management IP", "MAC Address", "OS Version", "Status"]
             devices = db.query(DeviceInventory).order_by(DeviceInventory.id).all()
             rows = [[d.id, d.hostname, d.model, d.device_type, d.management_ip, d.mac_address, d.os_version, d.status] for d in devices]
         elif report_type == "Device Health":
-            headers = ["Health ID", "Device ID", "CPU Usage (%)", "Memory Usage (%)", "Chassis Temp (°C)", "Updated At"]
-            healths = db.query(DeviceHealth).order_by(desc(DeviceHealth.updated_at)).limit(100).all()
-            rows = [[h.id, h.device_id, f"{h.cpu_usage}%", f"{h.memory_usage}%", f"{h.temperature_c}°C", str(h.updated_at)] for h in healths]
+            headers = ["Health ID", "Device ID", "CPU Usage (%)", "Memory Usage (%)", "Chassis Temp (°C)", "Recorded At"]
+            healths = db.query(DeviceHealth).order_by(DeviceHealth.recorded_at.desc()).limit(100).all()
+            rows = [[h.id, h.device_id, f"{h.cpu_usage}%", f"{h.memory_usage}%", f"{h.temperature}°C", str(h.recorded_at)] for h in healths]
         elif report_type == "Firewall Policies":
-            headers = ["Policy ID", "Rule Name", "Source Zone", "Dest Zone", "Action", "Protocol", "Matched Packets", "Status"]
+            headers = ["Policy ID", "Rule Priority", "Source IP", "Destination", "Policy Action", "Protocol", "Matched Packets", "Status"]
             policies = db.query(SecurityPolicy).all()
-            rows = [[p.id, p.policy_name, p.source_zone, p.destination_zone, p.action, p.protocol, p.logs_count, p.status] for p in policies]
+            rows = [[p.id, f"Rule Priority {p.priority}", p.source_ip, p.destination, p.policy, p.protocol, p.logs_count, p.status] for p in policies]
         elif report_type == "Alert History":
             headers = ["Alert ID", "Type", "Severity", "Title", "Confidence Score", "Status", "Timestamp"]
-            alerts = db.query(SecurityAlert).order_by(desc(SecurityAlert.created_at)).limit(100).all()
+            alerts = db.query(SecurityAlert).order_by(SecurityAlert.created_at.desc()).limit(100).all()
             rows = [[a.id, a.alert_type, a.severity, a.title, a.confidence_score, a.status, str(a.created_at)] for a in alerts]
         else:
             headers = ["Key", "Value"]

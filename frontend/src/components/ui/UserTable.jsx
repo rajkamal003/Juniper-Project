@@ -106,7 +106,24 @@ export const UserTable = ({
                 </td>
 
                 {/* Name */}
-                <td className="py-4 px-6 font-semibold truncate max-w-[180px]">{u.fullname}</td>
+                <td className="py-4 px-6 font-semibold truncate max-w-[180px]">
+                  <div>{u.fullname}</div>
+                  {u.role_id === 3 && u.roll_number && (
+                    <span className="text-[10px] text-slate-400 block font-mono font-medium leading-tight mt-0.5">({u.roll_number})</span>
+                  )}
+                  {u.role_id === 2 && u.employee_id && (
+                    <span className="text-[10px] text-slate-400 block font-mono font-medium leading-tight mt-0.5">({u.employee_id})</span>
+                  )}
+                  {u.role_id === 5 && u.roll_number && (
+                    <span className="text-[10px] text-slate-400 block font-mono font-medium leading-tight mt-0.5">({u.roll_number})</span>
+                  )}
+                  {u.role_id === 1 && u.employee_id && (
+                    <span className="text-[10px] text-slate-400 block font-mono font-medium leading-tight mt-0.5">({u.employee_id})</span>
+                  )}
+                  {u.role_id === 4 && u.parent_student_roll && (
+                    <span className="text-[10px] text-slate-400 block font-mono font-medium leading-tight mt-0.5">(Parent: {u.parent_student_roll})</span>
+                  )}
+                </td>
 
                 {/* Email */}
                 <td className="py-4 px-6 font-mono text-sm truncate max-w-[200px]" style={{ color: 'var(--text-secondary)' }}>{u.email}</td>

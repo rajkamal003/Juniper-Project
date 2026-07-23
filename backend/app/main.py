@@ -108,14 +108,17 @@ def run_db_migrations():
                 (4, 'Parent Visitor', 'Parent Visitor'),
                 (5, 'Guest', 'Guest');
             """))
-            admin_check = conn.execute(text("SELECT id FROM users WHERE email = 'admin@securecampus.com';")).fetchone()
+            admin_check = conn.execute(text("SELECT id, employee_id FROM users WHERE email = 'admin@securecampus.com';")).fetchone()
             if not admin_check:
                 admin_hash = hash_password("Admin@123")
                 conn.execute(text(
-                    "INSERT INTO users (fullname, email, phone, password_hash, role_id, account_status, is_verified, is_first_login) "
-                    "VALUES ('Super Admin', 'admin@securecampus.com', '9988776655', :pwd, 1, 'Active', 1, 0);"
+                    "INSERT INTO users (fullname, email, phone, password_hash, role_id, account_status, is_verified, is_first_login, employee_id) "
+                    "VALUES ('Super Admin', 'admin@securecampus.com', '9988776655', :pwd, 1, 'Active', 1, 0, 'ADM-001');"
                 ), {"pwd": admin_hash})
-                print("Seeded default Super Admin user: admin@securecampus.com")
+                print("Seeded default Super Admin user: admin@securecampus.com with employee_id ADM-001")
+            elif not admin_check[1]:
+                conn.execute(text("UPDATE users SET employee_id = 'ADM-001' WHERE email = 'admin@securecampus.com';"))
+                print("Updated existing Super Admin user with employee_id ADM-001")
         except Exception as e:
             print("DB migration warning / ignored:", e)
 

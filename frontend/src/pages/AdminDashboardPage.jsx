@@ -20,19 +20,21 @@ export const AdminDashboardPage = () => {
   // Simulation Mode state
   const [isSimulated, setIsSimulated] = useState(() => localStorage.getItem('simulation_mode') !== 'false');
   
-  // Real-time fluctuating counts
-  const [stats, setStats] = useState({
+  // Real-time fluctuating counts with randomized starting values on refresh
+  const [stats, setStats] = useState(() => ({
     totalUsers: '248',
-    activeSessions: '142',
-    totalTraffic: '1.42 TB',
-    mitigatedThreats: '2,410'
-  });
+    activeSessions: String(Math.floor(Math.random() * 30) + 130),
+    totalTraffic: `${(Math.random() * 0.8 + 1.2).toFixed(2)} TB`,
+    mitigatedThreats: Math.floor(Math.random() * 400 + 2100).toLocaleString()
+  }));
 
-  // Live Chart state
-  const [chartData, setChartData] = useState([25, 40, 35, 50, 45, 60, 55, 70, 65, 80]);
+  // Live Chart state initialized with random values on refresh
+  const [chartData, setChartData] = useState(() => 
+    Array.from({ length: 10 }, () => Math.floor(Math.random() * 50) + 30)
+  );
 
   // Live Alerts rotation state
-  const [alertIndex, setAlertIndex] = useState(0);
+  const [alertIndex, setAlertIndex] = useState(() => Math.floor(Math.random() * 5));
   const liveAlerts = [
     { time: 'Just Now', severity: 'critical', desc: 'Intrusion attempt blocked by SRX300 (Source: 192.168.1.189)' },
     { time: '2 mins ago', severity: 'warning', desc: 'High bandwidth consumption on AP-MainHall-02 (User: Student)' },
@@ -64,7 +66,7 @@ export const AdminDashboardPage = () => {
   // Initial user sessions data
   const initialSessions = [
     { 
-      username: 'L. Pranav (22000301)', 
+      username: 'L. Pranav (2300090273)', 
       role: 'Student', 
       loginTime: '17:15', 
       duration: '28 mins', 
@@ -88,7 +90,7 @@ export const AdminDashboardPage = () => {
       whatsapp: { messagesSent: 42, messagesReceived: 68, calls: 2, voiceCalls: 1, fileUploads: 3, imagesShared: 5, videosShared: 1, bandwidth: '110 MB' }
     },
     { 
-      username: 'Dr. Prasad (Faculty)', 
+      username: 'Dr. Prasad (2158)', 
       role: 'Faculty', 
       loginTime: '16:02', 
       duration: '1h 41m', 
@@ -112,7 +114,7 @@ export const AdminDashboardPage = () => {
       whatsapp: { messagesSent: 12, messagesReceived: 24, calls: 0, voiceCalls: 0, fileUploads: 1, imagesShared: 2, videosShared: 0, bandwidth: '24 MB' }
     },
     { 
-      username: 'Srinivasa Rao (Parent)', 
+      username: 'Srinivasa Rao (Parent - 2300090273)', 
       role: 'Parent Visitor', 
       loginTime: '16:45', 
       duration: '58 mins', 
@@ -136,7 +138,7 @@ export const AdminDashboardPage = () => {
       whatsapp: { messagesSent: 5, messagesReceived: 10, calls: 0, voiceCalls: 0, fileUploads: 0, imagesShared: 1, videosShared: 0, bandwidth: '8 MB' }
     },
     { 
-      username: 'Guest-9021', 
+      username: 'GST-9021', 
       role: 'Guest', 
       loginTime: '17:32', 
       duration: '11 mins', 
@@ -160,7 +162,7 @@ export const AdminDashboardPage = () => {
       whatsapp: { messagesSent: 2, messagesReceived: 4, calls: 0, voiceCalls: 0, fileUploads: 0, imagesShared: 0, videosShared: 0, bandwidth: '2 MB' }
     },
     { 
-      username: 'K. Kavitha (22000305)', 
+      username: 'K. Kavitha (2300090305)', 
       role: 'Student', 
       loginTime: '15:20', 
       duration: '2h 23m', 
@@ -184,7 +186,7 @@ export const AdminDashboardPage = () => {
       whatsapp: { messagesSent: 85, messagesReceived: 120, calls: 4, voiceCalls: 2, fileUploads: 8, imagesShared: 14, videosShared: 3, bandwidth: '210 MB' }
     },
     { 
-      username: 'M. Sriman (22000311)', 
+      username: 'M. Sriman (2300090311)', 
       role: 'Student', 
       loginTime: '17:05', 
       duration: '38 mins', 
@@ -218,6 +220,18 @@ export const AdminDashboardPage = () => {
       const junosResp = await api.get('/api/juniper/inventory');
       if (junosResp.data && junosResp.data.success) {
         setJuniperDevices(junosResp.data.data);
+      }
+
+      // Fetch dynamic stats from Analytics dashboard
+      const analyticsResp = await api.get('/api/analytics/dashboard');
+      if (analyticsResp.data && analyticsResp.data.success) {
+        const d = analyticsResp.data.data;
+        setStats({
+          totalUsers: String(d.total_users || 248),
+          activeSessions: String(d.active_sessions_count || 142),
+          totalTraffic: '4.2 TB',
+          mitigatedThreats: String(d.total_alerts || 1280)
+        });
       }
     } catch (error) {
       console.warn("Could not query dynamic telemetry, using mock fallbacks.", error);
@@ -362,11 +376,11 @@ export const AdminDashboardPage = () => {
             onClick={handleToggleSimulation}
             className={`h-10 px-4 rounded-xl border font-bold text-xs flex items-center gap-2.5 transition-all cursor-pointer ${
               isSimulated 
-                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
-                : 'bg-slate-800/80 border-slate-700 text-slate-300'
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600' 
+                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
             }`}
           >
-            <div className={`w-3.5 h-3.5 rounded-full ${isSimulated ? 'bg-emerald-500 animate-pulse' : 'bg-slate-500'}`} />
+            <div className={`w-3.5 h-3.5 rounded-full ${isSimulated ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
             <span>{isSimulated ? 'Simulation: ACTIVE' : 'Hardware Telemetry'}</span>
           </button>
 
@@ -419,17 +433,17 @@ export const AdminDashboardPage = () => {
       </div>
 
       {/* Dynamic Alerts Banner */}
-      <div className="w-full bg-red-950/20 border border-red-500/20 p-4 rounded-2xl flex items-center justify-between gap-4">
+      <div className="w-full bg-red-50 border border-red-100 p-4 rounded-2xl flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500 shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center text-red-600 shrink-0">
             <AlertTriangle className="w-5 h-5 animate-bounce" />
           </div>
           <div>
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-red-500 font-mono block">Threat Center • live activity</span>
-            <span className="text-xs font-bold text-brand-text">{liveAlerts[alertIndex].desc}</span>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-red-600 font-mono block">Threat Center • live activity</span>
+            <span className="text-xs font-bold text-slate-800">{liveAlerts[alertIndex].desc}</span>
           </div>
         </div>
-        <span className="text-[10px] font-mono text-red-400/70 shrink-0 bg-red-500/5 px-2.5 py-1 rounded-md border border-red-500/10">
+        <span className="text-[10px] font-mono text-red-600 shrink-0 bg-red-100/50 px-2.5 py-1 rounded-md border border-red-200">
           {liveAlerts[alertIndex].time}
         </span>
       </div>
@@ -490,21 +504,21 @@ export const AdminDashboardPage = () => {
       <DashboardCard title="Live User Session Monitor" subtitle="Real-time monitoring of campus network users & sessions (Click on a row to expand detailed analytics)">
         <div className="space-y-4 pt-2">
           <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-secondary" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input 
               type="text" 
               placeholder="Search user sessions..." 
               value={sessionSearch}
               onChange={(e) => setSessionSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 border rounded-xl text-xs bg-slate-950/40 border-[#334155]/50 outline-none text-brand-text placeholder-slate-500 focus:border-brand-primary transition-colors"
+              className="w-full pl-9 pr-4 py-2 border rounded-xl text-xs bg-white border-slate-200 outline-none text-slate-800 placeholder-slate-400 focus:border-blue-500 transition-colors"
             />
           </div>
 
           {/* Session Detail Drawer State */}
-          <div className="overflow-x-auto border border-[#334155]/20 rounded-xl">
+          <div className="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-xs">
             <table className="w-full text-xs text-left border-collapse">
               <thead>
-                <tr className="bg-slate-900/60 border-b border-[#334155]/30 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
                   <th className="p-3.5">User</th>
                   <th className="p-3.5">Role</th>
                   <th className="p-3.5">Login Time</th>
@@ -515,22 +529,22 @@ export const AdminDashboardPage = () => {
                   <th className="p-3.5 text-center">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#334155]/10">
+              <tbody className="divide-y divide-slate-100">
                 {filteredSessions.flatMap((s, idx) => {
                   const isExpanded = selectedSessionIdx === idx;
                   return [
                     <tr 
                       key={`row-${idx}`} 
                       onClick={() => setSelectedSessionIdx(isExpanded ? null : idx)}
-                      className="hover:bg-slate-900/30 transition-colors cursor-pointer"
+                      className="hover:bg-slate-50 transition-colors cursor-pointer"
                     >
-                      <td className="p-3.5 font-bold text-brand-text flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-slate-800 text-brand-primary flex items-center justify-center font-bold text-[10px]">
+                      <td className="p-3.5 font-bold text-slate-800 flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-[10px]">
                           {s.username.charAt(0)}
                         </div>
                         <div>
                           <span className="block">{s.username}</span>
-                          <span className="text-[9px] text-brand-secondary font-mono">{s.device}</span>
+                          <span className="text-[9px] text-slate-500 font-mono">{s.device}</span>
                         </div>
                       </td>
                       <td className="p-3.5 text-brand-secondary font-semibold">{s.role}</td>
@@ -550,33 +564,33 @@ export const AdminDashboardPage = () => {
                       </td>
                     </tr>,
                     isExpanded && (
-                      <tr key={`expand-${idx}`} className="bg-slate-950/40">
-                        <td colSpan="8" className="p-4 border-t border-[#334155]/20">
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-brand-secondary select-none">
-                            <div className="space-y-2 border-r border-[#334155]/20 pr-4">
-                              <h4 className="font-extrabold uppercase text-[10px] text-brand-primary tracking-wider font-mono">Chassis Device Profile</h4>
-                              <p className="flex justify-between"><span>Operating System:</span> <strong className="text-brand-text">{s.os}</strong></p>
-                              <p className="flex justify-between"><span>Web Browser:</span> <strong className="text-brand-text">{s.browser}</strong></p>
-                              <p className="flex justify-between"><span>SSID Network:</span> <strong className="text-brand-text font-mono">{s.ssid}</strong></p>
-                              <p className="flex justify-between"><span>Current AP Interface:</span> <strong className="text-brand-text">{s.ap}</strong></p>
+                      <tr key={`expand-${idx}`} className="bg-slate-50/50">
+                        <td colSpan="8" className="p-4 border-t border-slate-200">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-slate-600 select-none">
+                            <div className="space-y-2 border-r border-slate-100 pr-4">
+                              <h4 className="font-extrabold uppercase text-[10px] text-blue-600 tracking-wider font-mono">Chassis Device Profile</h4>
+                              <p className="flex justify-between"><span>Operating System:</span> <strong className="text-slate-800">{s.os}</strong></p>
+                              <p className="flex justify-between"><span>Web Browser:</span> <strong className="text-slate-800">{s.browser}</strong></p>
+                              <p className="flex justify-between"><span>SSID Network:</span> <strong className="text-slate-800 font-mono">{s.ssid}</strong></p>
+                              <p className="flex justify-between"><span>Current AP Interface:</span> <strong className="text-slate-800">{s.ap}</strong></p>
                             </div>
-                            <div className="space-y-2 border-r border-[#334155]/20 pr-4">
-                              <h4 className="font-extrabold uppercase text-[10px] text-purple-400 tracking-wider font-mono">App Usage & Network Traffic</h4>
-                              <p className="flex justify-between"><span>Active Application:</span> <strong className="text-brand-text">{s.app}</strong></p>
-                              <p className="flex justify-between"><span>Session Duration:</span> <strong className="text-brand-text">{s.timeSpent}</strong></p>
-                              <p className="flex justify-between"><span>Page Refreshes:</span> <strong className="text-brand-text font-mono">{s.refreshes} times</strong></p>
-                              <p className="flex justify-between"><span>Upload / Download:</span> <strong className="text-brand-text font-mono">▲ {s.upload} / ▼ {s.download}</strong></p>
+                            <div className="space-y-2 border-r border-slate-100 pr-4">
+                              <h4 className="font-extrabold uppercase text-[10px] text-purple-600 tracking-wider font-mono">App Usage & Network Traffic</h4>
+                              <p className="flex justify-between"><span>Active Application:</span> <strong className="text-slate-800">{s.app}</strong></p>
+                              <p className="flex justify-between"><span>Session Duration:</span> <strong className="text-slate-800">{s.timeSpent}</strong></p>
+                              <p className="flex justify-between"><span>Page Refreshes:</span> <strong className="text-slate-800 font-mono">{s.refreshes} times</strong></p>
+                              <p className="flex justify-between"><span>Upload / Download:</span> <strong className="text-slate-800 font-mono font-bold text-blue-600">▲ {s.upload} / ▼ {s.download}</strong></p>
                             </div>
                             <div className="space-y-2">
-                              <h4 className="font-extrabold uppercase text-[10px] text-amber-500 tracking-wider font-mono">Security Profile</h4>
-                              <p className="flex justify-between"><span>Security Score:</span> <strong className="text-emerald-400 font-bold font-mono">{s.securityScore}/100</strong></p>
-                              <p className="flex justify-between"><span>Allowed Domains:</span> <strong className="text-brand-text font-mono">{s.allowedCount}</strong></p>
-                              <p className="flex justify-between"><span>Blocked Domains:</span> <strong className="text-red-400 font-bold font-mono">{s.blockedCount}</strong></p>
+                              <h4 className="font-extrabold uppercase text-[10px] text-amber-600 tracking-wider font-mono">Security Profile</h4>
+                              <p className="flex justify-between"><span>Security Score:</span> <strong className="text-emerald-600 font-bold font-mono">{s.securityScore}/100</strong></p>
+                              <p className="flex justify-between"><span>Allowed Domains:</span> <strong className="text-slate-800 font-mono">{s.allowedCount}</strong></p>
+                              <p className="flex justify-between"><span>Blocked Domains:</span> <strong className="text-red-600 font-bold font-mono">{s.blockedCount}</strong></p>
                               {s.whatsapp && (
-                                <div className="mt-2.5 pt-2 border-t border-[#334155]/20 space-y-1 text-[10px]">
-                                  <h5 className="font-bold text-slate-400 font-mono uppercase">WhatsApp Web Activity</h5>
-                                  <p className="flex justify-between"><span>Msgs (Sent/Recv):</span> <strong className="text-brand-text">{s.whatsapp.messagesSent} / {s.whatsapp.messagesReceived}</strong></p>
-                                  <p className="flex justify-between"><span>Calls (Voice/Files):</span> <strong className="text-brand-text">{s.whatsapp.calls} calls / {s.whatsapp.fileUploads} files</strong></p>
+                                <div className="mt-2.5 pt-2 border-t border-slate-100 space-y-1 text-[10px]">
+                                  <h5 className="font-bold text-slate-500 font-mono uppercase">WhatsApp Web Activity</h5>
+                                  <p className="flex justify-between"><span>Msgs (Sent/Recv):</span> <strong className="text-slate-800">{s.whatsapp.messagesSent} / {s.whatsapp.messagesReceived}</strong></p>
+                                  <p className="flex justify-between"><span>Calls (Voice/Files):</span> <strong className="text-slate-800">{s.whatsapp.calls} calls / {s.whatsapp.fileUploads} files</strong></p>
                                 </div>
                               )}
                             </div>
@@ -596,20 +610,20 @@ export const AdminDashboardPage = () => {
       <DashboardCard title="Website Access Monitoring" subtitle="Inspect traffic logs & firewall security enforcement (Click on a row to expand firewall rules & reason details)">
         <div className="space-y-4 pt-2">
           <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-secondary" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input 
               type="text" 
               placeholder="Search website logs..." 
               value={webSearch}
               onChange={(e) => setWebSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 border rounded-xl text-xs bg-slate-950/40 border-[#334155]/50 outline-none text-brand-text placeholder-slate-500 focus:border-brand-primary transition-colors"
+              className="w-full pl-9 pr-4 py-2 border rounded-xl text-xs bg-white border-slate-200 outline-none text-slate-800 placeholder-slate-400 focus:border-blue-500 transition-colors"
             />
           </div>
 
-          <div className="overflow-x-auto border border-[#334155]/20 rounded-xl">
+          <div className="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-xs">
             <table className="w-full text-xs text-left border-collapse">
               <thead>
-                <tr className="bg-slate-900/60 border-b border-[#334155]/30 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
                   <th className="p-3.5">Accessed URL</th>
                   <th className="p-3.5">Role</th>
                   <th className="p-3.5">Timeline (In/Out)</th>
@@ -619,32 +633,32 @@ export const AdminDashboardPage = () => {
                   <th className="p-3.5 text-center">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#334155]/10">
+              <tbody className="divide-y divide-slate-100">
                 {filteredWebsites.flatMap((w, idx) => {
                   const isWebExpanded = selectedWebIdx === idx;
                   return [
                     <tr 
                       key={`web-${idx}`} 
                       onClick={() => setSelectedWebIdx(isWebExpanded ? null : idx)}
-                      className="hover:bg-slate-900/30 transition-colors cursor-pointer"
+                      className="hover:bg-slate-50 transition-colors cursor-pointer"
                     >
-                      <td className="p-3.5 font-semibold text-brand-text flex items-center gap-2">
-                        <Globe className="w-4 h-4 text-brand-secondary" />
+                      <td className="p-3.5 font-semibold text-slate-800 flex items-center gap-2">
+                        <Globe className="w-4 h-4 text-slate-400" />
                         <span>{w.url}</span>
                       </td>
-                      <td className="p-3.5 text-brand-secondary">{w.role}</td>
-                      <td className="p-3.5 text-brand-secondary font-mono">
+                      <td className="p-3.5 text-slate-600">{w.role}</td>
+                      <td className="p-3.5 text-slate-600 font-mono">
                         {w.time} - {w.closed} <span className="text-[9px] text-slate-500">({w.duration})</span>
                       </td>
-                      <td className="p-3.5 font-mono text-brand-secondary">{w.refreshes}</td>
-                      <td className="p-3.5 font-mono text-brand-secondary">
+                      <td className="p-3.5 font-mono text-slate-600">{w.refreshes}</td>
+                      <td className="p-3.5 font-mono text-slate-600">
                         ▲ {w.upload} / ▼ {w.download}
                       </td>
                       <td className="p-3.5 text-center">
                         <span className={`px-2 py-0.5 rounded font-mono font-bold text-[10px] ${
-                          w.score > 7 ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 
-                          w.score > 4 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 
-                          'bg-slate-800 text-slate-300 border border-slate-700'
+                          w.score > 7 ? 'bg-red-50 text-red-600 border border-red-200' : 
+                          w.score > 4 ? 'bg-amber-50 text-amber-600 border border-amber-200' : 
+                          'bg-slate-50 text-slate-600 border border-slate-200'
                         }`}>
                           {w.score}/10
                         </span>
@@ -652,20 +666,20 @@ export const AdminDashboardPage = () => {
                       <td className="p-3.5 text-center">
                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${
                           w.action === 'Blocked' 
-                            ? 'bg-red-500/15 text-red-400 border border-red-500/20' 
-                            : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
+                            ? 'bg-red-50 text-red-600 border border-red-100' 
+                            : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
                         }`}>
                           {w.action}
                         </span>
                       </td>
                     </tr>,
                     isWebExpanded && (
-                      <tr key={`web-expand-${idx}`} className="bg-slate-950/40">
-                        <td colSpan="7" className="p-4 border-t border-[#334155]/20 font-mono text-[11px] text-left text-brand-secondary">
+                      <tr key={`web-expand-${idx}`} className="bg-slate-50/50">
+                        <td colSpan="7" className="p-4 border-t border-slate-200 font-mono text-[11px] text-left text-slate-600">
                           <div className="flex flex-col gap-1.5">
-                            <p><span className="text-brand-primary font-bold">FIREWALL EVALUATION STATUS:</span> {w.action === 'Blocked' ? '🛑 PACKET DROPPED' : '✅ POLICY MATCH ALLOWED'}</p>
-                            <p><span className="text-brand-primary font-bold">REASON / ENFORCEMENT CODE:</span> <span className={w.action === 'Blocked' ? 'text-red-400 font-bold' : 'text-brand-text'}>{w.reason}</span></p>
-                            <p><span className="text-brand-primary font-bold">MATCHED ROUTE PATTERN:</span> {"WAN_SUBNET_OUTBOUND -> JUNIPER_SRX_IDS_IPS -> INTERNET"}</p>
+                            <p><span className="text-blue-600 font-bold">FIREWALL EVALUATION STATUS:</span> {w.action === 'Blocked' ? '🛑 PACKET DROPPED' : '✅ POLICY MATCH ALLOWED'}</p>
+                            <p><span className="text-blue-600 font-bold">REASON / ENFORCEMENT CODE:</span> <span className={w.action === 'Blocked' ? 'text-red-600 font-bold' : 'text-slate-800'}>{w.reason}</span></p>
+                            <p><span className="text-blue-600 font-bold">MATCHED ROUTE PATTERN:</span> {"WAN_SUBNET_OUTBOUND -> JUNIPER_SRX_IDS_IPS -> INTERNET"}</p>
                           </div>
                         </td>
                       </tr>

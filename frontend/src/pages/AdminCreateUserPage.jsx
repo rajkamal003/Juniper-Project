@@ -39,35 +39,78 @@ const adminCreateSchema = z.object({
 }).superRefine((data, ctx) => {
   const role = parseInt(data.role_id, 10);
   
-  // Conditional checks by role
-  if (role === 2 && !data.employee_id) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Employee ID is required for Faculty",
-      path: ["employee_id"]
-    });
+  if (role === 1) { // Admin
+    if (data.employee_id && data.employee_id.trim()) {
+      if (!/^ADM-[0-9]{3}$/.test(data.employee_id.trim())) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Admin ID must match ADM-XXX format (e.g. ADM-001)",
+          path: ["employee_id"]
+        });
+      }
+    }
   }
-  if (role === 3 && !data.roll_number) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Roll number is required for Students",
-      path: ["roll_number"]
-    });
+  if (role === 2) { // Faculty
+    if (!data.employee_id || !data.employee_id.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Employee ID is required for Faculty",
+        path: ["employee_id"]
+      });
+    } else if (!/^[0-9]{4,5}$/.test(data.employee_id.trim())) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Faculty ID must be exactly 4 or 5 digits numbers only",
+        path: ["employee_id"]
+      });
+    }
   }
-  if (role === 4) {
-    if (!data.parent_student_roll) {
+  if (role === 3) { // Student
+    if (!data.roll_number || !data.roll_number.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Student ID is required for Students",
+        path: ["roll_number"]
+      });
+    } else if (!/^[0-9]{10}$/.test(data.roll_number.trim())) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Student ID must be exactly 10 digits numbers only",
+        path: ["roll_number"]
+      });
+    }
+  }
+  if (role === 4) { // Parent
+    if (!data.parent_student_roll || !data.parent_student_roll.trim()) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Linked student roll number is required",
         path: ["parent_student_roll"]
       });
+    } else if (!/^[0-9]{10}$/.test(data.parent_student_roll.trim())) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Student Roll Number must be exactly 10 digits numbers only",
+        path: ["parent_student_roll"]
+      });
     }
-    if (!data.relationship) {
+    if (!data.relationship || !data.relationship.trim()) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Relationship is required",
         path: ["relationship"]
       });
+    }
+  }
+  if (role === 5) { // Guest
+    if (data.roll_number && data.roll_number.trim()) {
+      if (!/^GST-[0-9]{4}$/.test(data.roll_number.trim())) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Guest ID must match GST-XXXX format (e.g. GST-9021)",
+          path: ["roll_number"]
+        });
+      }
     }
   }
 });

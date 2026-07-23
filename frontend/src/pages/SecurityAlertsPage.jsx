@@ -26,6 +26,37 @@ export const SecurityAlertsPage = () => {
 
   const headers = ["Alert", "Severity", "Confidence", "Status", "Timestamp", "Actions"];
 
+  const generateAlerts = () => {
+    const templates = [
+      { title: 'Unknown Guest MAC Connected', desc: 'New device associated with AP-Library-02. Security policy check initiated.', type: 'Intrusion Detection', severity: 'Medium', score: 0.82 },
+      { title: 'Faculty Login Success', desc: 'Prof. Anjali logged into ERP subnet from unfamiliar IP 192.168.10.155.', type: 'Access Control', severity: 'Low', score: 0.95 },
+      { title: 'AP Offline Alert', desc: 'Access Point AP-Hostel-B4 disconnected or missed heartbeat packets.', type: 'Hardware Warning', severity: 'High', score: 0.99 },
+      { title: 'Rogue DHCP Server Detected', desc: 'Conflict DHCP broadcast received on Student subnet from MAC 00:AB:12:34:56:78.', type: 'Network Anomaly', severity: 'Critical', score: 0.97 },
+      { title: 'Blocked Torrent Domain Attempt', desc: 'Client on Student SSID attempted accessing peer-to-peer magnetic tracker.', type: 'Domain Policy Violation', severity: 'Critical', score: 0.99 },
+      { title: 'VPN Bypass Attempt Detected', desc: 'Encrypted packet tunnels detected from student host 192.168.20.45.', type: 'Policy Bypass', severity: 'High', score: 0.91 },
+      { title: 'Port Scan Activity Detected', desc: 'Internal host 192.168.30.12 scanned 50+ ports on local printer subnets.', type: 'Intrusion Detection', severity: 'High', score: 0.88 },
+      { title: 'High Bandwidth Usage Detected', desc: 'User L. Pranav (2300090273) consumed over 2 GB in 15 mins.', type: 'Bandwidth Anomaly', severity: 'High', score: 0.94 },
+      { title: 'Firewall Rule Triggered', desc: 'Traffic from 198.51.100.4 blocked by Default Inbound Deny Rule.', type: 'Firewall Log', severity: 'Medium', score: 0.89 },
+      { title: 'Rogue Access Point Detected', desc: 'SSID "SecureCampus_Test" with high signal strength detected near AP-Lab-03.', type: 'Intrusion Detection', severity: 'High', score: 0.93 },
+      { title: 'SSL Certificate Mismatch', desc: 'Expired SSL handshake aborted for destination website https://legacy-db.local.', type: 'Security Policy', severity: 'Medium', score: 0.87 },
+      { title: 'DNS Tunneling Suspicion', desc: 'High volume of DNS requests to non-standard nameservers from host 192.168.4.89.', type: 'Threat Detection', severity: 'Critical', score: 0.96 },
+      { title: 'ARP Poisoning Attempt Checked', desc: 'Gratuitous ARP broadcast intercepted from unauthorized network gateway clone.', type: 'Intrusion Detection', severity: 'Critical', score: 0.98 },
+      { title: 'Mist Switch EX4100 Fan Warning', desc: 'Chassis temperature exceeded 38°C due to low fan speed metrics.', type: 'Hardware Warning', severity: 'Medium', score: 0.90 },
+      { title: 'IoT Device Communication Anomaly', desc: 'CCTV camera at Gate 3 initiated HTTP request to unknown external IP.', type: 'Intrusion Detection', severity: 'Medium', score: 0.84 }
+    ];
+
+    return templates.map((item, idx) => ({
+      id: `alert-${idx + 1}-${Math.floor(Math.random() * 1000)}`,
+      title: item.title,
+      description: item.desc,
+      alert_type: item.type,
+      severity: item.severity,
+      confidence_score: item.score,
+      status: ['Active', 'Acknowledged', 'Resolved'][idx % 3],
+      created_at: new Date(Date.now() - idx * 600000).toISOString()
+    }));
+  };
+
   const fetchAlerts = async () => {
     setLoading(true);
     try {
@@ -42,13 +73,7 @@ export const SecurityAlertsPage = () => {
         setTotal(response.data.data.total);
         setPages(response.data.data.pages);
       } else {
-        const fallbacks = [
-          { id: '1', title: 'High Bandwidth Usage Detected', description: 'User L. Pranav (Student) consumed over 2 GB in 15 mins.', alert_type: 'Bandwidth Anomaly', severity: 'High', confidence_score: 0.94, status: 'Active', created_at: new Date(Date.now() - 3 * 60000).toISOString() },
-          { id: '2', title: 'Blocked Torrent Domain Attempt', description: 'Device on Student SSID tried loading a magnetic peer link tracker.', alert_type: 'Domain Policy Violation', severity: 'Critical', confidence_score: 0.99, status: 'Active', created_at: new Date(Date.now() - 15 * 60000).toISOString() },
-          { id: '3', title: 'Unknown Guest MAC Address Connected', description: 'New device 70:F3:95:44:55:66 associated with AP-Library-01.', alert_type: 'Intrusion Detection', severity: 'Medium', confidence_score: 0.85, status: 'Active', created_at: new Date(Date.now() - 40 * 60000).toISOString() },
-          { id: '4', title: 'Multiple Login Attempts Failure', description: 'Operator Operator-05 failed console credentials 5 consecutive times.', alert_type: 'Access Control', severity: 'High', confidence_score: 0.92, status: 'Active', created_at: new Date(Date.now() - 120 * 60000).toISOString() },
-          { id: '5', title: 'Mist Switch EX4100 Fan Failure Warning', description: 'Chassis temperature exceeded 38°C due to low fan speed metrics.', alert_type: 'Hardware Warning', severity: 'Medium', confidence_score: 0.90, status: 'Active', created_at: new Date(Date.now() - 180 * 60000).toISOString() }
-        ];
+        const fallbacks = generateAlerts();
         
         // Filter mock alerts locally to support search/filter UI
         const filteredFallbacks = fallbacks.filter(item => {
@@ -60,17 +85,20 @@ export const SecurityAlertsPage = () => {
 
         setAlerts(filteredFallbacks);
         setTotal(filteredFallbacks.length);
-        setPages(1);
+        setPages(Math.ceil(filteredFallbacks.length / 10));
       }
     } catch (err) {
-      const fallbacks = [
-        { id: '1', title: 'High Bandwidth Usage Detected', description: 'User L. Pranav (Student) consumed over 2 GB in 15 mins.', alert_type: 'Bandwidth Anomaly', severity: 'High', confidence_score: 0.94, status: 'Active', created_at: new Date(Date.now() - 3 * 60000).toISOString() },
-        { id: '2', title: 'Blocked Torrent Domain Attempt', description: 'Device on Student SSID tried loading a magnetic peer link tracker.', alert_type: 'Domain Policy Violation', severity: 'Critical', confidence_score: 0.99, status: 'Active', created_at: new Date(Date.now() - 15 * 60000).toISOString() },
-        { id: '3', title: 'Unknown Guest MAC Address Connected', description: 'New device 70:F3:95:44:55:66 associated with AP-Library-01.', alert_type: 'Intrusion Detection', severity: 'Medium', confidence_score: 0.85, status: 'Active', created_at: new Date(Date.now() - 40 * 60000).toISOString() }
-      ];
-      setAlerts(fallbacks);
-      setTotal(fallbacks.length);
-      setPages(1);
+      console.warn("Security alerts API failed, using fallback randomized alerts.");
+      const fallbacks = generateAlerts();
+      const filteredFallbacks = fallbacks.filter(item => {
+        const matchesSearch = !searchQuery || item.title.toLowerCase().includes(searchQuery.toLowerCase()) || item.description.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesStatus = !statusFilter || item.status === statusFilter;
+        const matchesSeverity = !severityFilter || item.severity === severityFilter;
+        return matchesSearch && matchesStatus && matchesSeverity;
+      });
+      setAlerts(filteredFallbacks);
+      setTotal(filteredFallbacks.length);
+      setPages(Math.ceil(filteredFallbacks.length / 10));
     } finally {
       setLoading(false);
     }
@@ -95,10 +123,10 @@ export const SecurityAlertsPage = () => {
 
   const getSeverityColor = (sev) => {
     switch (sev) {
-      case 'Critical': return 'bg-red-500/15 text-red-400 border border-red-500/30';
-      case 'High': return 'bg-orange-500/15 text-orange-400 border border-orange-500/30';
-      case 'Medium': return 'bg-amber-500/15 text-amber-400 border border-amber-500/30';
-      default: return 'bg-blue-500/15 text-blue-400 border border-blue-500/30';
+      case 'Critical': return 'bg-red-50 text-red-600 border border-red-100';
+      case 'High': return 'bg-orange-50 text-orange-600 border border-orange-100';
+      case 'Medium': return 'bg-amber-50 text-amber-600 border border-amber-100';
+      default: return 'bg-blue-50 text-blue-600 border border-blue-100';
     }
   };
 
@@ -118,16 +146,15 @@ export const SecurityAlertsPage = () => {
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
         </Button>
       </PageHeader>
-
-      {/* Filter Row */}
-      <Card className="p-4 flex flex-col md:flex-row items-center gap-4 justify-between">
+      {/* Filter Row */}
+      <Card className="p-4 flex flex-col md:flex-row items-center gap-4 justify-between bg-white border border-slate-200 shadow-xs">
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           {/* Status filter */}
           <div>
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="h-10 px-3 bg-slate-900 border border-[#334155] rounded-xl text-xs text-brand-text font-semibold outline-none"
+              className="h-10 px-3 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 font-semibold outline-none focus:border-blue-500"
             >
               <option value="">All Statuses</option>
               <option value="Active">Active</option>
@@ -142,7 +169,7 @@ export const SecurityAlertsPage = () => {
             <select
               value={severityFilter}
               onChange={(e) => { setSeverityFilter(e.target.value); setPage(1); }}
-              className="h-10 px-3 bg-slate-900 border border-[#334155] rounded-xl text-xs text-brand-text font-semibold outline-none"
+              className="h-10 px-3 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 font-semibold outline-none focus:border-blue-500"
             >
               <option value="">All Severities</option>
               <option value="Critical">Critical</option>
@@ -157,21 +184,21 @@ export const SecurityAlertsPage = () => {
         <div className="relative w-full md:w-80 flex gap-2">
           <div className="relative w-full">
             <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <Search className="h-4 w-4 text-brand-secondary" />
+              <Search className="h-4 w-4 text-slate-400" />
             </span>
             <input
               type="text"
-              placeholder="Search alert title or type..."
+              placeholder="Search alert title..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && setTriggerSearch(prev => prev + 1)}
-              className="w-full h-10 pl-10 pr-4 bg-slate-900 border border-[#334155] rounded-xl text-xs text-brand-text placeholder-brand-secondary outline-none focus:border-brand-primary"
+              className="w-full h-10 pl-10 pr-4 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-blue-500"
             />
           </div>
           <Button
             variant="secondary"
             onClick={() => setTriggerSearch(prev => prev + 1)}
-            className="h-10 px-4 text-xs font-bold w-auto"
+            className="h-10 px-4 text-xs font-bold w-auto cursor-pointer"
           >
             Go
           </Button>
@@ -194,9 +221,9 @@ export const SecurityAlertsPage = () => {
         renderRow={(alert) => (
           <>
             <td className="px-5 py-4 max-w-xs">
-              <div className="text-sm font-semibold text-brand-text">{alert.title}</div>
-              <div className="text-xs text-brand-secondary mt-1">{alert.description}</div>
-              <div className="text-[10px] text-brand-primary mt-2 font-mono uppercase tracking-wider bg-brand-primary/5 px-2 py-0.5 rounded border border-brand-primary/10 inline-block">
+              <div className="text-sm font-semibold text-slate-800">{alert.title}</div>
+              <div className="text-xs text-slate-500 mt-1">{alert.description}</div>
+              <div className="text-[10px] text-blue-600 mt-2 font-mono uppercase tracking-wider bg-blue-50 px-2 py-0.5 rounded border border-blue-100 inline-block">
                 Type: {alert.alert_type}
               </div>
             </td>
@@ -205,21 +232,21 @@ export const SecurityAlertsPage = () => {
                 {alert.severity}
               </span>
             </td>
-            <td className="px-5 py-4 font-mono text-xs font-bold text-brand-text">
+            <td className="px-5 py-4 font-mono text-xs font-bold text-slate-800">
               {(alert.confidence_score * 100).toFixed(0)}%
             </td>
             <td className="px-5 py-4">
               <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
-                alert.status === 'Active' ? 'bg-red-500/10 text-red-400 border-red-500/20' : (
-                  alert.status === 'Acknowledged' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : (
-                    alert.status === 'Resolved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+                alert.status === 'Active' ? 'bg-red-50 text-red-600 border-red-100' : (
+                  alert.status === 'Acknowledged' ? 'bg-amber-50 text-amber-600 border-amber-100' : (
+                    alert.status === 'Resolved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-600 border-slate-100'
                   )
                 )
               }`}>
                 {alert.status}
               </span>
             </td>
-            <td className="px-5 py-4 font-mono text-xs text-brand-secondary">
+            <td className="px-5 py-4 font-mono text-xs text-slate-500">
               {new Date(alert.created_at).toLocaleString()}
             </td>
             <td className="px-5 py-4">
@@ -229,7 +256,7 @@ export const SecurityAlertsPage = () => {
                     <Button
                       variant="secondary"
                       onClick={() => handleUpdateStatus(alert.id, 'Acknowledged')}
-                      className="h-8 px-2 text-[10px] w-auto font-bold flex items-center gap-1 border-amber-500/20 text-amber-400 hover:bg-amber-500/10"
+                      className="h-8 px-2 text-[10px] w-auto font-bold flex items-center gap-1 border-amber-200 text-amber-600 hover:bg-amber-50 cursor-pointer"
                     >
                       <Eye className="w-3 h-3" />
                       <span>Acknowledge</span>
@@ -237,7 +264,7 @@ export const SecurityAlertsPage = () => {
                     <Button
                       variant="secondary"
                       onClick={() => handleUpdateStatus(alert.id, 'Resolved')}
-                      className="h-8 px-2 text-[10px] w-auto font-bold flex items-center gap-1 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10"
+                      className="h-8 px-2 text-[10px] w-auto font-bold flex items-center gap-1 border-emerald-200 text-emerald-600 hover:bg-emerald-50 cursor-pointer"
                     >
                       <CheckCircle className="w-3 h-3" />
                       <span>Resolve</span>
@@ -249,7 +276,7 @@ export const SecurityAlertsPage = () => {
                   <Button
                     variant="secondary"
                     onClick={() => handleUpdateStatus(alert.id, 'Resolved')}
-                    className="h-8 px-2 text-[10px] w-auto font-bold flex items-center gap-1 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10"
+                    className="h-8 px-2 text-[10px] w-auto font-bold flex items-center gap-1 border-emerald-200 text-emerald-600 hover:bg-emerald-50 cursor-pointer"
                   >
                     <CheckCircle className="w-3 h-3" />
                     <span>Resolve</span>
@@ -260,7 +287,7 @@ export const SecurityAlertsPage = () => {
                   <Button
                     variant="secondary"
                     onClick={() => handleUpdateStatus(alert.id, 'Closed')}
-                    className="h-8 px-2 text-[10px] w-auto font-bold flex items-center gap-1 border-slate-500/20 text-slate-400 hover:bg-slate-500/10"
+                    className="h-8 px-2 text-[10px] w-auto font-bold flex items-center gap-1 border-slate-200 text-slate-500 hover:bg-slate-50 cursor-pointer"
                   >
                     <XCircle className="w-3 h-3" />
                     <span>Close</span>
@@ -268,7 +295,7 @@ export const SecurityAlertsPage = () => {
                 )}
 
                 {alert.status === 'Closed' && (
-                  <span className="text-[10px] text-brand-secondary italic">Archived</span>
+                  <span className="text-[10px] text-slate-400 italic">Archived</span>
                 )}
               </div>
             </td>

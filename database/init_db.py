@@ -25,8 +25,10 @@ def init_database():
     try:
         with connection.cursor() as cursor:
             # Create database
-            print("Creating database if not exists: {}...".format(DB_NAME))
-            cursor.execute("CREATE DATABASE IF NOT EXISTS securecampus_db;")
+            print("Dropping database if exists: {}...".format(DB_NAME))
+            cursor.execute("DROP DATABASE IF EXISTS securecampus_db;")
+            print("Creating database: {}...".format(DB_NAME))
+            cursor.execute("CREATE DATABASE securecampus_db;")
             
             # Switch to database
             cursor.execute("USE securecampus_db;")
