@@ -1,14 +1,15 @@
 // frontend/src/components/ui/PageTransition.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
+import { pageVariants } from '../../constants/motionVariants';
 
 export const PageTransition = ({ children, className = '' }) => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      variants={pageVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
       className={`w-full min-h-full ${className}`}
     >
       {children}

@@ -2,6 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Loader2, CheckCircle2 } from 'lucide-react';
+import { buttonHoverProps } from '../../constants/motionVariants';
 
 export const Button = ({
   variant = 'primary',
@@ -16,13 +17,13 @@ export const Button = ({
   className = '',
   ...props
 }) => {
-  const baseStyle = "h-13 px-7 rounded-xl font-semibold text-btn flex items-center justify-center gap-2.5 transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus-ring-dynamic select-none cursor-pointer shadow-md";
+  const baseStyle = "h-12 px-6 rounded-xl font-semibold text-btn flex items-center justify-center gap-2.5 transition-colors duration-150 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus-ring-dynamic select-none cursor-pointer shadow-xs";
   
   const variants = {
-    primary: "text-white shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30",
-    secondary: "border shadow-sm",
-    danger: "bg-red-600 hover:bg-red-700 text-white shadow-red-500/20 hover:shadow-lg",
-    success: "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20 hover:shadow-lg",
+    primary: "text-white shadow-blue-500/20 hover:shadow-md",
+    secondary: "border shadow-xs",
+    danger: "bg-red-600 hover:bg-red-700 text-white shadow-red-500/20 hover:shadow-md",
+    success: "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20 hover:shadow-md",
     ghost: "bg-transparent hover:bg-black/5 dark:hover:bg-white/10 shadow-none"
   };
 
@@ -53,9 +54,8 @@ export const Button = ({
       type={type}
       onClick={onClick}
       disabled={disabled || loading}
-      whileHover={{ scale: disabled || loading ? 1 : 1.05 }}
-      whileTap={{ scale: disabled || loading ? 1 : 0.97 }}
-      transition={{ duration: 0.2, ease: "easeOut" }}
+      whileHover={disabled || loading ? undefined : buttonHoverProps.whileHover}
+      whileTap={disabled || loading ? undefined : buttonHoverProps.whileTap}
       style={getCustomStyle()}
       className={`${baseStyle} ${variants[variant]} ${className}`}
       {...props}

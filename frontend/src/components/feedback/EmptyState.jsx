@@ -1,6 +1,8 @@
 // frontend/src/components/feedback/EmptyState.jsx
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Database } from 'lucide-react';
+import { emptyStateVariants } from '../../constants/motionVariants';
 
 export const EmptyState = ({
   icon: Icon = Database,
@@ -9,13 +11,28 @@ export const EmptyState = ({
   className = ""
 }) => {
   return (
-    <div className={`flex flex-col items-center justify-center p-8 text-center glass-panel rounded-2xl border border-opacity-10 ${className}`}>
-      <div className="w-12 h-12 rounded-full bg-slate-800 text-brand-secondary flex items-center justify-center mb-4">
+    <motion.div 
+      variants={emptyStateVariants}
+      initial="initial"
+      animate="animate"
+      className={`flex flex-col items-center justify-center p-8 text-center glass-panel rounded-2xl border ${className}`}
+      style={{
+        backgroundColor: 'var(--bg-surface-glass)',
+        borderColor: 'var(--border-color)',
+        boxShadow: 'var(--shadow-card)'
+      }}
+    >
+      <motion.div 
+        whileHover={{ scale: 1.1, rotate: 8 }}
+        transition={{ duration: 0.15 }}
+        className="w-13 h-13 rounded-2xl border flex items-center justify-center mb-4 shadow-xs"
+        style={{ backgroundColor: 'var(--bg-hover)', borderColor: 'var(--border-color)', color: 'var(--color-primary)' }}
+      >
         <Icon className="w-6 h-6" />
-      </div>
-      <h3 className="text-sm font-bold text-brand-text mb-1 select-none">{title}</h3>
-      <p className="text-xs text-brand-secondary max-w-xs">{description}</p>
-    </div>
+      </motion.div>
+      <h3 className="text-subheading font-bold mb-1 select-none" style={{ color: 'var(--text-main)' }}>{title}</h3>
+      <p className="text-body text-sm max-w-xs" style={{ color: 'var(--text-secondary)' }}>{description}</p>
+    </motion.div>
   );
 };
 export default EmptyState;

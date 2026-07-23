@@ -38,13 +38,11 @@ export const Input = React.forwardRef(({
 
   const handleChange = (e) => {
     setHasValue(Boolean(e.target.value));
-    // Intercept tel and numeric keyboards to block alphabets, spaces, symbols
     if (type === 'tel' || props.inputMode === 'numeric') {
       const filtered = e.target.value.replace(/[^0-9]/g, '');
       e.target.value = filtered;
     }
     
-    // Convert email to lowercase and trim spaces
     if (type === 'email' || name === 'email') {
       const sanitized = e.target.value.trim().toLowerCase();
       e.target.value = sanitized;
@@ -71,10 +69,10 @@ export const Input = React.forwardRef(({
           initial={false}
           animate={{
             y: labelActive && placeholder ? -2 : 0,
-            scale: isFocused ? 1.02 : 1,
+            scale: isFocused ? 1.01 : 1,
             color: isFocused ? 'var(--color-primary)' : 'var(--text-secondary)'
           }}
-          transition={{ duration: 0.25, ease: "easeInOut" }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
           className="block text-label font-semibold uppercase tracking-wider select-none pointer-events-none"
         >
           {label} {required && <span className="text-red-500 font-bold">*</span>}
@@ -83,17 +81,17 @@ export const Input = React.forwardRef(({
       
       <motion.div 
         animate={{
-          scale: isFocused ? 1.01 : 1,
+          scale: isFocused ? 1.008 : 1,
           boxShadow: isFocused 
-            ? '0 0 0 4px var(--glow-color), 0 10px 25px -5px rgba(0, 0, 0, 0.1)' 
-            : '0 2px 4px 0 rgba(0, 0, 0, 0.02)'
+            ? '0 0 0 3px var(--glow-color), 0 4px 12px rgba(0, 0, 0, 0.05)' 
+            : '0 1px 2px 0 rgba(0, 0, 0, 0.02)'
         }}
-        transition={{ duration: 0.25, ease: "easeInOut" }}
+        transition={{ duration: 0.15, ease: "easeOut" }}
         className="relative flex items-center rounded-xl overflow-hidden"
       >
         {Icon && (
           <span 
-            className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-250 z-10"
+            className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-150 z-10"
             style={{ color: isFocused ? 'var(--color-primary)' : 'var(--text-muted)' }}
           >
             <Icon className="w-5 h-5 shrink-0" />
@@ -112,7 +110,7 @@ export const Input = React.forwardRef(({
           onFocus={handleFocus}
           onBlur={handleBlur}
           onWheel={handleWheel}
-          className={`h-13 w-full border text-input rounded-xl text-body transition-all duration-250 outline-none ${
+          className={`h-12 w-full border text-input rounded-xl text-body transition-all duration-150 outline-none ${
             Icon ? 'pl-12 pr-11' : 'pl-4.5 pr-11'
           }`}
           style={{
@@ -141,6 +139,7 @@ export const Input = React.forwardRef(({
         <motion.p 
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.15 }}
           className="text-sm text-red-500 font-semibold pl-1"
         >
           {error.message}

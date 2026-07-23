@@ -2,6 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Shield, ArrowRight } from 'lucide-react';
+import { cardVariants, cardHoverProps, iconRotateHover } from '../../constants/motionVariants';
 
 // 1. DashboardCard
 export const DashboardCard = ({ 
@@ -16,11 +17,11 @@ export const DashboardCard = ({
 }) => {
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 25 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -5, scale: 1.008 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
-      className={`glass-panel rounded-2xl p-6 border transition-all duration-300 ${className}`}
+      variants={cardVariants}
+      initial="initial"
+      animate="animate"
+      whileHover={cardHoverProps.whileHover}
+      className={`glass-panel rounded-2xl p-6 border transition-all duration-150 ${className}`}
       style={{
         backgroundColor: 'var(--bg-surface-glass)',
         borderColor: 'var(--border-color)',
@@ -31,10 +32,10 @@ export const DashboardCard = ({
       {(title || subtitle) && (
         <div className="mb-4 pb-3 border-b border-gray-200/20 select-none">
           {title && (
-            <h3 className="text-card-title font-bold tracking-tight text-main">{title}</h3>
+            <h3 className="text-card-title font-bold tracking-tight" style={{ color: 'var(--text-main)' }}>{title}</h3>
           )}
           {subtitle && (
-            <p className="text-subheading text-secondary text-sm mt-1">{subtitle}</p>
+            <p className="text-subheading text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>{subtitle}</p>
           )}
         </div>
       )}
@@ -47,11 +48,16 @@ export const DashboardCard = ({
         </div>
       ) : empty ? (
         <div className="flex flex-col items-center justify-center text-center py-8 select-none">
-          <div className="w-12 h-12 rounded-2xl border flex items-center justify-center mb-3" style={{ backgroundColor: 'var(--bg-hover)', borderColor: 'var(--border-color)' }}>
-            <Shield className="w-6 h-6 opacity-70" style={{ color: 'var(--color-primary)' }} />
-          </div>
-          <h4 className="text-subheading font-bold text-main mb-1">{emptyTitle}</h4>
-          <p className="text-body text-secondary text-sm max-w-sm">{emptyDescription}</p>
+          <motion.div 
+            variants={iconRotateHover}
+            whileHover="whileHover"
+            className="w-12 h-12 rounded-2xl border flex items-center justify-center mb-3" 
+            style={{ backgroundColor: 'var(--bg-hover)', borderColor: 'var(--border-color)' }}
+          >
+            <Shield className="w-6 h-6 opacity-80" style={{ color: 'var(--color-primary)' }} />
+          </motion.div>
+          <h4 className="text-subheading font-bold mb-1" style={{ color: 'var(--text-main)' }}>{emptyTitle}</h4>
+          <p className="text-body text-sm max-w-sm" style={{ color: 'var(--text-secondary)' }}>{emptyDescription}</p>
         </div>
       ) : (
         children
@@ -72,11 +78,11 @@ export const StatCard = ({
 }) => {
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -5, scale: 1.01 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
-      className={`glass-panel rounded-2xl p-6 border flex items-center justify-between gap-4 transition-all duration-300 ${className}`}
+      variants={cardVariants}
+      initial="initial"
+      animate="animate"
+      whileHover={cardHoverProps.whileHover}
+      className={`glass-panel rounded-2xl p-6 border flex items-center justify-between gap-4 transition-all duration-150 ${className}`}
       style={{
         backgroundColor: 'var(--bg-surface-glass)',
         borderColor: 'var(--border-color)',
@@ -102,9 +108,9 @@ export const StatCard = ({
       
       {!loading && Icon && (
         <motion.div 
-          whileHover={{ rotate: 12, scale: 1.1 }}
-          transition={{ duration: 0.2 }}
-          className="w-13 h-13 rounded-2xl border flex items-center justify-center shrink-0 shadow-md"
+          whileHover={{ rotate: 10, scale: 1.1 }}
+          transition={{ duration: 0.15 }}
+          className="w-13 h-13 rounded-2xl border flex items-center justify-center shrink-0 shadow-xs"
           style={{ 
             backgroundColor: 'var(--bg-hover)', 
             borderColor: 'var(--border-color)',
@@ -134,8 +140,8 @@ export const QuickActionCard = ({
       disabled={disabled}
       whileHover={{ scale: disabled ? 1 : 1.02, x: 4 }}
       whileTap={{ scale: disabled ? 1 : 0.98 }}
-      transition={{ duration: 0.2 }}
-      className={`w-full group text-left border rounded-xl p-4.5 flex items-center justify-between gap-4 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${className}`}
+      transition={{ duration: 0.15 }}
+      className={`w-full group text-left border rounded-xl p-4.5 flex items-center justify-between gap-4 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${className}`}
       style={{
         backgroundColor: 'var(--bg-surface)',
         borderColor: 'var(--border-color)',
@@ -153,7 +159,7 @@ export const QuickActionCard = ({
         </div>
         <p className="text-body text-sm mt-1 line-clamp-1" style={{ color: 'var(--text-secondary)' }}>{description}</p>
       </div>
-      <div className="w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 transition-all select-none group-hover:bg-primary group-hover:text-white" style={{ backgroundColor: 'var(--bg-hover)', borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}>
+      <div className="w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 transition-all duration-150 select-none group-hover:bg-primary group-hover:text-white" style={{ backgroundColor: 'var(--bg-hover)', borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}>
         <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
       </div>
     </motion.button>
@@ -163,7 +169,9 @@ export const QuickActionCard = ({
 // 4. RoleBadge
 export const RoleBadge = ({ role }) => {
   return (
-    <span 
+    <motion.span 
+      whileHover={{ scale: 1.05 }}
+      transition={{ duration: 0.15 }}
       className="inline-flex items-center text-xs font-bold border px-2.5 py-1 rounded-lg uppercase tracking-wider select-none shadow-xs"
       style={{
         backgroundColor: 'var(--bg-hover)',
@@ -172,7 +180,7 @@ export const RoleBadge = ({ role }) => {
       }}
     >
       {role || 'Guest'}
-    </span>
+    </motion.span>
   );
 };
 
@@ -184,9 +192,14 @@ export const EmptyWidget = ({
 }) => {
   return (
     <div className={`border border-dashed rounded-2xl p-6 flex flex-col items-center justify-center text-center select-none ${className}`} style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-hover)' }}>
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 opacity-80" style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--color-primary)' }}>
+      <motion.div 
+        whileHover={{ scale: 1.1, rotate: 10 }}
+        transition={{ duration: 0.15 }}
+        className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 opacity-80" 
+        style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--color-primary)' }}
+      >
         <Shield className="w-5 h-5" />
-      </div>
+      </motion.div>
       <h4 className="text-subheading font-semibold leading-tight" style={{ color: 'var(--text-main)' }}>{title}</h4>
       <p className="text-body text-xs font-bold uppercase tracking-wider mt-1" style={{ color: 'var(--text-muted)' }}>{description}</p>
     </div>

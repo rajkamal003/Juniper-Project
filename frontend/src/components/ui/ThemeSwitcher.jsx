@@ -1,118 +1,127 @@
 // frontend/src/components/ui/ThemeSwitcher.jsx
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Palette, Check, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Palette, Check, X } from 'lucide-react';
 
 export const ThemeSwitcher = () => {
   const { theme, setTheme, themes, currentTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    setMounted(true);
+  }, []);
+
+  // Close panel on ESC key press
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) {
         setIsOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
 
   return (
-    <div className="relative z-50" ref={dropdownRef}>
-      {/* Compact Trigger: Icon + Color Indicator Dot ONLY (No theme name text when closed) */}
+    <>
+      {/* Compact Trigger Button inside Navbar / TopBar */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="p-2.5 rounded-xl transition-all duration-200 border shadow-xs hover:scale-[1.05] active:scale-[0.97] focus:outline-none flex items-center justify-center gap-2 cursor-pointer"
+        onClick={() => setIsOpen(true)}
+        className="p-2 rounded-lg transition-transform hover:scale-105 active:scale-95 focus:outline-none flex items-center justify-center gap-1.5 cursor-pointer border shadow-xs"
         style={{
           backgroundColor: 'var(--bg-surface)',
           borderColor: 'var(--border-color)',
           color: 'var(--text-main)'
         }}
-        title={currentTheme ? `Theme: ${currentTheme.name}` : "Theme System"}
-        aria-label="Theme System"
+        title="Theme Settings"
+        aria-label="Theme Settings"
       >
         <Palette className="w-5 h-5 shrink-0" style={{ color: 'var(--color-primary)' }} />
         <div 
-          className="w-3 h-3 rounded-full border shrink-0 shadow-xs" 
+          className="w-2.5 h-2.5 rounded-full shrink-0 border"
           style={{ 
-            backgroundColor: currentTheme?.primary || 'var(--color-primary)',
+            backgroundColor: currentTheme?.primary || '#2563eb',
             borderColor: 'rgba(0,0,0,0.15)'
-          }} 
+          }}
         />
       </button>
 
-      {/* Dropdown Popover */}
-      {isOpen && (
-        <div 
-          className="absolute right-0 mt-3 w-80 rounded-2xl border p-4 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-top-3 duration-200"
-          style={{
-            backgroundColor: 'var(--bg-surface)',
-            borderColor: 'var(--border-color)',
-            color: 'var(--text-main)',
-            boxShadow: 'var(--shadow-hover)'
-          }}
-        >
-          {/* Header showing current active theme details */}
-          <div className="flex items-center justify-between pb-3 mb-3 border-b" style={{ borderColor: 'var(--border-color)' }}>
-            <div className="flex items-center gap-2 min-w-0">
-              <Sparkles className="w-4.5 h-4.5 shrink-0" style={{ color: 'var(--color-primary)' }} />
-              <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Current Theme</p>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-base truncate">{currentTheme?.name || 'White + Blue'}</h3>
-                  <div className="w-3 h-3 rounded-full shrink-0 border" style={{ backgroundColor: currentTheme?.primary, borderColor: 'rgba(0,0,0,0.15)' }} />
+      {/* Floating Overlay Drawer mounted at document.body via React Portal */}
+      {mounted && createPortal(
+        <AnimatePresence>
+          {isOpen && (
+            <div className="font-sans select-none">
+              {/* Semi-transparent Backdrop overlay over entire viewport (z-index 99998) */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="fixed inset-0 bg-black/40 z-[99998]"
+                onClick={() => setIsOpen(false)}
+              />
+
+              {/* Fixed Right Drawer (z-index 99999): Fixed top 0, right 0, width 170px, height 100vh */}
+              <motion.div
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="fixed top-0 right-0 h-screen w-[170px] bg-white shadow-2xl flex flex-col rounded-none z-[99999] overflow-hidden"
+              >
+                {/* Purple Header (#6b21a8), Height ~55px */}
+                <div className="h-[55px] bg-[#6b21a8] text-white px-3 flex items-center justify-between shrink-0 shadow-xs">
+                  <span className="font-extrabold text-[12px] uppercase tracking-wider text-white">
+                    THEME SETTINGS
+                  </span>
+                  <button
+                    onClick={() => setIsOpen(false)}
+                    className="text-white/80 hover:text-white transition-colors focus:outline-none cursor-pointer p-1"
+                    aria-label="Close Theme Settings"
+                  >
+                    <X className="w-4.5 h-4.5" />
+                  </button>
                 </div>
-              </div>
-            </div>
-            <span className="text-xs font-mono px-2 py-0.5 rounded-full font-bold shrink-0 ml-2" style={{ backgroundColor: 'var(--bg-hover)', color: 'var(--text-secondary)' }}>
-              10 Themes
-            </span>
-          </div>
 
-          {/* Theme List */}
-          <div className="space-y-1.5 max-h-[360px] overflow-y-auto pr-1">
-            {themes.map((t) => {
-              const isSelected = theme === t.id;
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => {
-                    setTheme(t.id);
-                    setIsOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left transition-all duration-150 group border cursor-pointer ${
-                    isSelected ? 'font-bold shadow-xs' : 'hover:bg-black/5 dark:hover:bg-white/5 font-medium'
-                  }`}
-                  style={{
-                    backgroundColor: isSelected ? 'var(--bg-hover)' : 'transparent',
-                    borderColor: isSelected ? 'var(--color-primary)' : 'transparent'
-                  }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="relative flex items-center justify-center">
-                      <div 
-                        className="w-5.5 h-5.5 rounded-full border shadow-xs transition-transform group-hover:scale-110" 
-                        style={{ backgroundColor: t.primary, borderColor: 'rgba(0,0,0,0.1)' }} 
-                      />
-                      <div 
-                        className="w-2.5 h-2.5 rounded-full absolute -bottom-0.5 -right-0.5 border" 
-                        style={{ backgroundColor: t.bg, borderColor: t.primary }} 
-                      />
-                    </div>
-                    <span className="text-sm font-semibold">{t.name}</span>
+                {/* Body Content */}
+                <div className="p-3 flex-1 overflow-y-auto bg-white">
+                  <p className="text-[12px] font-bold text-gray-700 mb-3 text-left">
+                    Choose Theme Color
+                  </p>
+
+                  {/* 3 Columns Color Grid */}
+                  <div className="grid grid-cols-3 gap-2.5 justify-items-center">
+                    {themes.map((t) => {
+                      const isSelected = theme === t.id;
+                      return (
+                        <button
+                          key={t.id}
+                          onClick={() => setTheme(t.id)}
+                          className={`w-[34px] h-[34px] rounded-md flex items-center justify-center cursor-pointer transition-all border shadow-xs relative ${
+                            isSelected ? 'ring-2 ring-purple-600 border-white' : 'hover:opacity-90 border-black/10'
+                          }`}
+                          style={{ backgroundColor: t.primary }}
+                          title={t.name}
+                          aria-label={t.name}
+                        >
+                          {isSelected && (
+                            <Check className="w-4 h-4 text-white stroke-[3]" />
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
-
-                  {isSelected && (
-                    <Check className="w-5 h-5 shrink-0" style={{ color: 'var(--color-primary)' }} />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
-    </div>
+    </>
   );
 };
 
