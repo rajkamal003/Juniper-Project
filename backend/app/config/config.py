@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     ACCOUNT_APPROVAL_MODE: str = "AUTO"  # AUTO or ADMIN
     DEBUG: bool = True
+    ENABLE_MFA: bool = False
 
     # Juniper Infrastructure Settings
     JUNIPER_SRX300_HOST: str = "192.168.1.1"

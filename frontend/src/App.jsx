@@ -19,6 +19,7 @@ import UserManagementPage from './pages/UserManagementPage';
 import UserDetailsPage from './pages/UserDetailsPage';
 import AdminCreateUserPage from './pages/AdminCreateUserPage';
 import LoadingSpinner from './components/feedback/LoadingSpinner';
+import TermsOfServicePage from './pages/TermsOfServicePage';
 
 // Stage 3 dashboards & pages
 import AdminDashboardPage from './pages/AdminDashboardPage';
@@ -40,7 +41,7 @@ import AttendancePage from './pages/AttendancePage';
 import FacultyCoursesPage from './pages/FacultyCoursesPage';
 import StudentCoursesPage from './pages/StudentCoursesPage';
 import CampusAccessPage from './pages/CampusAccessPage';
-import ExamModePage from './pages/ExamModePage';
+
 import StudentStatusPage from './pages/StudentStatusPage';
 import VisitorRequestsPage from './pages/VisitorRequestsPage';
 import VisitorAccessPage from './pages/VisitorAccessPage';
@@ -138,6 +139,34 @@ const CourseRouteResolver = () => {
 
 // Route wrapper content
 const AppContent = () => {
+  const { isBackendOffline, retryConnection } = useAuth();
+
+  if (isBackendOffline) {
+    return (
+      <div className="min-h-screen bg-[#0f172a] flex flex-col items-center justify-center text-white p-6 font-sans">
+        <div className="max-w-md w-full text-center space-y-6 bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl">
+          <div className="w-16 h-16 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center justify-center mx-auto text-red-500 animate-pulse">
+            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-3.536 4.978 4.978 0 011.414-3.536m0 0L11 11.03M5.636 18.364a9 9 0 01-1.414-6.364 9 9 0 011.414-6.364m0 0L3 3" />
+            </svg>
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-extrabold tracking-tight">Backend Offline</h2>
+            <p className="text-sm text-slate-400">
+              The SecureCampus AI security system is currently offline or unreachable. Please check if the backend server is running.
+            </p>
+          </div>
+          <button
+            onClick={retryConnection}
+            className="w-full h-11 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all cursor-pointer shadow-lg active:scale-95"
+          >
+            Retry Connection
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Routes>
       {/* Root Route loads LandingPage Portal */}
@@ -232,6 +261,12 @@ const AppContent = () => {
 
       <Route path="/guest/register" element={<Navigate to="/guest/request" replace />} />
       <Route path="/register" element={<Navigate to="/select-role" replace />} />
+      
+      <Route path="/terms/:role" element={
+        <AuthLayout>
+          <TermsOfServicePage />
+        </AuthLayout>
+      } />
       
       <Route path="/forgot-password" element={
         <PublicOnlyRoute>
@@ -419,13 +454,7 @@ const AppContent = () => {
         </RoleGuard>
       } />
 
-      <Route path="/exam-mode" element={
-        <RoleGuard allowedRoles={['Super Admin', 'Faculty', 'Student']}>
-          <DashboardLayout>
-            <ExamModePage />
-          </DashboardLayout>
-        </RoleGuard>
-      } />
+
 
       {/* Parent Modules */}
       <Route path="/student-status" element={
@@ -451,6 +480,14 @@ const AppContent = () => {
             <VisitorAccessPage />
           </DashboardLayout>
         </RoleGuard>
+      } />
+
+      <Route path="/profile" element={
+        <ProtectedRoute>
+          <DashboardLayout>
+            <ProfilePage />
+          </DashboardLayout>
+        </ProtectedRoute>
       } />
 
       {/* Forbidden Access Route */}

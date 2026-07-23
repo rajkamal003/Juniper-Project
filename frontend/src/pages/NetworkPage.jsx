@@ -166,6 +166,30 @@ export const NetworkPage = () => {
         </Button>
       </PageHeader>
 
+      {/* Real-time Network Operations Center Overview Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 select-none">
+        <div className="p-4 bg-slate-900 border border-[#334155]/40 rounded-2xl">
+          <span className="text-[10px] font-extrabold uppercase text-slate-500 font-mono block">Network Health</span>
+          <span className="text-lg font-extrabold text-emerald-400 font-mono mt-1 block">99.85%</span>
+          <span className="text-[9px] text-brand-secondary mt-1 block">Excellent Link Integrity</span>
+        </div>
+        <div className="p-4 bg-slate-900 border border-[#334155]/40 rounded-2xl">
+          <span className="text-[10px] font-extrabold uppercase text-slate-500 font-mono block">Network Latency</span>
+          <span className="text-lg font-extrabold text-brand-primary font-mono mt-1 block">4.2 ms</span>
+          <span className="text-[9px] text-brand-secondary mt-1 block">Standard Gateway Ping RTT</span>
+        </div>
+        <div className="p-4 bg-slate-900 border border-[#334155]/40 rounded-2xl">
+          <span className="text-[10px] font-extrabold uppercase text-slate-500 font-mono block">Packet Loss Rate</span>
+          <span className="text-lg font-extrabold text-brand-text font-mono mt-1 block">0.002%</span>
+          <span className="text-[9px] text-emerald-400 mt-1 block">Highly Secure Shield Link</span>
+        </div>
+        <div className="p-4 bg-slate-900 border border-[#334155]/40 rounded-2xl">
+          <span className="text-[10px] font-extrabold uppercase text-slate-500 font-mono block">Mist Wireless Clients</span>
+          <span className="text-lg font-extrabold text-purple-400 font-mono mt-1 block">142</span>
+          <span className="text-[9px] text-brand-secondary mt-1 block">Load-Balanced across APs</span>
+        </div>
+      </div>
+
       <form onSubmit={handleSearchSubmit}>
         <ActionToolbar
           searchBar={

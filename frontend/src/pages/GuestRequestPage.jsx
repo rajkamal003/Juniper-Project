@@ -50,6 +50,27 @@ export const GuestRequestPage = () => {
       return;
     }
 
+    const cleanPhone = phone.trim();
+    const cleanEmail = email.trim();
+
+    if (!cleanPhone) {
+      toast.error('Phone Number is required.');
+      return;
+    }
+    if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
+      toast.error('Please enter a valid 10-digit phone number starting with 6-9.');
+      return;
+    }
+
+    if (!cleanEmail) {
+      toast.error('Email Address is required.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      toast.error('Please enter a valid email address.');
+      return;
+    }
+
     setLoading(true);
     setTimeout(() => {
       const creds = generateGuestCredentials();
@@ -154,22 +175,24 @@ Please keep your temporary credentials secure.`;
               />
 
               <Input
-                label="Phone Number (Optional)"
+                label="Phone Number"
                 type="tel"
                 inputMode="numeric"
                 maxLength={10}
                 placeholder="9876543210"
                 icon={Phone}
+                required
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 disabled={loading}
               />
 
               <Input
-                label="Email Address (Optional)"
+                label="Email Address"
                 type="email"
                 placeholder="guest@example.com"
                 icon={Mail}
+                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}

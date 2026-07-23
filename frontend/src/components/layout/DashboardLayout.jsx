@@ -6,21 +6,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Shield, 
   LayoutDashboard, 
-  Users, 
   Cpu, 
   Globe, 
-  AlertOctagon, 
   FileSpreadsheet, 
   Settings, 
   User, 
-  Calendar, 
-  BookOpen, 
-  Award, 
   UserCheck, 
   LogOut, 
   X,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Bell,
+  AlertOctagon,
+  Users
 } from 'lucide-react';
 import { toast } from 'sonner';
 import TopBar from './TopBar';
@@ -56,37 +54,34 @@ export const DashboardLayout = ({ children }) => {
           { name: 'Network', icon: Globe, path: '/network' },
           { name: 'Firewall', icon: AlertOctagon, path: '/firewall' },
           { name: 'Reports', icon: FileSpreadsheet, path: '/reports' },
-          { name: 'Settings', icon: Settings, path: '/settings' },
-          { name: 'Exam Mode', icon: Award, path: '/exam-mode' },
-          { name: 'Profile', icon: User, path: '/profile' }
+          { name: 'Settings', icon: Settings, path: '/settings' }
         ];
       case 'Faculty':
         return [
           { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-          { name: 'Students', icon: Users, path: '/students' },
-          { name: 'Attendance', icon: Calendar, path: '/attendance' },
-          { name: 'Exam Mode', icon: Award, path: '/exam-mode' },
-          { name: 'Profile', icon: User, path: '/profile' }
+          { name: 'Network Status', icon: Globe, path: '/network' },
+          { name: 'Connected Devices', icon: Cpu, path: '/devices' },
+          { name: 'Website Usage', icon: Globe, path: '/website-usage' },
+          { name: 'Application Usage', icon: Cpu, path: '/application-usage' },
+          { name: 'Notifications', icon: Bell, path: '/notifications' },
+          { name: 'Reports', icon: FileSpreadsheet, path: '/reports' },
+          { name: 'Profile', icon: User, path: '/profile' },
+          { name: 'Settings', icon: Settings, path: '/settings' }
         ];
       case 'Student':
         return [
-          { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-          { name: 'Courses', icon: BookOpen, path: '/courses' },
-          { name: 'Exam Mode', icon: Award, path: '/exam-mode' },
-          { name: 'Profile', icon: User, path: '/profile' }
+          { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' }
         ];
       case 'Parent Visitor':
         return [
           { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-          { name: 'Student Status', icon: UserCheck, path: '/student-status' },
-          { name: 'Profile', icon: User, path: '/profile' }
+          { name: 'Student Status', icon: UserCheck, path: '/student-status' }
         ];
       case 'Guest':
       default:
         return [
           { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-          { name: 'Visitor Access', icon: Globe, path: '/visitor-access' },
-          { name: 'Profile', icon: User, path: '/profile' }
+          { name: 'Visitor Access', icon: Globe, path: '/visitor-access' }
         ];
     }
   };
@@ -135,7 +130,7 @@ export const DashboardLayout = ({ children }) => {
           </div>
 
           {/* Navigation Links */}
-          <nav className="space-y-1.5">
+          <nav className="space-y-1.5 relative">
             {sidebarItems.map((item, idx) => {
               const isActive = location.pathname === item.path || 
                 (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
@@ -147,44 +142,45 @@ export const DashboardLayout = ({ children }) => {
                     if (isMobile) setIsMobileDrawerOpen(false);
                     navigate(item.path);
                   }}
-                  whileHover={{ x: isSidebarCollapsed && !isMobile ? 0 : 4 }}
+                  whileHover={{ 
+                    x: isSidebarCollapsed && !isMobile ? 0 : 4,
+                    scale: 1.02,
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                  }}
                   whileTap={{ scale: 0.98 }}
+                  transition={{ duration: 0.25 }}
                   title={isSidebarCollapsed && !isMobile ? item.name : undefined}
-                  className={`w-full flex items-center gap-3.5 px-3.5 py-3 rounded-xl text-sidebar font-medium tracking-wide transition-all ${
+                  className={`w-full flex items-center gap-3.5 px-3.5 py-3 rounded-xl text-sidebar font-medium tracking-wide transition-all relative border border-transparent cursor-pointer ${
                     isSidebarCollapsed && !isMobile ? 'justify-center' : 'justify-start'
                   }`}
                   style={{
-                    backgroundColor: isActive ? 'var(--bg-hover)' : 'transparent',
                     color: isActive ? 'var(--color-primary)' : 'var(--text-secondary)',
                     fontWeight: isActive ? 700 : 500,
-                    border: isActive ? '1px solid var(--border-focus)' : '1px solid transparent'
                   }}
                 >
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeSidebarBg"
+                      className="absolute inset-0 rounded-xl border -z-10 shadow-lg"
+                      style={{
+                        backgroundColor: 'var(--bg-hover)',
+                        borderColor: 'var(--border-focus)',
+                        boxShadow: '0 0 15px rgba(37, 99, 235, 0.12)'
+                      }}
+                      transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                    />
+                  )}
                   <motion.div whileHover={{ rotate: 10 }}>
                     <item.icon className="w-5 h-5 shrink-0" style={{ color: isActive ? 'var(--color-primary)' : 'var(--text-secondary)' }} />
                   </motion.div>
                   {(!isSidebarCollapsed || isMobile) && (
-                    <span className="truncate">{item.name}</span>
+                    <span className="truncate z-10">{item.name}</span>
                   )}
                 </motion.button>
               );
             })}
           </nav>
         </div>
-
-        {/* Terminate Session */}
-        <motion.button
-          onClick={handleLogout}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.97 }}
-          title={isSidebarCollapsed && !isMobile ? "Terminate Session" : undefined}
-          className={`w-full flex items-center justify-center gap-2.5 px-4 py-3 border border-red-500/30 text-red-600 font-bold text-btn rounded-xl transition-all hover:bg-red-500/10 cursor-pointer ${
-            isSidebarCollapsed && !isMobile ? 'px-0' : 'px-4'
-          }`}
-        >
-          <LogOut className="w-5 h-5 shrink-0" />
-          {(!isSidebarCollapsed || isMobile) && <span>Terminate Session</span>}
-        </motion.button>
       </div>
     );
   };
@@ -198,7 +194,7 @@ export const DashboardLayout = ({ children }) => {
       <motion.aside 
         animate={{ width: isSidebarCollapsed ? 84 : 260 }}
         transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-        className="border-r flex flex-col p-5 shrink-0 relative hidden lg:block"
+        className={`border-r flex flex-col shrink-0 relative hidden lg:block transition-all duration-300 ${isSidebarCollapsed ? 'p-3' : 'p-5'}`}
         style={{
           backgroundColor: 'var(--bg-sidebar)',
           borderColor: 'var(--border-color)'

@@ -276,16 +276,24 @@ class RolePermissionsUpdate(BaseModel):
     permission_ids: list[int]
 
 class SessionResponse(BaseModel):
+    id: Optional[int] = None
     session_id: str
     user_id: int
+    role: Optional[str] = None
     login_time: datetime
     logout_time: Optional[datetime] = None
+    ip_address: Optional[str] = None
     device_name: Optional[str] = None
     browser: Optional[str] = None
     operating_system: Optional[str] = None
-    ip_address: Optional[str] = None
     mac_address: Optional[str] = None
+    ssid: Optional[str] = None
+    access_point: Optional[str] = None
+    signal_strength: Optional[str] = None
     status: str
+    session_status: Optional[str] = None
+    last_activity: Optional[datetime] = None
+    session_duration: Optional[int] = None
 
     class Config:
         from_attributes = True

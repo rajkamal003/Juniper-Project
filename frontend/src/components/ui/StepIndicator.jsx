@@ -4,20 +4,33 @@ import { Check } from 'lucide-react';
 
 export const StepIndicator = ({ currentStep = 1, steps = ['Basic', 'Role', 'Security'] }) => {
   return (
-    <div className="flex items-center justify-between w-full select-none mb-6">
-      {steps.map((step, idx) => {
-        const stepNum = idx + 1;
-        const isActive = stepNum === currentStep;
-        const isCompleted = stepNum < currentStep;
+    <div className="w-full select-none mb-8">
+      <div className="relative flex items-start justify-between w-full">
+        {/* Background Line */}
+        <div className="absolute left-[16.6%] right-[16.6%] top-4 h-0.5 bg-[#334155] -z-0" />
+        
+        {/* Progress Line */}
+        <div 
+          className="absolute left-[16.6%] top-4 h-0.5 bg-brand-primary transition-all duration-500 -z-0"
+          style={{ 
+            width: steps.length > 1 
+              ? `${((Math.min(currentStep, steps.length) - 1) / (steps.length - 1)) * 66.8}%` 
+              : '0%' 
+          }}
+        />
 
-        return (
-          <React.Fragment key={idx}>
-            {/* Step Node */}
-            <div className="flex flex-col items-center relative z-10">
+        {steps.map((step, idx) => {
+          const stepNum = idx + 1;
+          const isActive = stepNum === currentStep;
+          const isCompleted = stepNum < currentStep;
+
+          return (
+            <div key={idx} className="flex flex-col items-center flex-1 z-10 px-1 text-center">
+              {/* Circle */}
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 border-2 ${
+                className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 border-2 shrink-0 ${
                   isCompleted
-                    ? 'bg-brand-primary border-brand-primary text-white'
+                    ? 'bg-brand-primary border-brand-primary text-white shadow-md shadow-brand-primary/20'
                     : isActive
                     ? 'bg-[#1e293b] border-brand-primary text-brand-primary shadow-lg shadow-blue-500/20'
                     : 'bg-[#1e293b] border-[#334155] text-brand-secondary'
@@ -25,28 +38,22 @@ export const StepIndicator = ({ currentStep = 1, steps = ['Basic', 'Role', 'Secu
               >
                 {isCompleted ? <Check className="w-4 h-4" /> : stepNum}
               </div>
+              
+              {/* Label */}
               <span
-                className={`text-[11px] font-semibold mt-1.5 uppercase tracking-wider absolute -bottom-6 whitespace-nowrap transition-colors duration-300 ${
+                className={`text-[10px] sm:text-[11px] font-semibold mt-2.5 uppercase tracking-wider transition-colors duration-300 break-words max-w-[100px] leading-tight ${
                   isActive || isCompleted ? 'text-brand-primary' : 'text-brand-secondary'
                 }`}
               >
                 {step}
               </span>
             </div>
-
-            {/* Connecting Bar */}
-            {idx < steps.length - 1 && (
-              <div className="flex-grow mx-4 relative h-0.5 bg-[#334155]">
-                <div
-                  className="absolute inset-y-0 left-0 bg-brand-primary transition-all duration-300"
-                  style={{ width: isCompleted ? '100%' : '0%' }}
-                />
-              </div>
-            )}
-          </React.Fragment>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 };
+
 export default StepIndicator;
+

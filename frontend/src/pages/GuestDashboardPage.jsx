@@ -6,6 +6,8 @@ import { Clock, Network, Compass, ShieldAlert, RefreshCw, Key } from 'lucide-rea
 import { DashboardCard, QuickActionCard, EmptyWidget } from '../components/dashboard/DashboardComponents';
 import api from '../services/api';
 import { toast } from 'sonner';
+import { AppUsageGrid } from '../components/dashboard/AppUsageGrid';
+import { generateAppUsage } from '../utils/appDataGenerator';
 
 export const GuestDashboardPage = () => {
   const { user } = useAuth();
@@ -14,6 +16,7 @@ export const GuestDashboardPage = () => {
   const [access, setAccess] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [appUsage, setAppUsage] = useState([]);
 
   const fetchGuestAccess = async () => {
     setLoading(true);
@@ -22,6 +25,7 @@ export const GuestDashboardPage = () => {
       const response = await api.get('/api/guest/access');
       if (response.data?.success) {
         setAccess(response.data.data);
+        setAppUsage(generateAppUsage('Guest'));
       } else {
         setError('No active temporary Wi-Fi access pass found.');
       }
@@ -168,6 +172,10 @@ export const GuestDashboardPage = () => {
                     </p>
                   </div>
                 </div>
+              </DashboardCard>
+
+              <DashboardCard title="Application & Web Subnet Consumption" subtitle="Temporary Guest Session Traffic">
+                <AppUsageGrid apps={appUsage} />
               </DashboardCard>
             </>
           )}

@@ -168,15 +168,40 @@ export const QuickActionCard = ({
 
 // 4. RoleBadge
 export const RoleBadge = ({ role }) => {
+  const getRoleStyle = (r) => {
+    const norm = (r || '').trim().toUpperCase();
+    if (norm === 'ACTIVE') {
+      return { bg: '#10b981', border: '#059669', text: '#ffffff' };
+    }
+    if (norm === 'STUDENT') {
+      return { bg: '#2563eb', border: '#1d4ed8', text: '#ffffff' };
+    }
+    if (norm === 'FACULTY') {
+      return { bg: '#7c3aed', border: '#6d28d9', text: '#ffffff' };
+    }
+    if (norm.includes('PARENT')) {
+      return { bg: '#ea580c', border: '#c2410c', text: '#ffffff' };
+    }
+    if (norm === 'GUEST') {
+      return { bg: '#0891b2', border: '#0e7490', text: '#ffffff' };
+    }
+    if (norm === 'ADMIN' || norm === 'SUPER ADMIN' || norm.includes('ADMIN')) {
+      return { bg: '#dc2626', border: '#b91c1c', text: '#ffffff' };
+    }
+    return { bg: '#0891b2', border: '#0e7490', text: '#ffffff' };
+  };
+
+  const style = getRoleStyle(role);
+
   return (
     <motion.span 
       whileHover={{ scale: 1.05 }}
       transition={{ duration: 0.15 }}
-      className="inline-flex items-center text-xs font-bold border px-2.5 py-1 rounded-lg uppercase tracking-wider select-none shadow-xs"
+      className="inline-flex items-center justify-center text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider select-none shadow-sm border h-[26px] shrink-0"
       style={{
-        backgroundColor: 'var(--bg-hover)',
-        color: 'var(--color-primary)',
-        borderColor: 'var(--border-color)'
+        backgroundColor: style.bg,
+        borderColor: style.border,
+        color: style.text
       }}
     >
       {role || 'Guest'}

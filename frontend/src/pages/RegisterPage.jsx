@@ -298,6 +298,7 @@ export const RegisterPage = ({ roleContext: propRoleContext }) => {
                 placeholder="John Doe"
                 icon={User}
                 required
+                autoComplete="name"
                 error={errors.fullname}
                 isValid={Boolean(watchName && watchName.length >= 3 && !errors.fullname)}
                 {...register('fullname')}
@@ -309,6 +310,7 @@ export const RegisterPage = ({ roleContext: propRoleContext }) => {
                 placeholder={roleInfo.roleId === 4 ? "parent@example.com" : "username@kluniversity.in"}
                 icon={Mail}
                 required
+                autoComplete="email"
                 error={errors.email}
                 isValid={Boolean(watchEmail && !errors.email)}
                 {...register('email')}
@@ -322,6 +324,7 @@ export const RegisterPage = ({ roleContext: propRoleContext }) => {
                 placeholder="9876543210"
                 icon={Phone}
                 required
+                autoComplete="tel"
                 error={errors.phone}
                 isValid={Boolean(watchPhone && watchPhone.length === 10 && !errors.phone)}
                 {...register('phone')}
@@ -482,6 +485,7 @@ export const RegisterPage = ({ roleContext: propRoleContext }) => {
                   icon={Lock}
                   required
                   placeholder="••••••••"
+                  autoComplete="new-password"
                   error={errors.password}
                   {...register('password')}
                 />
@@ -536,6 +540,7 @@ export const RegisterPage = ({ roleContext: propRoleContext }) => {
                   icon={Lock}
                   required
                   placeholder="••••••••"
+                  autoComplete="new-password"
                   error={errors.confirm_password}
                   isValid={isPasswordsMatching}
                   {...register('confirm_password')}
@@ -558,7 +563,7 @@ export const RegisterPage = ({ roleContext: propRoleContext }) => {
                   {...register('terms')}
                 />
                 <label htmlFor="terms" className="text-xs select-none cursor-pointer leading-tight" style={{ color: 'var(--text-secondary)' }}>
-                  I agree to the <span className="font-semibold text-brand-primary hover:underline">Terms of Service</span> and Privacy Policy.
+                  I agree to the <a href={`/terms/${propRoleContext?.toLowerCase() || 'student'}`} target="_blank" rel="noopener noreferrer" className="font-semibold text-brand-primary hover:underline">Terms of Service</a> and Privacy Policy.
                 </label>
               </div>
               {errors.terms && <p className="text-xs text-red-500 font-semibold">{errors.terms.message}</p>}

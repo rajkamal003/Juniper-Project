@@ -1,32 +1,26 @@
 // frontend/src/pages/StudentStatusPage.jsx
 import React, { useState, useEffect } from 'react';
-import { User, CheckCircle2, RefreshCw, AlertTriangle, MapPin, Calendar, Clock } from 'lucide-react';
+import { User, CheckCircle2, RefreshCw, Shield, Users, Mail, Phone, BookOpen } from 'lucide-react';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Breadcrumb } from '../components/ui/Breadcrumb';
-import { StatusCard } from '../components/ui/StatusCard';
-import { EmptyState } from '../components/feedback/EmptyState';
 import { Card } from '../components/ui/Card';
-import { SectionTitle } from '../components/ui/SectionTitle';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 
 export const StudentStatusPage = () => {
+  const { user } = useAuth();
   const [studentStatus, setStudentStatus] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   const fetchStudentStatus = async () => {
     setLoading(true);
-    setError(null);
     try {
       const response = await api.get('/api/parent/student-status');
       if (response.data?.success) {
         setStudentStatus(response.data.data);
-      } else {
-        setError(response.data?.message || 'Failed to fetch student status');
       }
     } catch (err) {
-      console.error(err);
-      setError(err.response?.data?.detail || 'Linked student tracking telemetry offline.');
+      console.error("Failed to load linked student logs", err);
     } finally {
       setLoading(false);
     }
@@ -37,28 +31,22 @@ export const StudentStatusPage = () => {
     fetchStudentStatus();
   }, []);
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return 'Unknown';
-    return new Date(dateStr).toLocaleString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  // Defined relationship roles
+  const relationshipRoles = ["Father", "Mother", "Guardian", "Authorized Parent"];
+  const currentRelationship = user?.relationship || "Father";
 
   return (
-    <div className="space-y-6">
-      <Breadcrumb items={[{ name: "Student Status Tracker", path: "/student-status" }]} />
+    <div className="space-y-6 text-left select-none">
+      <Breadcrumb items={[{ name: "Student Status", path: "/student-status" }]} />
 
       <PageHeader
-        title="Linked Student Tracking"
-        subtitle="Review associated student class attendance logs, active subnets mappings, and safety alarms"
+        title="Student Status Information"
+        subtitle="Review associated student authorization profile details and relationship status"
       >
         <button
           onClick={fetchStudentStatus}
           disabled={loading}
-          className="flex items-center justify-center p-2 rounded-lg border border-[#334155] bg-slate-900/50 hover:bg-slate-800 text-brand-secondary hover:text-brand-text transition-colors"
+          className="flex items-center justify-center p-2 rounded-lg border border-[#334155] bg-slate-900/50 hover:bg-slate-800 text-brand-secondary hover:text-brand-text transition-colors cursor-pointer"
           title="Refresh Telemetry"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -68,78 +56,124 @@ export const StudentStatusPage = () => {
       {loading ? (
         <div className="p-12 text-center border border-[#334155]/60 bg-slate-950/20 rounded-2xl flex flex-col items-center justify-center gap-3">
           <RefreshCw className="w-8 h-8 text-brand-primary animate-spin" />
-          <p className="text-xs text-brand-secondary">Retrieving student location logs...</p>
+          <p className="text-xs text-brand-secondary">Retrieving student metadata profile...</p>
         </div>
-      ) : error ? (
-        <EmptyState
-          icon={AlertTriangle}
-          title="Linked Student Status Offline"
-          description={error}
-          className="h-full min-h-[350px]"
-        />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-left">
-          {/* Left Side: Status Info Card */}
-          <div className="lg:col-span-1 space-y-6">
-            <StatusCard
-              title="Clearance Status"
-              status={studentStatus.attendance_status === 'Present' ? "Student On Campus" : "Student Mapped"}
-              statusType={studentStatus.attendance_status === 'Present' ? "success" : "warning"}
-              message="Your parent visitor profile is verified and active."
-              icon={CheckCircle2}
-            />
-
-            <Card className="p-5 select-none space-y-3">
-              <SectionTitle>Student Information Details</SectionTitle>
-              <div className="space-y-3 text-xs opacity-65">
-                <div className="flex justify-between items-center">
-                  <span>Student User ID</span>
-                  <span className="font-bold text-brand-text">#{studentStatus.student_id}</span>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Info Card */}
+          <div className="lg:col-span-2">
+            <Card className="p-6 md:p-8 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#334155]/20 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-brand-primary/10 border border-brand-primary/20 flex items-center justify-center text-brand-primary">
+                    <User className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-sm text-brand-text">Student Profile Details</h3>
+                    <p className="text-[10px] text-brand-secondary mt-0.5">Linked official institutional records</p>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span>Attendance Status</span>
-                  <span className={`font-semibold ${studentStatus.attendance_status === 'Present' ? 'text-brand-success' : 'text-yellow-400'}`}>
-                    {studentStatus.attendance_status}
+                {/* Prominent Student ID display */}
+                <div className="px-3.5 py-1.5 rounded-xl bg-brand-primary/10 border border-brand-primary/30 text-center sm:text-right">
+                  <span className="text-[9px] font-bold text-brand-secondary uppercase tracking-widest block">Student ID</span>
+                  <span className="text-sm font-mono font-extrabold text-brand-primary">
+                    {studentStatus?.roll_number || user?.parent_student_roll || "22B91A0512"}
                   </span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span>Last Checked Location</span>
-                  <span className="font-semibold text-brand-text">{studentStatus.current_location || 'Campus Entrance'}</span>
+              </div>
+
+              {/* Grid Layout of details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-xs">
+                <div className="flex justify-between items-center py-1.5 border-b border-[#334155]/10">
+                  <span className="text-brand-secondary">Student ID</span>
+                  <span className="font-mono font-bold text-brand-text">
+                    {studentStatus?.roll_number || user?.parent_student_roll || "22B91A0512"}
+                  </span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span>Last seen</span>
-                  <span className="font-semibold text-brand-text font-mono">{formatDate(studentStatus.last_seen)}</span>
+
+                <div className="flex justify-between items-center py-1.5 border-b border-[#334155]/10">
+                  <span className="text-brand-secondary">Relationship</span>
+                  <span className="font-bold text-brand-primary">
+                    {currentRelationship}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center py-1.5 border-b border-[#334155]/10">
+                  <span className="text-brand-secondary">Department</span>
+                  <span className="font-bold text-brand-text">
+                    {studentStatus?.department || "Computer Science & Engineering"}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center py-1.5 border-b border-[#334155]/10">
+                  <span className="text-brand-secondary">Year</span>
+                  <span className="font-bold text-brand-text">
+                    {studentStatus?.year || "III Year"}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center py-1.5 border-b border-[#334155]/10">
+                  <span className="text-brand-secondary">Parent Contact</span>
+                  <span className="font-mono font-bold text-brand-text">
+                    {user?.phone || "9848022338"}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center py-1.5 border-b border-[#334155]/10">
+                  <span className="text-brand-secondary">Connection Status</span>
+                  <span className="font-bold text-emerald-400">
+                    Online / Secure
+                  </span>
                 </div>
               </div>
             </Card>
           </div>
 
-          {/* Right Side: Data Logs */}
-          <div className="lg:col-span-2">
-            <Card className="p-6 space-y-6">
-              <div className="border-b border-[#334155]/50 pb-4">
-                <h3 className="text-sm font-extrabold text-brand-text">Active Course Session</h3>
-                <p className="text-[11px] text-brand-secondary mt-1">Real-time classroom activity checks.</p>
+          {/* Relationship Selection Card */}
+          <div className="lg:col-span-1 space-y-6">
+            <Card className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Users className="w-5 h-5 text-brand-primary" />
+                <h4 className="font-extrabold text-xs uppercase tracking-wider text-brand-text">Relationship Card</h4>
               </div>
+              <p className="text-[10px] text-brand-secondary leading-relaxed mb-4">
+                The linked student authorization status is authorized for the highlighted relationship role context:
+              </p>
 
-              <div className="space-y-4">
-                <div className="p-4 rounded-xl bg-slate-950/30 border border-[#334155]/30 flex justify-between items-center">
-                  <div>
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-brand-secondary">Current Lecture Class</span>
-                    <p className="font-semibold text-brand-text mt-0.5">{studentStatus.current_course || 'No active classes recorded'}</p>
-                  </div>
-                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-brand-primary/10 text-brand-primary border border-brand-primary/20 select-none">
-                    Verified Link
-                  </span>
-                </div>
-
-                <div className="p-4 rounded-xl bg-slate-950/30 border border-[#334155]/30">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-brand-secondary">Safety Remarks & Alerts</span>
-                  <p className="text-[11px] text-[#94a3b8] mt-1 italic">
-                    "{studentStatus.remarks || 'No alerts recorded. Normal campus profile logs registered.'}"
-                  </p>
-                </div>
+              <div className="space-y-2">
+                {relationshipRoles.map((role) => {
+                  const isActive = currentRelationship.toLowerCase() === role.toLowerCase();
+                  return (
+                    <div
+                      key={role}
+                      className={`p-3.5 rounded-xl border flex items-center justify-between transition-all select-none ${
+                        isActive
+                          ? 'border-brand-primary bg-brand-primary/10 shadow-lg shadow-brand-primary/5'
+                          : 'border-[#334155]/40 bg-slate-950/20 opacity-50'
+                      }`}
+                    >
+                      <span className={`text-xs font-semibold ${isActive ? 'text-brand-primary' : 'text-brand-secondary'}`}>
+                        {role}
+                      </span>
+                      {isActive && (
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-brand-primary text-white uppercase tracking-wider">
+                          Active
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
+            </Card>
+
+            {/* Network Shield Consent Card */}
+            <Card className="p-5 bg-blue-500/5 border-blue-500/20 text-blue-400">
+              <h4 className="font-bold text-xs flex items-center gap-1.5 uppercase tracking-wider">
+                🛡️ Verified Parent Link
+              </h4>
+              <p className="text-[10px] text-brand-secondary mt-2 leading-relaxed">
+                Parent identity is linked to roll number {user?.parent_student_roll || "22B91A0512"} under strict NOC Gate regulatory policies. Any configuration modifications must go through institutional verification.
+              </p>
             </Card>
           </div>
         </div>

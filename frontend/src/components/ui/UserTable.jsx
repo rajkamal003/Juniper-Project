@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, CheckCircle2, XCircle, Power, Key } from 'lucide-react';
-import StatusBadge from './StatusBadge';
+import { StatusBadge } from './StatusBadge';
 
 const UserAvatar = ({ src, name }) => {
   const [error, setError] = React.useState(false);

@@ -10,6 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [sessionMetadata, setSessionMetadata] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sessionTimeout, setSessionTimeout] = useState(900); // Default 15 mins (in seconds)
+  const [isBackendOffline, setIsBackendOffline] = useState(false);
 
   const getSessionIdFromToken = (token) => {
     if (!token) return null;
@@ -40,6 +41,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await api.get('/api/auth/profile');
       setUser(response.data);
+      setIsBackendOffline(false);
 
       const sessId = getSessionIdFromToken(token);
       if (sessId) {
@@ -51,17 +53,24 @@ export const AuthProvider = ({ children }) => {
           } else {
             setSessionMetadata({ session_id: sessId, browser: 'Web Client', operating_system: 'Terminal', ip_address: '127.0.0.1' });
           }
-        } catch {
+        } catch (e) {
+          if (!e.response) {
+            setIsBackendOffline(true);
+          }
           setSessionMetadata({ session_id: sessId, browser: 'Web Client', operating_system: 'Terminal', ip_address: '127.0.0.1' });
         }
       }
-    } catch {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      sessionStorage.removeItem('access_token');
-      sessionStorage.removeItem('refresh_token');
-      setUser(null);
-      setSessionMetadata(null);
+    } catch (err) {
+      if (!err.response) {
+        setIsBackendOffline(true);
+      } else {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        sessionStorage.removeItem('access_token');
+        sessionStorage.removeItem('refresh_token');
+        setUser(null);
+        setSessionMetadata(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -73,9 +82,19 @@ export const AuthProvider = ({ children }) => {
       if (response.data && response.data.session_timeout) {
         setSessionTimeout(response.data.session_timeout);
       }
+      setIsBackendOffline(false);
     } catch (error) {
+      if (!error.response) {
+        setIsBackendOffline(true);
+      }
       console.warn("Failed to fetch dynamic session timeout settings, using default 15 minutes.", error);
     }
+  };
+
+  const retryConnection = async () => {
+    setLoading(true);
+    await checkAuth();
+    await fetchSystemSettings();
   };
 
   useEffect(() => {
@@ -263,7 +282,9 @@ const extractErrorMessage = (error, defaultMsg) => {
       verifyFacultyMFA,
       logout, 
       register, 
-      refreshProfile: checkAuth 
+      refreshProfile: checkAuth,
+      isBackendOffline,
+      retryConnection
     }}>
       {children}
     </AuthContext.Provider>

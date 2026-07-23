@@ -165,6 +165,7 @@ export const ResetPasswordPage = () => {
                 type={showConfirmPassword ? 'text' : 'password'}
                 icon={Lock}
                 placeholder="••••••••"
+                autoComplete="new-password"
                 error={errors.confirm_password}
                 isValid={confirmPassword !== '' && isPasswordsMatching}
                 disabled={loading}

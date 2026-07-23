@@ -6,7 +6,7 @@ import * as z from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Lock, Mail, RefreshCw, ShieldCheck, Trash2 } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, RefreshCw, ShieldCheck, Trash2, ArrowLeft } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
@@ -319,6 +319,29 @@ export const LoginPage = ({ roleContext }) => {
       className="w-full sm:w-auto z-10"
     >
       <Card>
+        {/* Back Navigation */}
+        <div className="flex justify-start mb-3 select-none">
+          <button
+            type="button"
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1);
+              } else {
+                navigate('/select-role');
+              }
+            }}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border shadow-xs cursor-pointer transition-colors"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              borderColor: 'var(--border-color)',
+              color: 'var(--text-secondary)'
+            }}
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Go Back</span>
+          </button>
+        </div>
+
         {/* Card Header */}
         <div className="flex flex-col items-center gap-2 mb-8 text-center select-none">
           {roleContext && (
@@ -342,11 +365,6 @@ export const LoginPage = ({ roleContext }) => {
               : (roleContext ? `Sign in to access your ${roleContext} portal` : 'Sign in to continue')}
           </p>
           
-          {roleContext === 'Admin' && (
-            <div className="mt-2 px-3 py-1.5 rounded-xl border border-red-500/20 bg-red-500/10 text-red-400 text-xs font-medium max-w-sm">
-              <span className="font-bold">Demo Credentials:</span> <code className="text-white bg-black/30 px-1.5 py-0.5 rounded">admin@securecampus.com</code> / <code className="text-white bg-black/30 px-1.5 py-0.5 rounded">Admin@123</code>
-            </div>
-          )}
         </div>
 
         {/* Error Banner when Account Not Found or Credentials Failed */}
@@ -553,48 +571,52 @@ export const LoginPage = ({ roleContext }) => {
           </Button>
         </form>
 
-        {/* New Operator Divider */}
-        <div className="relative my-7 select-none">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t" style={{ borderColor: 'var(--border-color)' }}></div>
-          </div>
-          <div className="relative flex justify-center">
-            <span 
-              className="px-3.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-[1px] text-white shadow-xs"
-              style={{ backgroundColor: 'var(--color-primary)' }}
-            >
-              NEW OPERATOR
-            </span>
-          </div>
-        </div>
+        {/* New Operator Divider (Hidden for Admin) */}
+        {roleContext !== 'Admin' && (
+          <>
+            <div className="relative my-7 select-none">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t" style={{ borderColor: 'var(--border-color)' }}></div>
+              </div>
+              <div className="relative flex justify-center">
+                <span 
+                  className="px-3.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-[1px] text-white shadow-xs"
+                  style={{ backgroundColor: 'var(--color-primary)' }}
+                >
+                  NEW OPERATOR
+                </span>
+              </div>
+            </div>
 
-        {/* Create Account Button */}
-        <motion.button
-          type="button"
-          onClick={handleCreateAccount}
-          disabled={loading}
-          whileHover={{ y: -2, scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          transition={{ duration: 0.2, ease: "easeOut" }}
-          className="w-full h-12 rounded-xl font-semibold text-btn flex items-center justify-center gap-2.5 transition-all duration-200 cursor-pointer shadow-xs border"
-          style={{
-            backgroundColor: 'var(--color-primary-light)',
-            borderColor: 'var(--border-color)',
-            color: 'var(--color-primary)'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--color-primary)';
-            e.currentTarget.style.borderColor = 'var(--color-primary)';
-            e.currentTarget.style.color = '#ffffff';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--color-primary-light)';
-            e.currentTarget.style.borderColor = 'var(--border-color)';
-            e.currentTarget.style.color = 'var(--color-primary)';
-          }}
-        >
-          {roleContext ? `Create ${roleContext} Account` : 'Create Account'}
-        </motion.button>
+            {/* Create Account Button */}
+            <motion.button
+              type="button"
+              onClick={handleCreateAccount}
+              disabled={loading}
+              whileHover={{ y: -2, scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="w-full h-12 rounded-xl font-semibold text-btn flex items-center justify-center gap-2.5 transition-all duration-200 cursor-pointer shadow-xs border"
+              style={{
+                backgroundColor: 'var(--color-primary-light)',
+                borderColor: 'var(--border-color)',
+                color: 'var(--color-primary)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--color-primary)';
+                e.currentTarget.style.borderColor = 'var(--color-primary)';
+                e.currentTarget.style.color = '#ffffff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--color-primary-light)';
+                e.currentTarget.style.borderColor = 'var(--border-color)';
+                e.currentTarget.style.color = 'var(--color-primary)';
+              }}
+            >
+              {roleContext ? `Create ${roleContext} Account` : 'Create Account'}
+            </motion.button>
+          </>
+        )}
       </Card>
 
       {/* Faculty TOTP MFA Overlay Modal */}

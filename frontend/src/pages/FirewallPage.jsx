@@ -181,6 +181,30 @@ export const FirewallPage = () => {
         </Button>
       </PageHeader>
 
+      {/* Live Threat Shield Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 select-none">
+        <div className="p-4 bg-slate-900 border border-[#334155]/40 rounded-2xl">
+          <span className="text-[10px] font-extrabold uppercase text-slate-500 font-mono block">IDS/IPS Shield</span>
+          <span className="text-lg font-extrabold text-emerald-400 font-mono mt-1 block">ACTIVE & ENFORCED</span>
+          <span className="text-[9px] text-brand-secondary mt-1 block">Junos Security Engined</span>
+        </div>
+        <div className="p-4 bg-slate-900 border border-[#334155]/40 rounded-2xl">
+          <span className="text-[10px] font-extrabold uppercase text-slate-500 font-mono block">Threat Block Timeline</span>
+          <span className="text-lg font-extrabold text-brand-primary font-mono mt-1 block">156 Blocks</span>
+          <span className="text-[9px] text-brand-secondary mt-1 block">Mitigated in last 1 hour</span>
+        </div>
+        <div className="p-4 bg-slate-900 border border-[#334155]/40 rounded-2xl">
+          <span className="text-[10px] font-extrabold uppercase text-slate-500 font-mono block">Active Blocks (IPs)</span>
+          <span className="text-lg font-extrabold text-red-400 font-mono mt-1 block">42 IPs Blacklisted</span>
+          <span className="text-[9px] text-brand-secondary mt-1 block">Malicious signatures detected</span>
+        </div>
+        <div className="p-4 bg-slate-900 border border-[#334155]/40 rounded-2xl">
+          <span className="text-[10px] font-extrabold uppercase text-slate-500 font-mono block">Blocked Domains</span>
+          <span className="text-lg font-extrabold text-purple-400 font-mono mt-1 block">38 Domains</span>
+          <span className="text-[9px] text-brand-secondary mt-1 block">Filtered Category Policies</span>
+        </div>
+      </div>
+
       <form onSubmit={handleSearchSubmit}>
         <ActionToolbar
           searchBar={

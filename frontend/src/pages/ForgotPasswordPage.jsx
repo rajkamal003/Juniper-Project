@@ -219,13 +219,20 @@ export const ForgotPasswordPage = () => {
 
         {/* Return Links */}
         <div className="mt-6 flex justify-center border-t border-[#334155]/20 pt-4 select-none">
-          <Link
-            to="/login"
-            className="flex items-center gap-1.5 text-xs text-brand-secondary hover:text-brand-text font-semibold transition-colors duration-200"
+          <button
+            type="button"
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1);
+              } else {
+                navigate('/select-role');
+              }
+            }}
+            className="flex items-center gap-1.5 text-xs text-brand-secondary hover:text-brand-text font-semibold transition-colors duration-200 cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Back to Sign In</span>
-          </Link>
+          </button>
         </div>
 
       </Card>

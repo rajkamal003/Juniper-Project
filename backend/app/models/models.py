@@ -77,8 +77,10 @@ class User(Base):
 class UserSession(Base):
     __tablename__ = "user_sessions"
 
-    session_id = Column(String(255), primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    session_id = Column(String(255), unique=True, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    role = Column(String(50), nullable=True)
     login_time = Column(DateTime, server_default=func.now())
     logout_time = Column(DateTime, nullable=True)
     device_name = Column(String(255), nullable=True)
@@ -86,7 +88,12 @@ class UserSession(Base):
     operating_system = Column(String(255), nullable=True)
     ip_address = Column(String(100), nullable=True)
     mac_address = Column(String(100), nullable=True)
+    ssid = Column(String(100), nullable=True, default="SecureCampus-WiFi")
+    access_point = Column(String(100), nullable=True, default="AP-MainHall-01")
+    signal_strength = Column(String(50), nullable=True, default="Excellent (-52 dBm)")
     status = Column(Enum('Active', 'Expired', 'LoggedOut', name='session_status_enum'), default='Active')
+    session_status = Column(String(50), nullable=True, default="Active")
+    last_activity = Column(DateTime, server_default=func.now(), onupdate=func.now())
     session_duration = Column(Integer, nullable=True)  # duration in seconds
 
     # Relationships

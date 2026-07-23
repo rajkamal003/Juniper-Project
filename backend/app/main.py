@@ -12,6 +12,7 @@ from app.routes.juniper_routes import router as juniper_router
 from app.routes.visitor_routes import router as visitor_router
 from app.routes.exam_routes import router as exam_router
 from app.routes.analytics_routes import router as analytics_router
+from app.routes.profile_routes import router as profile_router
 from app.config.config import settings
 
 # Initialize FastAPI
@@ -51,6 +52,7 @@ app.include_router(juniper_router)
 app.include_router(visitor_router)
 app.include_router(exam_router)
 app.include_router(analytics_router)
+app.include_router(profile_router)
 
 @app.on_event("startup")
 def run_db_migrations():
@@ -58,6 +60,16 @@ def run_db_migrations():
     from app.models.models import Base
     from sqlalchemy import text, inspect
     
+    # Drop user_sessions if it exists to force refresh schema
+    try:
+        with engine.begin() as conn:
+            inspector = inspect(conn)
+            if inspector.has_table("user_sessions"):
+                conn.execute(text("DROP TABLE user_sessions;"))
+                print("Migration: Dropped old user_sessions table to force schema refresh.")
+    except Exception as e:
+        print("DB drop user_sessions warning / ignored:", e)
+
     # Create all missing tables automatically
     Base.metadata.create_all(bind=engine)
     

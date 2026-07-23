@@ -180,48 +180,54 @@ def test_duplicate_checks():
     assert resp_student_id.json()["detail"] == "This Student ID is already registered."
 
 def test_faculty_mfa_flow():
-    email = "prof_mfa_test@kluniversity.in"
-    password = "Password123@"
+    from app.config.config import settings
+    original_mfa = settings.ENABLE_MFA
+    settings.ENABLE_MFA = True
+    try:
+        email = "prof_mfa_test@kluniversity.in"
+        password = "Password123@"
 
-    # Register Faculty
-    client.post("/api/auth/register", json={
-        "fullname": "Prof MFA Test",
-        "email": email,
-        "phone": "9876543216",
-        "role_id": 2,
-        "employee_id": "9999",
-        "department": "CSE",
-        "password": password,
-        "confirm_password": password
-    })
+        # Register Faculty
+        client.post("/api/auth/register", json={
+            "fullname": "Prof MFA Test",
+            "email": email,
+            "phone": "9876543216",
+            "role_id": 2,
+            "employee_id": "9999",
+            "department": "CSE",
+            "password": password,
+            "confirm_password": password
+        })
 
-    # Step 1: Login
-    login_resp = client.post("/api/auth/login", json={
-        "email": email,
-        "password": password
-    })
-    assert login_resp.status_code == 200
-    login_data = login_resp.json()
-    assert login_data["mfa_required"] is True
-    assert login_data["is_mfa_setup"] is False
-    assert "temp_token" in login_data
-    assert "qr_code_url" in login_data
-    assert "secret_key" in login_data
+        # Step 1: Login
+        login_resp = client.post("/api/auth/login", json={
+            "email": email,
+            "password": password
+        })
+        assert login_resp.status_code == 200
+        login_data = login_resp.json()
+        assert login_data["mfa_required"] is True
+        assert login_data["is_mfa_setup"] is False
+        assert "temp_token" in login_data
+        assert "qr_code_url" in login_data
+        assert "secret_key" in login_data
 
-    # Step 2: Generate TOTP code using returned secret_key
-    totp = pyotp.TOTP(login_data["secret_key"])
-    totp_code = totp.now()
+        # Step 2: Generate TOTP code using returned secret_key
+        totp = pyotp.TOTP(login_data["secret_key"])
+        totp_code = totp.now()
 
-    # Step 3: Verify Faculty MFA
-    mfa_verify_resp = client.post("/api/auth/verify-faculty-mfa", json={
-        "temp_token": login_data["temp_token"],
-        "totp_code": totp_code
-    })
-    if mfa_verify_resp.status_code != 200:
-        print(f"MFA Verify Error: {mfa_verify_resp.status_code} - {mfa_verify_resp.json()}")
-    assert mfa_verify_resp.status_code == 200
-    assert "access_token" in mfa_verify_resp.json()
-    assert mfa_verify_resp.json()["user"]["email"] == email
+        # Step 3: Verify Faculty MFA
+        mfa_verify_resp = client.post("/api/auth/verify-faculty-mfa", json={
+            "temp_token": login_data["temp_token"],
+            "totp_code": totp_code
+        })
+        if mfa_verify_resp.status_code != 200:
+            print(f"MFA Verify Error: {mfa_verify_resp.status_code} - {mfa_verify_resp.json()}")
+        assert mfa_verify_resp.status_code == 200
+        assert "access_token" in mfa_verify_resp.json()
+        assert mfa_verify_resp.json()["user"]["email"] == email
+    finally:
+        settings.ENABLE_MFA = original_mfa
 
 def test_parent_login_skips_mfa():
     email = "parent_test@gmail.com"

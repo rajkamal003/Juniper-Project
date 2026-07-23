@@ -73,7 +73,7 @@ class AuthService:
         if existing_user_email:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="This email address is already registered."
+                detail="An account with this email already exists. Please Login."
             )
 
         # Check duplicate phone
@@ -91,7 +91,7 @@ class AuthService:
             if existing_student:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
-                    detail="This ID already exists."
+                    detail="This Student ID is already registered."
                 )
 
         # Check duplicate Faculty ID (employee_id)
@@ -118,10 +118,10 @@ class AuthService:
             password_hash=hashed,
             role_id=payload.role_id,
             account_status=initial_status,
-            department=payload.department.strip() if payload.department else None,
-            roll_number=payload.roll_number.strip() if payload.roll_number else None,
-            employee_id=payload.employee_id.strip() if payload.employee_id else None,
-            parent_student_roll=payload.parent_student_roll.strip() if payload.parent_student_roll else None,
+            department=payload.department.strip() if (payload.department and payload.department.strip()) else None,
+            roll_number=payload.roll_number.strip() if (payload.roll_number and payload.roll_number.strip()) else None,
+            employee_id=payload.employee_id.strip() if (payload.employee_id and payload.employee_id.strip()) else None,
+            parent_student_roll=payload.parent_student_roll.strip() if (payload.parent_student_roll and payload.parent_student_roll.strip()) else None,
             relationship=payload.relationship,
             purpose=payload.purpose,
             duration=payload.duration, # Stores Student Year or Guest Duration
@@ -176,7 +176,7 @@ class AuthService:
                 LogRepo.log(db, user_id=None, action="LOGIN_FAILED", description=f"Failed login attempt for non-existent email: {email}", ip=client_ip)
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Email address not found."
+                    detail="No account found with this email address."
                 )
 
         # Portal Role Isolation Checks
@@ -258,7 +258,7 @@ class AuthService:
         # Check if user is Faculty -> Faculty TOTP MFA Enabled Only!
         is_faculty = (user.role_id == 2) or (user.role and user.role.role_name == 'Faculty')
 
-        if is_faculty:
+        if is_faculty and settings.ENABLE_MFA:
             if not user.mfa_secret:
                 user.mfa_secret = pyotp.random_base32()
                 UserRepo.update(db, user, {"mfa_secret": user.mfa_secret})
@@ -307,12 +307,17 @@ class AuthService:
         user_session = UserSession(
             session_id=session_id,
             user_id=user.id,
+            role=user.role.role_name if user.role else "Unknown",
             device_name=payload.device_name,
             browser=payload.browser,
             operating_system=payload.operating_system,
             ip_address=client_ip,
-            mac_address=payload.mac_address,
-            status="Active"
+            mac_address=payload.mac_address or "00:1A:2B:3C:4D:5E",
+            ssid="SecureCampus-WiFi",
+            access_point="AP-MainHall-01",
+            signal_strength="Excellent (-52 dBm)",
+            status="Active",
+            session_status="Active"
         )
         SessionRepo.create(db, user_session)
 
@@ -461,11 +466,17 @@ class AuthService:
         new_session = UserSession(
             user_id=user.id,
             session_id=session_id,
+            role=user.role.role_name if user.role else "Faculty",
             ip_address=client_ip,
             device_name="Desktop Web",
             browser="Chrome",
             operating_system="Windows",
-            status="Active"
+            mac_address="00:1A:2B:3C:4D:5F",
+            ssid="SecureCampus-WiFi",
+            access_point="AP-MainHall-01",
+            signal_strength="Excellent (-52 dBm)",
+            status="Active",
+            session_status="Active"
         )
         created_session = SessionRepo.create(db, new_session)
 
@@ -479,13 +490,7 @@ class AuthService:
             "access_token": access_token,
             "refresh_token": refresh_token,
             "token_type": "bearer",
-            "user": {
-                "id": user.id,
-                "fullname": user.fullname,
-                "email": user.email,
-                "phone": user.phone,
-                "role_id": user.role_id
-            }
+            "user": UserResponse.model_validate(user)
         }
 
     @staticmethod

@@ -81,6 +81,7 @@ export const OTPInput = ({ length = 6, value = '', onChange }) => {
           value={digit}
           onChange={(e) => handleChange(e.target, index)}
           onKeyDown={(e) => handleKeyDown(e, index)}
+          autoComplete="one-time-code"
           className="w-11 h-12 text-center bg-slate-900/40 border border-[#334155] text-brand-text rounded-xl focus-ring-blue font-mono font-bold text-lg select-all transition-all duration-200"
           aria-label={`Digit ${index + 1}`}
         />
