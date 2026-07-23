@@ -17,14 +17,15 @@ import { DEPARTMENTS, STUDENT_YEARS, GUEST_DURATIONS, RELATIONSHIPS } from '../c
 const registerSchema = z.object({
   fullname: z.string().min(3, 'Full name must be at least 3 characters'),
   email: z.string().min(1, 'Email is required').email('Invalid email address'),
-  phone: z.string().min(10, 'Phone number is required').regex(/^[6-9]\d{9}$/, 'Enter a valid 10-digit mobile number.'),
+  phone: z.string().min(10, 'Phone number is required').regex(/^[0-9]{10}$/, 'Please enter a valid 10-digit phone number.'),
   role_id: z.string().min(1, 'Please select a role'),
   password: z.string()
     .min(8, 'Password must be at least 8 characters')
     .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
     .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
     .regex(/\d/, 'Password must contain at least one number')
-    .regex(/[@$!%*?&#]/, 'Password must contain at least one special character'),
+    .regex(/[@$!%*?&#]/, 'Password must contain at least one special character')
+    .regex(/^\S*$/, 'Password cannot contain spaces'),
   confirm_password: z.string(),
   terms: z.boolean().refine(val => val === true, 'You must accept the terms'),
   
@@ -48,17 +49,29 @@ const registerSchema = z.object({
   }
 
   const roleId = parseInt(data.role_id, 10);
-  
+  const cleanEmail = (data.email || '').trim().toLowerCase();
+  const isKluEmail = cleanEmail.endsWith('@kluniversity.in') || cleanEmail.includes('.kluniversity.in');
+
   if (roleId === 2) {
+    if (!isKluEmail) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Faculty must register using their official KL University email.", path: ["email"] });
+    }
     if (!data.employee_id || !data.employee_id.trim()) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Employee ID is required", path: ["employee_id"] });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Faculty ID is required", path: ["employee_id"] });
+    } else if (!/^[0-9]{4,5}$/.test(data.employee_id.trim())) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Faculty ID must be 4 or 5 digits numbers only", path: ["employee_id"] });
     }
     if (!data.department || !data.department.trim()) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Department is required", path: ["department"] });
     }
   } else if (roleId === 3) {
+    if (!isKluEmail) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Students must register using their official KL University email.", path: ["email"] });
+    }
     if (!data.roll_number || !data.roll_number.trim()) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Roll Number is required", path: ["roll_number"] });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Student ID is required", path: ["roll_number"] });
+    } else if (!/^[0-9]{10}$/.test(data.roll_number.trim())) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Student ID must be exactly 10 digits numbers only", path: ["roll_number"] });
     }
     if (!data.department || !data.department.trim()) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Department is required", path: ["department"] });
@@ -165,7 +178,7 @@ export const RegisterPage = () => {
       const ok = await trigger(['fullname', 'email', 'phone']);
       if (ok) setStep(2);
     } else if (step === 2) {
-      const fields = ['role_id'];
+      const fields = ['role_id', 'email'];
       if (selectedRoleId === 2) fields.push('employee_id', 'department');
       if (selectedRoleId === 3) fields.push('roll_number', 'department', 'duration');
       if (selectedRoleId === 4) fields.push('parent_student_roll', 'relationship');

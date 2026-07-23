@@ -1,7 +1,7 @@
 // frontend/src/components/ui/Input.jsx
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check } from 'lucide-react';
+import { Check, AlertCircle } from 'lucide-react';
 
 export const Input = React.forwardRef(({
   label,
@@ -54,8 +54,8 @@ export const Input = React.forwardRef(({
   };
 
   const handleWheel = (e) => {
-    if (type === 'tel' || props.inputMode === 'numeric') {
-      e.preventDefault();
+    if (type === 'tel' || props.inputMode === 'numeric' || type === 'number') {
+      e.target.blur();
     }
     if (onWheel) onWheel(e);
   };
@@ -133,6 +133,13 @@ export const Input = React.forwardRef(({
             <Check className="w-5 h-5" />
           </span>
         )}
+
+        {/* Invalid error icon */}
+        {error && (
+          <span className="absolute right-4 flex items-center text-red-500 pointer-events-none">
+            <AlertCircle className="w-5 h-5" />
+          </span>
+        )}
       </motion.div>
       
       {error && (
@@ -140,9 +147,9 @@ export const Input = React.forwardRef(({
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.15 }}
-          className="text-sm text-red-500 font-semibold pl-1"
+          className="text-sm text-red-500 font-semibold pl-1 flex items-center gap-1"
         >
-          {error.message}
+          <span>{error.message}</span>
         </motion.p>
       )}
     </div>

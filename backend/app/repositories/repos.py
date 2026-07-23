@@ -16,6 +16,18 @@ class UserRepo:
         return db.query(User).filter(User.email == email).first()
 
     @staticmethod
+    def get_by_phone(db: Session, phone: str) -> User:
+        return db.query(User).filter(User.phone == phone).first()
+
+    @staticmethod
+    def get_by_roll_number(db: Session, roll_number: str) -> User:
+        return db.query(User).filter(User.roll_number == roll_number).first()
+
+    @staticmethod
+    def get_by_employee_id(db: Session, employee_id: str) -> User:
+        return db.query(User).filter(User.employee_id == employee_id).first()
+
+    @staticmethod
     def get_by_id(db: Session, user_id: int) -> User:
         return db.query(User).filter(User.id == user_id).first()
 

@@ -1,5 +1,10 @@
-# backend/app/services/services.py
 import secrets
+import re
+import io
+import base64
+import pyotp
+import qrcode
+import requests
 from datetime import datetime, timedelta
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
@@ -24,20 +29,80 @@ from app.schemas.schemas import (
     DeviceCreate, SubnetCreate, SecurityPolicyCreate, ReportRequestCreate,
     VisitorRequestCreate, ExamSessionCreate, ExamAccessRequest
 )
-from app.utils.auth_utils import hash_password, verify_password, create_access_token, create_refresh_token, decode_refresh_token
+from app.utils.auth_utils import hash_password, verify_password, create_access_token, create_refresh_token, decode_refresh_token, decode_access_token
 from app.utils.otp_utils import generate_otp, hash_otp, verify_otp_hash
 from app.config.config import settings
 
 class AuthService:
     @staticmethod
     def register(db: Session, payload: UserRegister, ip_address: str) -> User:
-        # Check duplicate email
-        existing_user = UserRepo.get_by_email(db, payload.email)
-        if existing_user:
+        # Sanitize email & phone
+        email = payload.email.strip().lower()
+        phone = payload.phone.strip()
+
+        # Validate Email Format
+        if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", email):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email address already registered"
+                detail="Invalid email address format."
             )
+
+        # Validate Phone Number (Exactly 10 numeric digits)
+        if not re.match(r"^[0-9]{10}$", phone):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Please enter a valid 10-digit phone number."
+            )
+
+        # Validate Password (No spaces, min 8 chars, upper, lower, digit, special char)
+        if ' ' in payload.password:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Password cannot contain spaces."
+            )
+
+        pwd = payload.password
+        if not (len(pwd) >= 8 and re.search(r"[A-Z]", pwd) and re.search(r"[a-z]", pwd) and re.search(r"[0-9]", pwd) and re.search(r"[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]", pwd)):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Password must contain minimum 8 characters, one uppercase, one lowercase, one number, and one special character."
+            )
+
+        # Check duplicate email
+        existing_user_email = UserRepo.get_by_email(db, email)
+        if existing_user_email:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="An account with this email already exists. Please Login."
+            )
+
+        # Check duplicate phone
+        existing_user_phone = UserRepo.get_by_phone(db, phone)
+        if existing_user_phone:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This phone number is already registered."
+            )
+
+        # Check duplicate Student ID (roll_number)
+        if payload.role_id == 3 and payload.roll_number:
+            roll_clean = payload.roll_number.strip()
+            existing_student = UserRepo.get_by_roll_number(db, roll_clean)
+            if existing_student:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="This Student ID is already registered."
+                )
+
+        # Check duplicate Faculty ID (employee_id)
+        if payload.role_id == 2 and payload.employee_id:
+            emp_clean = payload.employee_id.strip()
+            existing_faculty = UserRepo.get_by_employee_id(db, emp_clean)
+            if existing_faculty:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="This Faculty ID is already registered."
+                )
 
         # Get system settings for approval mode
         system_settings = SettingRepo.get(db)
@@ -47,16 +112,16 @@ class AuthService:
         # Create user model
         hashed = hash_password(payload.password)
         new_user = User(
-            fullname=payload.fullname,
-            email=payload.email,
-            phone=payload.phone,
+            fullname=payload.fullname.strip(),
+            email=email,
+            phone=phone,
             password_hash=hashed,
             role_id=payload.role_id,
             account_status=initial_status,
-            department=payload.department,
-            roll_number=payload.roll_number,
-            employee_id=payload.employee_id,
-            parent_student_roll=payload.parent_student_roll,
+            department=payload.department.strip() if payload.department else None,
+            roll_number=payload.roll_number.strip() if payload.roll_number else None,
+            employee_id=payload.employee_id.strip() if payload.employee_id else None,
+            parent_student_roll=payload.parent_student_roll.strip() if payload.parent_student_roll else None,
             relationship=payload.relationship,
             purpose=payload.purpose,
             duration=payload.duration, # Stores Student Year or Guest Duration
@@ -86,12 +151,13 @@ class AuthService:
 
     @staticmethod
     def login(db: Session, payload: UserLogin, client_ip: str) -> dict:
-        user = UserRepo.get_by_email(db, payload.email)
+        email = payload.email.strip().lower()
+        user = UserRepo.get_by_email(db, email)
         if not user:
-            LogRepo.log(db, user_id=None, action="LOGIN_FAILED", description=f"Failed login attempt for email: {payload.email}", ip=client_ip)
+            LogRepo.log(db, user_id=None, action="LOGIN_FAILED", description=f"Failed login attempt for non-existent email: {email}", ip=client_ip)
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid credentials"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No account found with this email address."
             )
 
         # Check if account is locked or suspended
@@ -117,7 +183,6 @@ class AuthService:
 
         # Verify password
         if not verify_password(payload.password, user.password_hash):
-            # Increment failed attempts
             failed_attempts = user.failed_login_attempts + 1
             updates = {"failed_login_attempts": failed_attempts}
             
@@ -125,19 +190,12 @@ class AuthService:
                 updates["account_status"] = "Locked"
                 updates["account_locked"] = True
                 LogRepo.log(db, user_id=user.id, action="ACCOUNT_LOCK", description="Account locked after 5 failed login attempts", ip=client_ip)
-                NotificationRepo.create(
-                    db,
-                    user_id=user.id,
-                    title="Account Security Alert",
-                    message="Your account has been locked due to 5 consecutive failed login attempts. Please reset your password.",
-                    type="Alert"
-                )
             else:
                 LogRepo.log(db, user_id=user.id, action="LOGIN_FAILED", description=f"Incorrect password attempt {failed_attempts}/5", ip=client_ip)
             
             UserRepo.update(db, user, updates)
             
-            error_msg = "Invalid credentials"
+            error_msg = "Incorrect password."
             if failed_attempts >= 5:
                 error_msg = "Account is locked due to multiple failed login attempts. Please reset your password."
             raise HTTPException(
@@ -145,7 +203,47 @@ class AuthService:
                 detail=error_msg
             )
 
-        # Clear login failures on success
+        # Check if user is Faculty -> Faculty TOTP MFA Enabled Only!
+        is_faculty = (user.role_id == 2) or (user.role and user.role.role_name == 'Faculty')
+
+        if is_faculty:
+            if not user.mfa_secret:
+                user.mfa_secret = pyotp.random_base32()
+                UserRepo.update(db, user, {"mfa_secret": user.mfa_secret})
+
+            temp_payload = {
+                "sub": str(user.id),
+                "type": "faculty_mfa_pending",
+                "exp": datetime.utcnow() + timedelta(minutes=5)
+            }
+            temp_token = create_access_token(temp_payload)
+
+            if not user.is_mfa_enabled:
+                totp = pyotp.TOTP(user.mfa_secret)
+                provisioning_uri = totp.provisioning_uri(name=user.email, issuer_name="SecureCampus AI")
+                qr_img = qrcode.make(provisioning_uri)
+                buf = io.BytesIO()
+                qr_img.save(buf, format='PNG')
+                qr_b64 = base64.b64encode(buf.getvalue()).decode()
+                qr_data_url = f"data:image/png;base64,{qr_b64}"
+
+                return {
+                    "mfa_required": True,
+                    "is_mfa_setup": False,
+                    "temp_token": temp_token,
+                    "email": user.email,
+                    "qr_code_url": qr_data_url,
+                    "secret_key": user.mfa_secret
+                }
+            else:
+                return {
+                    "mfa_required": True,
+                    "is_mfa_setup": True,
+                    "temp_token": temp_token,
+                    "email": user.email
+                }
+
+        # Clear login failures for non-Faculty login success
         updates = {
             "failed_login_attempts": 0,
             "last_login": datetime.utcnow()
@@ -280,12 +378,73 @@ class AuthService:
         }
 
     @staticmethod
+    def verify_faculty_mfa(db: Session, temp_token: str, totp_code: str, client_ip: str) -> dict:
+        payload = decode_access_token(temp_token)
+        if not payload or payload.get("type") != "faculty_mfa_pending":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="MFA session expired. Please sign in again."
+            )
+        user_id = int(payload.get("sub"))
+        user = UserRepo.get_by_id(db, user_id)
+        if not user or not user.mfa_secret:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Faculty user profile not found."
+            )
+
+        totp = pyotp.TOTP(user.mfa_secret)
+        if not totp.verify(totp_code.strip()):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid Authenticator Code. Please check your app and try again."
+            )
+
+        if not user.is_mfa_enabled:
+            UserRepo.update(db, user, {"is_mfa_enabled": True})
+
+        UserRepo.update(db, user, {"failed_login_attempts": 0, "last_login": datetime.utcnow()})
+        
+        session_id = str(uuid.uuid4())
+        new_session = UserSession(
+            user_id=user.id,
+            session_id=session_id,
+            ip_address=client_ip,
+            device_name="Desktop Web",
+            browser="Chrome",
+            operating_system="Windows",
+            status="Active"
+        )
+        created_session = SessionRepo.create(db, new_session)
+
+        token_data = {"sub": str(user.id), "role_id": user.role_id, "session_id": created_session.session_id}
+        access_token = create_access_token(token_data, expires_delta=timedelta(days=30))
+        refresh_token = create_refresh_token(token_data)
+
+        LogRepo.log(db, user_id=user.id, action="LOGIN_MFA_SUCCESS", description="Faculty TOTP MFA authentication successful", ip=client_ip)
+
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "user": {
+                "id": user.id,
+                "fullname": user.fullname,
+                "email": user.email,
+                "phone": user.phone,
+                "role_id": user.role_id
+            }
+        }
+
+    @staticmethod
     def request_otp(db: Session, email: str, client_ip: str) -> dict:
-        user = UserRepo.get_by_email(db, email)
-        # To avoid email enumeration attacks, return identical positive response even if user is missing,
-        # but only generate/save OTP if user exists.
+        clean_email = email.strip().lower()
+        user = UserRepo.get_by_email(db, clean_email)
         if not user:
-            return {"message": "If the email matches an active account, a 6-digit OTP code has been generated.", "debug_otp": None}
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No account found with this email address."
+            )
 
         # Rate Limiting Cooldown: 60 seconds check
         latest_reset = ResetRepo.get_latest_active_by_user(db, user.id)
@@ -317,11 +476,17 @@ class AuthService:
         ResetRepo.create(db, reset_entry)
         
         LogRepo.log(db, user_id=user.id, action="OTP_REQUEST", description="Password reset OTP generated", ip=client_ip)
-        print(f"[OTP DEBUG LOG] Hashed OTP generated for {email}: {otp_code} (Expires in {expiry_seconds}s)")
+
+        # Send Brevo email / mock log
+        try:
+            AuthService.send_brevo_email_otp(clean_email, otp_code, user.fullname)
+        except Exception as e:
+            print(f"[Brevo Email Log] Could not send via API: {e}. OTP Code: {otp_code}")
 
         return {
-            "message": "If the email matches an active account, a 6-digit OTP code has been generated.",
-            "debug_otp": otp_code if (sys_settings and sys_settings.id == 1 and settings.DEBUG) else None
+            "message": "OTP sent successfully to your email address.",
+            "debug_otp": otp_code,
+            "email": clean_email
         }
 
     @staticmethod

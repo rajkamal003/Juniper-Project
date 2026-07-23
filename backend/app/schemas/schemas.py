@@ -12,10 +12,10 @@ class UserBase(BaseModel):
     @field_validator('phone')
     @classmethod
     def validate_phone(cls, v):
-        # Allow numbers, optional +, spaces, hyphens, parentheses (basic international phone format)
-        if not re.match(r'^\+?[0-9\s\-()]{7,20}$', v):
-            raise ValueError('Invalid phone number format')
-        return v
+        v_clean = v.strip()
+        if not re.match(r'^[0-9]{10}$', v_clean):
+            raise ValueError('Please enter a valid 10-digit mobile number.')
+        return v_clean
 
 class UserRegister(UserBase):
     password: str
@@ -37,6 +37,8 @@ class UserRegister(UserBase):
     @field_validator('password')
     @classmethod
     def validate_password_strength(cls, v):
+        if ' ' in v:
+            raise ValueError('Password cannot contain spaces.')
         if len(v) < 8:
             raise ValueError('Password must be at least 8 characters long')
         if not re.search(r'[A-Z]', v):
@@ -54,26 +56,44 @@ class UserRegister(UserBase):
         # 1. Check passwords match
         if self.password != self.confirm_password:
             raise ValueError("Passwords do not match")
-        
-        # 2. Check conditional fields by role_id
+
+        # 2. Email domain restriction for Student & Faculty
+        clean_email = str(self.email).strip().lower()
+        is_klu = clean_email.endswith('@kluniversity.in') or '.kluniversity.in' in clean_email
+
+        if self.role_id == 3 and not is_klu:
+            raise ValueError("Students must register using their official KL University email.")
+        if self.role_id == 2 and not is_klu:
+            raise ValueError("Faculty must register using their official KL University email.")
+
+        # 3. Check conditional fields and formats by role_id
         # 2: Faculty, 3: Student, 4: Parent Visitor, 5: Guest
         if self.role_id == 2: # Faculty
             if not self.employee_id or not self.employee_id.strip():
-                raise ValueError("Employee ID is required for Faculty")
+                raise ValueError("Faculty ID is required for Faculty")
+            emp_clean = self.employee_id.strip()
+            if not re.match(r'^[0-9]{4,5}$', emp_clean):
+                raise ValueError("Faculty ID must be exactly 4 or 5 digits numbers only.")
             if not self.department or not self.department.strip():
                 raise ValueError("Department is required for Faculty")
+
         elif self.role_id == 3: # Student
             if not self.roll_number or not self.roll_number.strip():
-                raise ValueError("Roll Number is required for Students")
+                raise ValueError("Student ID is required for Students")
+            roll_clean = self.roll_number.strip()
+            if not re.match(r'^[0-9]{10}$', roll_clean):
+                raise ValueError("Student ID must be exactly 10 digits numbers only.")
             if not self.department or not self.department.strip():
                 raise ValueError("Department is required for Students")
             if not self.duration or not self.duration.strip() or self.duration not in ['1', '2', '3', '4']:
                 raise ValueError("Year must be 1, 2, 3, or 4 for Students")
+
         elif self.role_id == 4: # Parent Visitor
             if not self.parent_student_roll or not self.parent_student_roll.strip():
                 raise ValueError("Student Roll Number is required for Parents")
             if not self.relationship or not self.relationship.strip():
                 raise ValueError("Relationship is required for Parents")
+
         elif self.role_id == 5: # Guest
             if not self.purpose or not self.purpose.strip():
                 raise ValueError("Purpose of visit is required for Guests")
@@ -92,6 +112,18 @@ class UserLogin(BaseModel):
     operating_system: Optional[str] = "Unknown"
     ip_address: Optional[str] = "127.0.0.1"
     mac_address: Optional[str] = None
+
+class FacultyMFARequiredResponse(BaseModel):
+    mfa_required: bool = True
+    is_mfa_setup: bool = False
+    temp_token: str
+    email: str
+    qr_code_url: Optional[str] = None
+    secret_key: Optional[str] = None
+
+class FacultyMFAVerifyRequest(BaseModel):
+    temp_token: str
+    totp_code: str = Field(..., min_length=6, max_length=6)
 
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr

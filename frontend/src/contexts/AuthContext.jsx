@@ -125,6 +125,11 @@ export const AuthProvider = ({ children }) => {
       };
 
       const response = await api.post('/api/auth/login', loginPayload);
+      
+      if (response.data && response.data.mfa_required) {
+        return response.data;
+      }
+
       const { access_token, refresh_token, user: userData } = response.data;
 
       if (rememberMe) {
@@ -149,6 +154,35 @@ export const AuthProvider = ({ children }) => {
       return userData;
     } catch (error) {
       const errorMsg = error.response?.data?.detail || 'Login failed. Please try again.';
+      toast.error(errorMsg);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyFacultyMFA = async (tempToken, totpCode, rememberMe = false) => {
+    setLoading(true);
+    try {
+      const response = await api.post('/api/auth/verify-faculty-mfa', {
+        temp_token: tempToken,
+        totp_code: totpCode
+      });
+      const { access_token, refresh_token, user: userData } = response.data;
+
+      if (rememberMe) {
+        localStorage.setItem('access_token', access_token);
+        localStorage.setItem('refresh_token', refresh_token);
+      } else {
+        sessionStorage.setItem('access_token', access_token);
+        sessionStorage.setItem('refresh_token', refresh_token);
+      }
+
+      setUser(userData);
+      toast.success('Faculty Authenticator Verification Successful!');
+      return userData;
+    } catch (error) {
+      const errorMsg = error.response?.data?.detail || 'Invalid Authenticator Code. Please try again.';
       toast.error(errorMsg);
       throw error;
     } finally {
@@ -204,6 +238,7 @@ export const AuthProvider = ({ children }) => {
       isAuthenticated: !!user, 
       sessionTimeout, 
       login, 
+      verifyFacultyMFA,
       logout, 
       register, 
       refreshProfile: checkAuth 

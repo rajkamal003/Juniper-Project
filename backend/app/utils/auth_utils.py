@@ -25,7 +25,9 @@ def create_access_token(data: Dict, expires_delta: Optional[timedelta] = None) -
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire, "type": "access"})
+    if "type" not in to_encode:
+        to_encode["type"] = "access"
+    to_encode["exp"] = expire
     encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm="HS256")
     return encoded_jwt
 
@@ -44,7 +46,7 @@ def decode_access_token(token: str) -> Optional[Dict]:
     """Decode and validate an Access Token."""
     try:
         payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=["HS256"])
-        if payload.get("type") != "access":
+        if payload.get("type") not in ["access", "faculty_mfa_pending"]:
             return None
         return payload
     except jwt.PyJWTError:

@@ -10,8 +10,7 @@ export const THEMES = [
   { id: 'white-red', name: 'White + Red', primary: '#dc2626', bg: '#ffffff', badgeBg: '#fee2e2', badgeText: '#b91c1c' },
   { id: 'white-cyan', name: 'White + Cyan', primary: '#0891b2', bg: '#ffffff', badgeBg: '#cffaff', badgeText: '#0e7490' },
   { id: 'white-teal', name: 'White + Teal', primary: '#0d9488', bg: '#ffffff', badgeBg: '#ccfbf1', badgeText: '#0f766e' },
-  { id: 'white-indigo', name: 'White + Indigo', primary: '#4f46e5', bg: '#ffffff', badgeBg: '#e0e7ff', badgeText: '#4338ca' },
-  { id: 'dark', name: 'Professional Dark', primary: '#3b82f6', bg: '#0f172a', badgeBg: '#1e293b', badgeText: '#60a5fa' }
+  { id: 'white-indigo', name: 'White + Indigo', primary: '#4f46e5', bg: '#ffffff', badgeBg: '#e0e7ff', badgeText: '#4338ca' }
 ];
 
 const ThemeContext = createContext();
@@ -28,13 +27,6 @@ export const ThemeProvider = ({ children }) => {
   useEffect(() => {
     const root = window.document.documentElement;
     root.setAttribute('data-theme', theme);
-    if (theme === 'dark') {
-      root.classList.add('dark');
-      root.style.colorScheme = 'dark';
-    } else {
-      root.classList.remove('dark');
-      root.style.colorScheme = 'light';
-    }
     localStorage.setItem('theme', theme);
   }, [theme]);
 
@@ -45,7 +37,7 @@ export const ThemeProvider = ({ children }) => {
   };
 
   const toggleTheme = () => {
-    setThemeState(prev => (prev === 'dark' ? 'white-blue' : 'dark'));
+    setThemeState(prev => (prev === 'white-blue' ? 'white-indigo' : 'white-blue'));
   };
 
   const currentThemeObj = THEMES.find(t => t.id === theme) || THEMES[0];
@@ -55,7 +47,7 @@ export const ThemeProvider = ({ children }) => {
       theme, 
       setTheme: changeTheme, 
       toggleTheme, 
-      isDark: theme === 'dark',
+      isDark: false,
       currentTheme: currentThemeObj,
       themes: THEMES 
     }}>
@@ -66,4 +58,3 @@ export const ThemeProvider = ({ children }) => {
 
 export const useTheme = () => useContext(ThemeContext);
 export default ThemeContext;
-

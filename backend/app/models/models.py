@@ -52,11 +52,13 @@ class User(Base):
     is_first_login = Column(Boolean, default=True)
     account_locked = Column(Boolean, default=False)
     failed_login_attempts = Column(Integer, default=0)
+    mfa_secret = Column(String(255), nullable=True)
+    is_mfa_enabled = Column(Boolean, default=False)
 
     # Dynamic role fields
     department = Column(String(100), nullable=True)
-    roll_number = Column(String(100), nullable=True)
-    employee_id = Column(String(100), nullable=True)
+    roll_number = Column(String(100), nullable=True, unique=True)
+    employee_id = Column(String(100), nullable=True, unique=True)
     parent_student_roll = Column(String(100), nullable=True)
     relationship = Column(String(100), nullable=True)
     purpose = Column(Text, nullable=True)

@@ -7,6 +7,9 @@ import { Toaster } from 'sonner';
 
 import AuthLayout from './components/layout/AuthLayout';
 import DashboardLayout from './components/layout/DashboardLayout';
+import LandingPage from './pages/LandingPage';
+import RoleSelectionPage from './pages/RoleSelectionPage';
+import GuestRequestPage from './pages/GuestRequestPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -57,7 +60,7 @@ const ProtectedRoute = ({ children }) => {
   }
   
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/signin" replace />;
   }
   
   return children;
@@ -89,7 +92,7 @@ const RoleGuard = ({ children, allowedRoles }) => {
   }
   
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/signin" replace />;
   }
   
   const role = user?.role?.role_name || 'Guest';
@@ -112,7 +115,7 @@ const DashboardRedirect = () => {
   }
   
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/signin" replace />;
   }
   
   const role = user?.role?.role_name || 'Guest';
@@ -137,8 +140,61 @@ const CourseRouteResolver = () => {
 const AppContent = () => {
   return (
     <Routes>
-      {/* Primary entry point loads LoginPage */}
+      {/* Root Route loads LandingPage Portal */}
       <Route path="/" element={
+        <PublicOnlyRoute>
+          <AuthLayout>
+            <LandingPage />
+          </AuthLayout>
+        </PublicOnlyRoute>
+      } />
+
+      {/* Role Selection Route (Step 2) */}
+      <Route path="/select-role" element={
+        <PublicOnlyRoute>
+          <AuthLayout>
+            <RoleSelectionPage />
+          </AuthLayout>
+        </PublicOnlyRoute>
+      } />
+
+      {/* Role-Specific Sign In Routes */}
+      <Route path="/faculty/signin" element={
+        <PublicOnlyRoute>
+          <AuthLayout>
+            <LoginPage roleContext="Faculty" />
+          </AuthLayout>
+        </PublicOnlyRoute>
+      } />
+
+      <Route path="/student/signin" element={
+        <PublicOnlyRoute>
+          <AuthLayout>
+            <LoginPage roleContext="Student" />
+          </AuthLayout>
+        </PublicOnlyRoute>
+      } />
+
+      <Route path="/parent/signin" element={
+        <PublicOnlyRoute>
+          <AuthLayout>
+            <LoginPage roleContext="Parent" />
+          </AuthLayout>
+        </PublicOnlyRoute>
+      } />
+
+      <Route path="/guest/request" element={
+        <PublicOnlyRoute>
+          <AuthLayout>
+            <GuestRequestPage />
+          </AuthLayout>
+        </PublicOnlyRoute>
+      } />
+
+      <Route path="/guest/signin" element={<Navigate to="/guest/request" replace />} />
+
+      {/* General Sign In Route */}
+      <Route path="/signin" element={
         <PublicOnlyRoute>
           <AuthLayout>
             <LoginPage />

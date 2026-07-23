@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.schemas import (
     UserRegister, UserLogin, ForgotPasswordRequest, 
-    VerifyOTPRequest, ResetPasswordRequest, UserResponse, TokenResponse, SystemSettingsResponse
+    VerifyOTPRequest, ResetPasswordRequest, UserResponse, TokenResponse, SystemSettingsResponse,
+    FacultyMFAVerifyRequest
 )
 from app.services.services import AuthService
 from app.repositories.repos import UserRepo, SettingRepo, SessionRepo
@@ -57,10 +58,15 @@ def register(payload: UserRegister, request: Request, db: Session = Depends(get_
     client_ip = request.client.host if request.client else "127.0.0.1"
     return AuthService.register(db, payload, client_ip)
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login")
 def login(payload: UserLogin, request: Request, db: Session = Depends(get_db)):
     client_ip = request.client.host if request.client else "127.0.0.1"
     return AuthService.login(db, payload, client_ip)
+
+@router.post("/verify-faculty-mfa")
+def verify_faculty_mfa(payload: FacultyMFAVerifyRequest, request: Request, db: Session = Depends(get_db)):
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    return AuthService.verify_faculty_mfa(db, payload.temp_token, payload.totp_code, client_ip)
 
 @router.post("/forgot-password")
 def forgot_password(payload: ForgotPasswordRequest, request: Request, db: Session = Depends(get_db)):

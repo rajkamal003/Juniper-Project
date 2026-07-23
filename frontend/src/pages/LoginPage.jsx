@@ -36,8 +36,8 @@ const decryptPassword = (encrypted) => {
   }
 };
 
-export const LoginPage = () => {
-  const { login } = useAuth();
+export const LoginPage = ({ roleContext }) => {
+  const { login, verifyFacultyMFA } = useAuth();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -45,6 +45,12 @@ export const LoginPage = () => {
   // CAPTCHA State
   const [captchaCode, setCaptchaCode] = useState('');
   const [captchaError, setCaptchaError] = useState('');
+  const [loginErrorMessage, setLoginErrorMessage] = useState('');
+
+  // Faculty TOTP MFA State
+  const [mfaData, setMfaData] = useState(null);
+  const [totpCode, setTotpCode] = useState('');
+  const [totpLoading, setTotpLoading] = useState(false);
 
   // Multiple Remembered Accounts State
   const [rememberedAccounts, setRememberedAccounts] = useState([]);
@@ -62,6 +68,7 @@ export const LoginPage = () => {
     handleSubmit,
     watch,
     setValue,
+    setError,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(loginSchema),
@@ -80,7 +87,7 @@ export const LoginPage = () => {
 
   // Load remembered accounts and initial credentials on mount
   useEffect(() => {
-    document.title = "SecureCampus AI | Sign In";
+    document.title = roleContext ? `SecureCampus AI | ${roleContext} Sign In` : "SecureCampus AI | Sign In";
     generateCaptcha();
 
     let accounts = [];
@@ -98,13 +105,13 @@ export const LoginPage = () => {
       const savedPassword = localStorage.getItem('remember_me_password') || '';
       let decrypted = savedPassword;
       if (savedPassword && !savedPassword.includes(' ') && savedPassword.length % 4 === 0) {
-        decrypted = decryptPassword(savedPassword) || savedPassword;
+        decrypted = decryptPassword(savedPassword);
       }
-      setValue('email', savedEmail);
-      setValue('password', decrypted);
+      if (savedEmail) setValue('email', savedEmail);
+      if (decrypted) setValue('password', decrypted);
       setValue('rememberMe', true);
     }
-  }, [generateCaptcha, setValue]);
+  }, [generateCaptcha, setValue, roleContext]);
 
   // Click outside to close accounts dropdown
   useEffect(() => {
@@ -147,14 +154,12 @@ export const LoginPage = () => {
   };
 
   const handleSelectAccount = (acc) => {
-    let decrypted = acc.password;
-    try {
-      decrypted = decryptPassword(acc.password) || acc.password;
-    } catch {
-      // fallback
-    }
     setValue('email', acc.email);
-    setValue('password', decrypted);
+    let decrypted = acc.password;
+    if (acc.password && !acc.password.includes(' ') && acc.password.length % 4 === 0) {
+      decrypted = decryptPassword(acc.password);
+    }
+    setValue('password', decrypted || '');
     setValue('rememberMe', true);
     setIsDropdownOpen(false);
   };
@@ -188,6 +193,26 @@ export const LoginPage = () => {
   };
 
   const onSubmit = async (data) => {
+    // Role-specific Email Domain Check for Student & Faculty
+    const normalizedEmail = (data.email || '').trim().toLowerCase();
+    const isKLUEmail = normalizedEmail.endsWith('@kluniversity.in') || normalizedEmail.includes('.kluniversity.in');
+
+    if (roleContext === 'Student' && !isKLUEmail) {
+      setError('email', {
+        type: 'manual',
+        message: 'Students must sign in using their official KL University email (@kluniversity.in).'
+      });
+      return;
+    }
+
+    if (roleContext === 'Faculty' && !isKLUEmail) {
+      setError('email', {
+        type: 'manual',
+        message: 'Faculty must sign in using their official KL University email (@kluniversity.in).'
+      });
+      return;
+    }
+
     // Validate CAPTCHA match
     if (!data.captchaInput) {
       setCaptchaError('Please enter the CAPTCHA.');
@@ -205,8 +230,15 @@ export const LoginPage = () => {
 
     setLoading(true);
     try {
-      const userData = await login(data.email, data.password, data.rememberMe);
+      const res = await login(data.email, data.password, data.rememberMe);
 
+      if (res && res.mfa_required) {
+        setMfaData(res);
+        setLoading(false);
+        return;
+      }
+
+      const userData = res;
       let accounts = [];
       try {
         accounts = JSON.parse(localStorage.getItem('remembered_accounts')) || [];
@@ -218,48 +250,57 @@ export const LoginPage = () => {
         const encryptedPassword = encryptPassword(data.password);
         const lastLogin = new Date().toISOString();
 
-        // Avoid duplicates: remove existing match
         accounts = accounts.filter(acc => acc.email !== data.email);
-
-        // Add to front of array
         accounts.unshift({
           email: data.email,
           password: encryptedPassword,
-          displayName: userData.fullname || null,
+          displayName: userData?.fullname || null,
           lastLogin
         });
 
-        // Sort descending by lastLogin
         accounts.sort((a, b) => new Date(b.lastLogin) - new Date(a.lastLogin));
-
-        // Limit to 20
-        if (accounts.length > 20) {
-          accounts = accounts.slice(0, 20);
-        }
+        if (accounts.length > 20) accounts = accounts.slice(0, 20);
 
         localStorage.setItem('remembered_accounts', JSON.stringify(accounts));
-
-        // Sync with legacy single-account variables
         localStorage.setItem('remember_me_enabled', 'true');
         localStorage.setItem('remember_me_email', data.email);
         localStorage.setItem('remember_me_password', encryptedPassword);
       } else {
-        // If Remember Me is unchecked, clear this account's details
         accounts = accounts.filter(acc => acc.email !== data.email);
         localStorage.setItem('remembered_accounts', JSON.stringify(accounts));
-
         localStorage.removeItem('remember_me_enabled');
         localStorage.removeItem('remember_me_email');
         localStorage.removeItem('remember_me_password');
       }
 
+      setLoginErrorMessage('');
       navigate('/dashboard');
-    } catch {
-      // Regenerate CAPTCHA after failed login attempt
+    } catch (err) {
+      const msg = err.response?.data?.detail || 'Invalid credentials';
+      setLoginErrorMessage(msg);
       generateCaptcha();
       setValue('captchaInput', '');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVerifyMFA = async (e) => {
+    e.preventDefault();
+    if (!totpCode || totpCode.trim().length !== 6) {
+      setLoginErrorMessage("Please enter a valid 6-digit Authenticator Code.");
+      return;
+    }
+    setTotpLoading(true);
+    try {
+      await verifyFacultyMFA(mfaData.temp_token, totpCode.trim(), watchRememberMe);
+      setMfaData(null);
+      navigate('/dashboard');
+    } catch (err) {
+      setTotpCode('');
+      setLoginErrorMessage(err.response?.data?.detail || "Invalid Authenticator Code.");
+    } finally {
+      setTotpLoading(false);
     }
   };
 
@@ -273,9 +314,41 @@ export const LoginPage = () => {
       <Card>
         {/* Card Header */}
         <div className="flex flex-col items-center gap-2 mb-8 text-center select-none">
-          <h2 className="text-h2 font-extrabold tracking-tight" style={{ color: 'var(--text-main)' }}>Sign In</h2>
-          <p className="text-body text-sm" style={{ color: 'var(--text-secondary)' }}>Sign in to continue</p>
+          {roleContext && (
+            <div 
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold mb-1 border shadow-xs"
+              style={{
+                backgroundColor: 'var(--color-primary-light)',
+                borderColor: 'var(--border-color)',
+                color: 'var(--color-primary)'
+              }}
+            >
+              <span>{roleContext} Portal Sign In</span>
+            </div>
+          )}
+          <h2 className="text-h2 font-extrabold tracking-tight" style={{ color: 'var(--text-main)' }}>
+            {roleContext ? `${roleContext} Sign In` : 'Sign In'}
+          </h2>
+          <p className="text-body text-sm" style={{ color: 'var(--text-secondary)' }}>
+            {roleContext ? `Sign in to access your ${roleContext} portal` : 'Sign in to continue'}
+          </p>
         </div>
+
+        {/* Error Banner when Account Not Found or Credentials Failed */}
+        {loginErrorMessage && (
+          <div className="p-3.5 rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-semibold flex items-center justify-between gap-2 mb-4 select-none">
+            <span>{loginErrorMessage}</span>
+            {loginErrorMessage.includes("No account found") && (
+              <button 
+                type="button" 
+                onClick={() => navigate('/register')}
+                className="px-3 py-1 rounded-lg bg-amber-500 text-white font-bold hover:bg-amber-600 cursor-pointer shrink-0 transition-colors shadow-xs"
+              >
+                Create Account
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 text-left">
@@ -361,39 +434,54 @@ export const LoginPage = () => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-[38px] text-[#94a3b8] hover:text-[#f8fafc] focus:outline-none"
+                className="absolute right-3.5 top-[40px] transition-colors focus:outline-none cursor-pointer"
+                style={{ color: 'var(--text-muted)' }}
                 tabIndex={-1}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
 
             {/* CAPTCHA Section */}
             <div className="space-y-2 select-none">
-              <label className="block text-[13px] font-medium text-brand-secondary uppercase tracking-wider">
-                CAPTCHA <span className="text-brand-danger font-bold">*</span>
+              <label className="block text-label font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
+                CAPTCHA <span className="text-red-500 font-bold">*</span>
               </label>
 
               {/* CAPTCHA Box */}
-              <div className="flex items-center justify-between p-3 bg-slate-900/60 border border-[#334155]/60 rounded-xl">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-brand-primary" />
-                  <span className="font-mono text-lg font-extrabold tracking-[0.3em] text-brand-primary select-all">
+              <div 
+                className="flex items-center justify-between p-3.5 border rounded-xl shadow-xs transition-colors duration-200"
+                style={{
+                  backgroundColor: 'var(--color-primary-light)',
+                  borderColor: 'var(--border-color)'
+                }}
+              >
+                <div className="flex items-center gap-2.5">
+                  <ShieldCheck className="w-5 h-5" style={{ color: 'var(--color-primary)' }} />
+                  <span className="font-mono text-lg font-bold tracking-[4px] select-all" style={{ color: 'var(--color-primary)' }}>
                     {captchaCode || '••••••'}
                   </span>
                 </div>
-                <button
+                <motion.button
                   type="button"
                   onClick={handleRefreshCaptcha}
                   disabled={loading}
+                  whileHover={{ rotate: 180, scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
                   aria-label="Generate New CAPTCHA"
                   title="Generate New CAPTCHA"
-                  className="flex items-center gap-1 text-xs text-brand-secondary hover:text-brand-primary transition-colors focus:outline-none focus:ring-1 focus:ring-brand-primary rounded p-1"
+                  className="flex items-center gap-1.5 text-xs font-semibold rounded-lg p-1.5 border shadow-xs cursor-pointer focus:outline-none"
+                  style={{
+                    backgroundColor: 'var(--bg-surface)',
+                    borderColor: 'var(--border-color)',
+                    color: 'var(--color-primary)'
+                  }}
                 >
-                  <RefreshCw className="w-4 h-4" />
-                  <span className="hidden sm:inline text-[11px] font-bold">Refresh</span>
-                </button>
+                  <RefreshCw className="w-4 h-4 shrink-0" />
+                  <span className="hidden sm:inline text-xs font-bold">Refresh</span>
+                </motion.button>
               </div>
 
               {/* CAPTCHA Input Field */}
@@ -417,25 +505,28 @@ export const LoginPage = () => {
           </div>
 
           {/* Remember & Forgot Row */}
-          <div className="flex justify-between items-center text-xs select-none">
+          <div className="flex justify-between items-center text-sm select-none pt-1">
             <div className="flex items-center">
               <input
                 id="rememberMe"
                 type="checkbox"
                 disabled={loading}
                 {...register('rememberMe')}
-                className="w-4 h-4 rounded border-[#334155] text-brand-primary focus:ring-blue-500/40 bg-slate-900/40 cursor-pointer"
+                className="w-4 h-4 rounded cursor-pointer"
+                style={{ accentColor: 'var(--color-primary)' }}
               />
               <label
                 htmlFor="rememberMe"
-                className="ml-2 text-brand-secondary font-medium cursor-pointer"
+                className="ml-2.5 font-medium cursor-pointer"
+                style={{ color: 'var(--text-secondary)' }}
               >
                 Remember me
               </label>
             </div>
             <Link
               to="/forgot-password"
-              className="font-semibold text-brand-primary hover:underline"
+              className="font-semibold hover:underline"
+              style={{ color: 'var(--color-primary)' }}
             >
               Forgot Password?
             </Link>
@@ -447,23 +538,122 @@ export const LoginPage = () => {
           </Button>
         </form>
 
-        {/* Divider */}
-        <div className="relative my-6 select-none">
+        {/* New Operator Divider */}
+        <div className="relative my-7 select-none">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-[#334155]"></div>
+            <div className="w-full border-t" style={{ borderColor: 'var(--border-color)' }}></div>
           </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-[#1e293b] px-3 text-[10px] font-bold tracking-widest text-[#94a3b8]">
-              New Operator
+          <div className="relative flex justify-center">
+            <span 
+              className="px-3.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-[1px] text-white shadow-xs"
+              style={{ backgroundColor: 'var(--color-primary)' }}
+            >
+              NEW OPERATOR
             </span>
           </div>
         </div>
 
-        {/* Register Link */}
-        <Button variant="secondary" onClick={() => navigate('/register')} disabled={loading}>
+        {/* Create Account Button */}
+        <motion.button
+          type="button"
+          onClick={() => navigate('/register')}
+          disabled={loading}
+          whileHover={{ y: -2, scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          className="w-full h-12 rounded-xl font-semibold text-btn flex items-center justify-center gap-2.5 transition-all duration-200 cursor-pointer shadow-xs border"
+          style={{
+            backgroundColor: 'var(--color-primary-light)',
+            borderColor: 'var(--border-color)',
+            color: 'var(--color-primary)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--color-primary)';
+            e.currentTarget.style.borderColor = 'var(--color-primary)';
+            e.currentTarget.style.color = '#ffffff';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--color-primary-light)';
+            e.currentTarget.style.borderColor = 'var(--border-color)';
+            e.currentTarget.style.color = 'var(--color-primary)';
+          }}
+        >
           Create Account
-        </Button>
+        </motion.button>
       </Card>
+
+      {/* Faculty TOTP MFA Overlay Modal */}
+      {mfaData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="w-full max-w-md p-6 rounded-2xl border shadow-2xl space-y-5 text-center"
+            style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-color)', color: 'var(--text-main)' }}
+          >
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-500 shadow-xs">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-extrabold tracking-tight">Faculty Authenticator MFA</h3>
+              <p className="text-xs text-muted-foreground" style={{ color: 'var(--text-secondary)' }}>
+                {mfaData.is_mfa_setup ? "Enter 6-digit code from Google or Microsoft Authenticator" : "Scan QR Code with Google / Microsoft Authenticator app"}
+              </p>
+            </div>
+
+            {!mfaData.is_mfa_setup && mfaData.qr_code_url && (
+              <div className="p-4 rounded-xl border flex flex-col items-center gap-3 bg-white/5" style={{ borderColor: 'var(--border-color)' }}>
+                <img src={mfaData.qr_code_url} alt="Authenticator QR Code" className="w-40 h-40 rounded-lg shadow-sm border bg-white p-2" />
+                <div className="text-left w-full space-y-1">
+                  <p className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Setup Key (Manual Entry)</p>
+                  <p className="font-mono text-xs font-bold tracking-wider select-all break-all" style={{ color: 'var(--color-primary)' }}>
+                    {mfaData.secret_key}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={handleVerifyMFA} className="space-y-4 text-left">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
+                  6-Digit Authenticator Code
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="123456"
+                  value={totpCode}
+                  onChange={(e) => setTotpCode(e.target.value.replace(/[^0-9]/g, ''))}
+                  className="w-full h-12 text-center text-xl font-mono tracking-widest rounded-xl border outline-none font-bold transition-all"
+                  style={{ backgroundColor: 'var(--bg-input)', borderColor: 'var(--border-color)', color: 'var(--text-main)' }}
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button 
+                  type="button" 
+                  variant="secondary" 
+                  onClick={() => setMfaData(null)}
+                  className="w-1/2"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  loading={totpLoading} 
+                  loadingText="Verifying..." 
+                  disabled={totpLoading || totpCode.length !== 6}
+                  className="w-1/2"
+                >
+                  Verify Code
+                </Button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
     </motion.div>
   );
 };

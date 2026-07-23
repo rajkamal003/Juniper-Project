@@ -25,6 +25,14 @@ export const ThemeSwitcher = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen]);
 
+  const handleSelectTheme = (themeId) => {
+    setTheme(themeId);
+    // Allow 180ms delay so user briefly sees the checkmark and color transition before smooth slide-out
+    setTimeout(() => {
+      setIsOpen(false);
+    }, 180);
+  };
+
   return (
     <>
       {/* Compact Trigger Button inside Navbar / TopBar */}
@@ -99,7 +107,7 @@ export const ThemeSwitcher = () => {
                       return (
                         <button
                           key={t.id}
-                          onClick={() => setTheme(t.id)}
+                          onClick={() => handleSelectTheme(t.id)}
                           className={`w-[34px] h-[34px] rounded-md flex items-center justify-center cursor-pointer transition-all border shadow-xs relative ${
                             isSelected ? 'ring-2 ring-purple-600 border-white' : 'hover:opacity-90 border-black/10'
                           }`}
