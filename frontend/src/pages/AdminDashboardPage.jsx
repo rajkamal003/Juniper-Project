@@ -19,6 +19,111 @@ export const AdminDashboardPage = () => {
   const [juniperDevices, setJuniperDevices] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // ─── Data generators ─────────────────────────────────────────────────────
+  const generateSessions = () => {
+    const pool = [
+      { username: 'L. Pranav (2300090273)',      role: 'Student',        device: 'Pranav-iPhone',     ip: '192.168.1.102', mac: '00:1A:2B:3C:4D:5E', ap: 'AP-MainHall-01',   os: 'iOS 16.4',              browser: 'Safari Mobile',         ssid: 'SecureCampus-Student-WPA3',  app: 'WhatsApp Web',         securityScore: 88 },
+      { username: 'Dr. Prasad (2158)',            role: 'Faculty',        device: 'Prasad-ThinkPad',   ip: '192.168.1.44',  mac: 'BC:A9:C0:11:22:33', ap: 'AP-AdminBlock-02', os: 'Windows 11 Enterprise', browser: 'Google Chrome',         ssid: 'SecureCampus-Faculty-WPA3',  app: 'Google Classroom',     securityScore: 98 },
+      { username: 'Srinivasa Rao (Parent)',       role: 'Parent Visitor', device: 'Srinivasa-Galaxy',  ip: '192.168.1.115', mac: '70:F3:95:44:55:66', ap: 'AP-Library-01',   os: 'Android 13',            browser: 'Samsung Internet',      ssid: 'SecureCampus-Guest-Portal',  app: 'KL ERP Parent Link',   securityScore: 95 },
+      { username: 'GST-9021',                    role: 'Guest',          device: 'OnePlus-Nord',      ip: '192.168.1.205', mac: '90:0F:0C:77:88:99', ap: 'AP-GuestNet-01',  os: 'Android 12',            browser: 'Firefox Mobile',        ssid: 'SecureCampus-Guest-Portal',  app: 'Google Search',        securityScore: 82 },
+      { username: 'K. Kavitha (2300090305)',      role: 'Student',        device: 'MacBook-Air',       ip: '192.168.1.112', mac: 'F0:18:98:AA:BB:CC', ap: 'AP-Library-03',   os: 'macOS Sonoma',          browser: 'Safari',                ssid: 'SecureCampus-Student-WPA3',  app: 'GitHub Codespaces',    securityScore: 85 },
+      { username: 'M. Sriman (2300090311)',       role: 'Student',        device: 'Sriman-Pixel',      ip: '192.168.1.108', mac: '44:6D:57:DD:EE:FF', ap: 'AP-MainHall-01',  os: 'Android 14',            browser: 'Chrome Mobile',         ssid: 'SecureCampus-Student-WPA3',  app: 'YouTube Tutorials',    securityScore: 92 },
+      { username: 'T. Harsha (2300090401)',       role: 'Student',        device: 'Harsha-Dell',       ip: '192.168.1.121', mac: 'A1:B2:C3:D4:E5:F6', ap: 'AP-Library-02',   os: 'Windows 10',            browser: 'Edge',                  ssid: 'SecureCampus-Student-WPA3',  app: 'VS Code Web',          securityScore: 90 },
+      { username: 'Dr. Anitha (3041)',            role: 'Faculty',        device: 'Anitha-MacBook',    ip: '192.168.1.55',  mac: 'CC:DD:EE:FF:00:11', ap: 'AP-AdminBlock-01', os: 'macOS Ventura',         browser: 'Safari',                ssid: 'SecureCampus-Faculty-WPA3',  app: 'Zoom',                 securityScore: 97 },
+      { username: 'GST-7743',                    role: 'Guest',          device: 'Realme-GT',         ip: '192.168.1.210', mac: '11:22:33:44:55:66', ap: 'AP-GuestNet-01',  os: 'Android 13',            browser: 'Chrome',                ssid: 'SecureCampus-Guest-Portal',  app: 'Google Maps',          securityScore: 79 },
+      { username: 'P. Venkat (Parent)',           role: 'Parent Visitor', device: 'Venkat-Samsung',    ip: '192.168.1.118', mac: '77:88:99:AA:BB:CC', ap: 'AP-Library-01',   os: 'Android 12',            browser: 'Samsung Browser',       ssid: 'SecureCampus-Guest-Portal',  app: 'KL University Portal', securityScore: 93 },
+      { username: 'S. Mounika (2300090388)',      role: 'Student',        device: 'Mounika-iPhone14',  ip: '192.168.1.130', mac: 'DE:AD:BE:EF:12:34', ap: 'AP-MainHall-02',  os: 'iOS 17',                browser: 'Safari',                ssid: 'SecureCampus-Student-WPA3',  app: 'Google Meet',          securityScore: 87 },
+      { username: 'Prof. Rajan (1892)',           role: 'Faculty',        device: 'Rajan-HP-Elitebook', ip: '192.168.1.60', mac: 'FA:CE:B0:0C:12:34', ap: 'AP-AdminBlock-02', os: 'Windows 11',            browser: 'Firefox',               ssid: 'SecureCampus-Faculty-WPA3',  app: 'Microsoft Teams',      securityScore: 96 },
+    ];
+
+    const loginHours = [14, 15, 16, 17];
+    const durations = ['8 mins', '15 mins', '28 mins', '42 mins', '58 mins', '1h 12m', '1h 41m', '2h 5m', '2h 23m'];
+    const dataSizes = () => {
+      const val = Math.floor(Math.random() * 1800) + 45;
+      return val >= 1024 ? `${(val / 1024).toFixed(2)} GB` : `${val} MB`;
+    };
+
+    // Pick 4-7 random unique users each refresh
+    const count = Math.floor(Math.random() * 4) + 4;
+    const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, count);
+
+    return shuffled.map(u => {
+      const h = loginHours[Math.floor(Math.random() * loginHours.length)];
+      const m = Math.floor(Math.random() * 60);
+      const dur = durations[Math.floor(Math.random() * durations.length)];
+      const dataVal = dataSizes();
+      const dl = (() => { const v = parseFloat(dataVal) * (0.8 + Math.random() * 0.15); return dataVal.includes('GB') ? `${v.toFixed(2)} GB` : `${Math.floor(v)} MB`; })();
+      const ul = (() => { const v = parseFloat(dataVal) * (0.05 + Math.random() * 0.1); return dataVal.includes('GB') ? `${v.toFixed(2)} GB` : `${Math.floor(v)} MB`; })();
+      return {
+        ...u,
+        loginTime: `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`,
+        duration: dur,
+        data: dataVal,
+        status: 'Online',
+        download: dl,
+        upload: ul,
+        timeSpent: dur,
+        refreshes: Math.floor(Math.random() * 30),
+        blockedCount: Math.floor(Math.random() * 5),
+        allowedCount: Math.floor(Math.random() * 60) + 5,
+        whatsapp: { messagesSent: Math.floor(Math.random()*80), messagesReceived: Math.floor(Math.random()*120), calls: Math.floor(Math.random()*4), voiceCalls: Math.floor(Math.random()*2), fileUploads: Math.floor(Math.random()*8), imagesShared: Math.floor(Math.random()*15), videosShared: Math.floor(Math.random()*3), bandwidth: `${Math.floor(Math.random()*200)+10} MB` }
+      };
+    });
+  };
+
+  const generateWebsites = () => {
+    const pool = [
+      { url: 'https://github.com',         role: 'Faculty',  baseScore: 1,  action: 'Allowed', reason: 'Academic Repository' },
+      { url: 'https://instagram.com',      role: 'Student',  baseScore: 9,  action: 'Blocked', reason: 'Forbidden Entertainment Domain Policy' },
+      { url: 'https://stackoverflow.com',  role: 'Student',  baseScore: 2,  action: 'Allowed', reason: 'Educational Development' },
+      { url: 'https://kluniversity.in',    role: 'Parent',   baseScore: 1,  action: 'Allowed', reason: 'University Portal' },
+      { url: 'https://malicious-domain.xyz', role: 'Guest',  baseScore: 10, action: 'Blocked', reason: 'Heuristic Threat Intelligence Match' },
+      { url: 'https://wikipedia.org',      role: 'Student',  baseScore: 1,  action: 'Allowed', reason: 'Academic Reference' },
+      { url: 'https://zoom.us',            role: 'Faculty',  baseScore: 3,  action: 'Allowed', reason: 'Remote Instruction Class Session' },
+      { url: 'https://youtube.com',        role: 'Student',  baseScore: 4,  action: 'Allowed', reason: 'Academic Tutorials' },
+      { url: 'https://chat.openai.com',    role: 'Student',  baseScore: 2,  action: 'Allowed', reason: 'AI Code Assistant' },
+      { url: 'https://whatsapp-web.com',   role: 'Student',  baseScore: 3,  action: 'Allowed', reason: 'Communication' },
+      { url: 'https://discord.com',        role: 'Student',  baseScore: 4,  action: 'Allowed', reason: 'Academic Community Channels' },
+      { url: 'https://twitter.com',        role: 'Faculty',  baseScore: 5,  action: 'Allowed', reason: 'Social Networking (Faculty)' },
+      { url: 'https://torrent-site.net',   role: 'Student',  baseScore: 10, action: 'Blocked', reason: 'P2P Torrent Site – Policy Violation' },
+      { url: 'https://moodle.klu.ac.in',   role: 'Student',  baseScore: 1,  action: 'Allowed', reason: 'LMS Learning Portal' },
+      { url: 'https://office365.com',      role: 'Faculty',  baseScore: 1,  action: 'Allowed', reason: 'Official Microsoft Education Suite' },
+      { url: 'https://linkedin.com',       role: 'Faculty',  baseScore: 2,  action: 'Allowed', reason: 'Professional Networking' },
+      { url: 'https://telegram.org',       role: 'Student',  baseScore: 5,  action: 'Allowed', reason: 'Group Communication' },
+      { url: 'https://bet365.com',         role: 'Guest',    baseScore: 10, action: 'Blocked', reason: 'Gambling Domain – Blocked by Policy' },
+    ];
+
+    const count = Math.floor(Math.random() * 5) + 6;
+    const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, count);
+
+    return shuffled.map(w => {
+      const startH = Math.floor(Math.random() * 4) + 14;
+      const startM = Math.floor(Math.random() * 60);
+      const durationMins = w.action === 'Blocked' ? 0 : Math.floor(Math.random() * 60) + 5;
+      const endH = Math.floor((startH * 60 + startM + durationMins) / 60) % 24;
+      const endM = (startM + durationMins) % 60;
+      const dlMB = w.action === 'Blocked' ? 0 : Math.floor(Math.random() * 2000) + 20;
+      const ulMB = w.action === 'Blocked' ? 0 : Math.floor(dlMB * (0.05 + Math.random() * 0.15));
+      const dlStr = dlMB >= 1024 ? `${(dlMB/1024).toFixed(1)} GB` : `${dlMB} MB`;
+      const ulStr = ulMB >= 1024 ? `${(ulMB/1024).toFixed(1)} GB` : `${ulMB} MB`;
+      return {
+        url: w.url,
+        role: w.role,
+        bandwidth: dlMB >= 1024 ? `${((dlMB+ulMB)/1024).toFixed(2)} GB` : `${dlMB + ulMB} MB`,
+        status: w.action,
+        score: w.baseScore + (Math.random() > 0.7 ? 1 : 0),
+        action: w.action,
+        time: `${String(startH).padStart(2,'0')}:${String(startM).padStart(2,'0')}:${String(Math.floor(Math.random()*60)).padStart(2,'0')}`,
+        closed: `${String(endH).padStart(2,'0')}:${String(endM).padStart(2,'0')}:${String(Math.floor(Math.random()*60)).padStart(2,'0')}`,
+        duration: w.action === 'Blocked' ? '1s' : `${durationMins}m ${Math.floor(Math.random()*60)}s`,
+        refreshes: w.action === 'Blocked' ? 0 : Math.floor(Math.random() * 20),
+        download: dlStr,
+        upload: ulStr,
+        reason: w.reason,
+      };
+    });
+  };
+
   const handleRefresh = async () => {
     // Regenerate simulated stats
     setStats({
@@ -29,6 +134,9 @@ export const AdminDashboardPage = () => {
     });
     setChartData(Array.from({ length: 10 }, () => Math.floor(Math.random() * 50) + 30));
     setAlertIndex(Math.floor(Math.random() * 5));
+    // Regenerate session and website logs
+    setSessions(generateSessions());
+    setWebsites(generateWebsites());
     // Fetch latest hardware from API
     await fetchDashboardData();
   };
@@ -227,8 +335,8 @@ export const AdminDashboardPage = () => {
     }
   ];
 
-  const [websites, setWebsites] = useState(initialWebsites);
-  const [sessions, setSessions] = useState(initialSessions);
+  const [websites, setWebsites] = useState(() => generateWebsites());
+  const [sessions, setSessions] = useState(() => generateSessions());
 
   const fetchDashboardData = async () => {
     try {
