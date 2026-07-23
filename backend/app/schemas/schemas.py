@@ -102,8 +102,9 @@ class UserRegister(UserBase):
         return self
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    email: str
     password: str
+    portal: Optional[str] = None  # 'Admin', 'Student', 'Faculty', 'Parent'
     remember_me: bool = False
     
     # Metadata for sessions

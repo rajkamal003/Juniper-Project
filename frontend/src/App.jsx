@@ -60,7 +60,7 @@ const ProtectedRoute = ({ children }) => {
   }
   
   if (!isAuthenticated) {
-    return <Navigate to="/signin" replace />;
+    return <Navigate to="/select-role" replace />;
   }
   
   return children;
@@ -92,12 +92,12 @@ const RoleGuard = ({ children, allowedRoles }) => {
   }
   
   if (!isAuthenticated) {
-    return <Navigate to="/signin" replace />;
+    return <Navigate to="/select-role" replace />;
   }
   
   const role = user?.role?.role_name || 'Guest';
   if (!allowedRoles.includes(role)) {
-    return <Navigate to="/403" replace />;
+    return <ForbiddenPage />;
   }
   
   return children;
@@ -115,7 +115,7 @@ const DashboardRedirect = () => {
   }
   
   if (!isAuthenticated) {
-    return <Navigate to="/signin" replace />;
+    return <Navigate to="/select-role" replace />;
   }
   
   const role = user?.role?.role_name || 'Guest';
@@ -125,7 +125,7 @@ const DashboardRedirect = () => {
   if (role === 'Parent Visitor') return <Navigate to="/parent" replace />;
   if (role === 'Guest') return <Navigate to="/guest" replace />;
   
-  return <Navigate to="/403" replace />;
+  return <ForbiddenPage />;
 };
 
 const CourseRouteResolver = () => {
@@ -154,6 +154,15 @@ const AppContent = () => {
         <PublicOnlyRoute>
           <AuthLayout>
             <RoleSelectionPage />
+          </AuthLayout>
+        </PublicOnlyRoute>
+      } />
+
+      {/* Admin Sign In Route */}
+      <Route path="/admin/signin" element={
+        <PublicOnlyRoute>
+          <AuthLayout>
+            <LoginPage roleContext="Admin" />
           </AuthLayout>
         </PublicOnlyRoute>
       } />
@@ -193,22 +202,36 @@ const AppContent = () => {
 
       <Route path="/guest/signin" element={<Navigate to="/guest/request" replace />} />
 
-      {/* General Sign In Route */}
-      <Route path="/signin" element={
-        <PublicOnlyRoute>
-          <AuthLayout>
-            <LoginPage />
-          </AuthLayout>
-        </PublicOnlyRoute>
-      } />
+      {/* Legacy /signin Redirect to Role Selection */}
+      <Route path="/signin" element={<Navigate to="/select-role" replace />} />
       
-      <Route path="/register" element={
+      {/* Role-Specific Registration Routes */}
+      <Route path="/student/register" element={
         <PublicOnlyRoute>
           <AuthLayout>
-            <RegisterPage />
+            <RegisterPage roleContext="Student" />
           </AuthLayout>
         </PublicOnlyRoute>
       } />
+
+      <Route path="/faculty/register" element={
+        <PublicOnlyRoute>
+          <AuthLayout>
+            <RegisterPage roleContext="Faculty" />
+          </AuthLayout>
+        </PublicOnlyRoute>
+      } />
+
+      <Route path="/parent/register" element={
+        <PublicOnlyRoute>
+          <AuthLayout>
+            <RegisterPage roleContext="Parent" />
+          </AuthLayout>
+        </PublicOnlyRoute>
+      } />
+
+      <Route path="/guest/register" element={<Navigate to="/guest/request" replace />} />
+      <Route path="/register" element={<Navigate to="/select-role" replace />} />
       
       <Route path="/forgot-password" element={
         <PublicOnlyRoute>

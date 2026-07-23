@@ -3,22 +3,21 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { motion } from 'framer-motion';
-import { User, Mail, Phone, Lock, ChevronRight, ChevronLeft, Building2, Terminal, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Phone, Lock, ChevronRight, ChevronLeft, Building2, Eye, EyeOff, GraduationCap, Briefcase, Users, ArrowLeft } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { StepIndicator } from '../components/ui/StepIndicator';
-import { FileUpload } from '../components/forms/FileUpload';
-import { DEPARTMENTS, STUDENT_YEARS, GUEST_DURATIONS, RELATIONSHIPS } from '../constants/constants';
+import { DEPARTMENTS, STUDENT_YEARS, RELATIONSHIPS } from '../constants/constants';
 
 const registerSchema = z.object({
   fullname: z.string().min(3, 'Full name must be at least 3 characters'),
   email: z.string().min(1, 'Email is required').email('Invalid email address'),
   phone: z.string().min(10, 'Phone number is required').regex(/^[0-9]{10}$/, 'Please enter a valid 10-digit phone number.'),
-  role_id: z.string().min(1, 'Please select a role'),
+  role_id: z.string().min(1, 'Role is required'),
   password: z.string()
     .min(8, 'Password must be at least 8 characters')
     .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
@@ -35,10 +34,7 @@ const registerSchema = z.object({
   employee_id: z.string().optional(),
   parent_student_roll: z.string().optional(),
   relationship: z.string().optional(),
-  purpose: z.string().optional(),
   duration: z.string().optional(),
-  profile_image: z.string().optional(),
-  college_id_upload: z.string().optional()
 }).superRefine((data, ctx) => {
   if (data.password !== data.confirm_password) {
     ctx.addIssue({
@@ -54,7 +50,7 @@ const registerSchema = z.object({
 
   if (roleId === 2) {
     if (!isKluEmail) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Faculty must register using their official KL University email.", path: ["email"] });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Faculty must register using their official KL University email (@kluniversity.in).", path: ["email"] });
     }
     if (!data.employee_id || !data.employee_id.trim()) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Faculty ID is required", path: ["employee_id"] });
@@ -66,7 +62,7 @@ const registerSchema = z.object({
     }
   } else if (roleId === 3) {
     if (!isKluEmail) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Students must register using their official KL University email.", path: ["email"] });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Students must register using their official KL University email (@kluniversity.in).", path: ["email"] });
     }
     if (!data.roll_number || !data.roll_number.trim()) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Student ID is required", path: ["roll_number"] });
@@ -77,7 +73,7 @@ const registerSchema = z.object({
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Department is required", path: ["department"] });
     }
     if (!data.duration || !data.duration.trim()) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Year is required", path: ["duration"] });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Academic Year is required", path: ["duration"] });
     }
   } else if (roleId === 4) {
     if (!data.parent_student_roll || !data.parent_student_roll.trim()) {
@@ -86,27 +82,41 @@ const registerSchema = z.object({
     if (!data.relationship || !data.relationship.trim()) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Relationship status is required", path: ["relationship"] });
     }
-  } else if (roleId === 5) {
-    if (!data.purpose || !data.purpose.trim()) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Purpose of visit is required", path: ["purpose"] });
-    }
-    if (!data.duration || !data.duration.trim()) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Visit duration is required", path: ["duration"] });
-    }
   }
 });
 
-export const RegisterPage = () => {
+export const RegisterPage = ({ roleContext: propRoleContext }) => {
   const { register: registerAuth } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Determine active role from prop or route path
+  const getActiveRoleInfo = () => {
+    const path = location.pathname.toLowerCase();
+    let roleName = propRoleContext || 'Student';
+    if (path.includes('faculty')) roleName = 'Faculty';
+    else if (path.includes('parent')) roleName = 'Parent';
+    else if (path.includes('student')) roleName = 'Student';
+
+    if (roleName === 'Faculty') {
+      return { roleName: 'Faculty', roleId: 2, icon: Briefcase, badge: '👨‍🏫 Faculty Portal', title: 'Create Faculty Account', signInPath: '/faculty/signin' };
+    } else if (roleName === 'Parent') {
+      return { roleName: 'Parent', roleId: 4, icon: Users, badge: '👨‍👩‍👧 Parent Portal', title: 'Create Parent Account', signInPath: '/parent/signin' };
+    } else {
+      return { roleName: 'Student', roleId: 3, icon: GraduationCap, badge: '🎓 Student Portal', title: 'Create Student Account', signInPath: '/student/signin' };
+    }
+  };
+
+  const roleInfo = getActiveRoleInfo();
+  const RoleIcon = roleInfo.icon;
+
   useEffect(() => {
-    document.title = "SecureCampus AI | Create Account";
-  }, []);
+    document.title = `SecureCampus AI | ${roleInfo.title}`;
+  }, [roleInfo]);
 
   const {
     register,
@@ -122,29 +132,29 @@ export const RegisterPage = () => {
       fullname: '',
       email: '',
       phone: '',
-      role_id: '',
-      password: '',
-      confirm_password: '',
-      terms: false,
+      role_id: String(roleInfo.roleId),
       department: '',
       roll_number: '',
       employee_id: '',
       parent_student_roll: '',
       relationship: '',
-      purpose: '',
       duration: '',
-      profile_image: '',
-      college_id_upload: ''
+      password: '',
+      confirm_password: '',
+      terms: false
     }
   });
+
+  // Ensure role_id stays in sync
+  useEffect(() => {
+    setValue('role_id', String(roleInfo.roleId));
+  }, [roleInfo, setValue]);
 
   const watchName = watch('fullname');
   const watchEmail = watch('email');
   const watchPhone = watch('phone');
-  const watchRoleIdStr = watch('role_id');
-  const selectedRoleId = watchRoleIdStr ? parseInt(watchRoleIdStr, 10) : null;
-  const password = watch('password');
-  const confirmPassword = watch('confirm_password');
+  const password = watch('password') || '';
+  const confirmPassword = watch('confirm_password') || '';
   const termsAccepted = watch('terms');
 
   // Trigger beforeunload browser prompt
@@ -159,37 +169,20 @@ export const RegisterPage = () => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [isDirty]);
 
-  // Next Step validation locks
-  const isStep1Valid = watchName && watchEmail && watchPhone && !errors.fullname && !errors.email && !errors.phone;
-  
-  const getIsStep2Valid = () => {
-    if (!selectedRoleId) return false;
-    if (errors.role_id) return false;
-    if (selectedRoleId === 2) return watch('employee_id') && watch('department') && !errors.employee_id && !errors.department;
-    if (selectedRoleId === 3) return watch('roll_number') && watch('department') && watch('duration') && !errors.roll_number && !errors.department && !errors.duration;
-    if (selectedRoleId === 4) return watch('parent_student_roll') && watch('relationship') && !errors.parent_student_roll && !errors.relationship;
-    if (selectedRoleId === 5) return watch('purpose') && watch('duration') && !errors.purpose && !errors.duration;
-    return true;
-  };
-  const isStep2Valid = getIsStep2Valid();
-
   const nextStep = async () => {
-    if (step === 1) {
-      const ok = await trigger(['fullname', 'email', 'phone']);
-      if (ok) setStep(2);
-    } else if (step === 2) {
-      const fields = ['role_id', 'email'];
-      if (selectedRoleId === 2) fields.push('employee_id', 'department');
-      if (selectedRoleId === 3) fields.push('roll_number', 'department', 'duration');
-      if (selectedRoleId === 4) fields.push('parent_student_roll', 'relationship');
-      if (selectedRoleId === 5) fields.push('purpose', 'duration');
-      const ok = await trigger(fields);
-      if (ok) setStep(3);
+    let fieldsToValidate = ['fullname', 'email', 'phone'];
+    if (roleInfo.roleId === 2) fieldsToValidate.push('employee_id', 'department');
+    if (roleInfo.roleId === 3) fieldsToValidate.push('roll_number', 'department', 'duration');
+    if (roleInfo.roleId === 4) fieldsToValidate.push('parent_student_roll', 'relationship');
+
+    const ok = await trigger(fieldsToValidate);
+    if (ok) {
+      setStep(2);
     }
   };
 
   const prevStep = () => {
-    setStep(prev => Math.max(1, prev - 1));
+    setStep(1);
   };
 
   // Password checklist conditions
@@ -211,34 +204,33 @@ export const RegisterPage = () => {
     if (criteria.special) score++;
 
     const levels = {
-      0: { label: 'Very Weak', color: 'bg-brand-danger', textClass: 'text-brand-danger' },
-      1: { label: 'Very Weak', color: 'bg-brand-danger', textClass: 'text-brand-danger' },
-      2: { label: 'Weak', color: 'bg-red-500', textClass: 'text-red-500' },
+      0: { label: 'Very Weak', color: 'bg-red-500', textClass: 'text-red-500' },
+      1: { label: 'Very Weak', color: 'bg-red-500', textClass: 'text-red-500' },
+      2: { label: 'Weak', color: 'bg-red-400', textClass: 'text-red-400' },
       3: { label: 'Medium', color: 'bg-yellow-500', textClass: 'text-yellow-500' },
-      4: { label: 'Strong', color: 'bg-brand-primary', textClass: 'text-brand-primary' },
-      5: { label: 'Very Strong', color: 'bg-brand-success', textClass: 'text-brand-success' }
+      4: { label: 'Strong', color: 'bg-emerald-500', textClass: 'text-emerald-500' },
+      5: { label: 'Very Strong', color: 'bg-emerald-600', textClass: 'text-emerald-600' }
     };
     return { ...levels[score], score };
   };
 
   const { score, label, color, textClass } = getPasswordStrength(password);
   
-  // Submit lock validations
-  const isPasswordValid = criteria.length && criteria.upper && criteria.lower && criteria.number && criteria.special;
-  const isPasswordsMatching = password === confirmPassword;
-  const isFinalStepValid = isPasswordValid && isPasswordsMatching && termsAccepted && !errors.password && !errors.confirm_password;
+  const isPasswordValid = criteria.length && criteria.upper && criteria.lower && criteria.number && criteria.special && !password.includes(' ');
+  const isPasswordsMatching = password === confirmPassword && confirmPassword.length > 0;
+  const isStep2Valid = isPasswordValid && isPasswordsMatching && termsAccepted && !errors.password && !errors.confirm_password;
 
   const onSubmit = async (data) => {
     setLoading(true);
     try {
       const payload = {
         ...data,
-        role_id: parseInt(data.role_id, 10)
+        role_id: roleInfo.roleId
       };
       await registerAuth(payload);
-      navigate('/login');
+      navigate(roleInfo.signInPath);
     } catch {
-      // Handled by AuthContext toast notification
+      // Toast notification displayed by AuthContext
     } finally {
       setLoading(false);
     }
@@ -249,20 +241,52 @@ export const RegisterPage = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
-      className="w-full sm:max-w-[480px] lg:max-w-[500px] z-10"
+      className="w-full sm:max-w-[480px] lg:max-w-[500px] z-10 my-auto"
     >
       <Card className="sm:max-w-none lg:max-w-none">
-        {/* Card Header */}
-        <div className="flex flex-col items-center gap-1.5 mb-6 text-center select-none animate-pulse-slow">
-          <h2 className="text-xl font-bold tracking-tight text-brand-text">Create Account</h2>
-          <p className="text-xs text-brand-secondary">Setup security credentials</p>
+        {/* Back Navigation */}
+        <div className="flex justify-start mb-3">
+          <button
+            type="button"
+            onClick={() => navigate('/select-role')}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border shadow-xs cursor-pointer transition-colors"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              borderColor: 'var(--border-color)',
+              color: 'var(--text-secondary)'
+            }}
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Change Role</span>
+          </button>
         </div>
 
-        <StepIndicator currentStep={step} steps={['Basic', 'Role', 'Security']} />
+        {/* Card Header with Role Badge & Icon */}
+        <div className="flex flex-col items-center gap-2 mb-6 text-center select-none">
+          <div 
+            className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold border shadow-xs"
+            style={{
+              backgroundColor: 'var(--color-primary-light)',
+              borderColor: 'var(--border-color)',
+              color: 'var(--color-primary)'
+            }}
+          >
+            <span>{roleInfo.badge}</span>
+          </div>
+          <h2 className="text-h2 font-extrabold tracking-tight" style={{ color: 'var(--text-main)' }}>
+            {roleInfo.title}
+          </h2>
+          <p className="text-body text-xs max-w-xs" style={{ color: 'var(--text-secondary)' }}>
+            Setup official security credentials for your {roleInfo.roleName} account.
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pt-4">
+        {/* 2-Step Wizard Indicator */}
+        <StepIndicator currentStep={step} steps={['Basic Information', 'Security Setup']} />
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 pt-4 text-left">
           
-          {/* Step 1: Basic Information */}
+          {/* Step 1: Basic Information + Role Fields */}
           {step === 1 && (
             <motion.div
               initial={{ opacity: 0, x: 20 }}
@@ -273,214 +297,178 @@ export const RegisterPage = () => {
                 label="Full Name"
                 placeholder="John Doe"
                 icon={User}
-                autoFocus={true}
-                error={errors.fullname}
-                isValid={watchName?.length >= 3 && !errors.fullname}
-                disabled={loading}
                 required
+                error={errors.fullname}
+                isValid={Boolean(watchName && watchName.length >= 3 && !errors.fullname)}
                 {...register('fullname')}
               />
-              
+
               <Input
                 label="Security Email"
                 type="email"
-                placeholder="operator@securecampus.com"
+                placeholder={roleInfo.roleId === 4 ? "parent@example.com" : "username@kluniversity.in"}
                 icon={Mail}
-                autoComplete="email"
-                error={errors.email}
-                isValid={watchEmail !== '' && !errors.email}
-                disabled={loading}
                 required
+                error={errors.email}
+                isValid={Boolean(watchEmail && !errors.email)}
                 {...register('email')}
               />
 
               <Input
-                label="Phone Number"
+                label="Mobile Number"
                 type="tel"
                 inputMode="numeric"
-                pattern="[0-9]*"
                 maxLength={10}
                 placeholder="9876543210"
                 icon={Phone}
-                error={errors.phone}
-                isValid={watchPhone?.length === 10 && !errors.phone}
-                disabled={loading}
                 required
+                error={errors.phone}
+                isValid={Boolean(watchPhone && watchPhone.length === 10 && !errors.phone)}
                 {...register('phone')}
               />
-            </motion.div>
-          )}
 
-          {/* Step 2: Role Details */}
-          {step === 2 && (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="space-y-4"
-            >
-              <div className="space-y-1">
-                <label className="block text-[13px] font-medium text-brand-secondary uppercase tracking-wider select-none">
-                  Choose System Role <span className="text-brand-danger font-bold">*</span>
-                </label>
-                <select
-                  {...register('role_id')}
-                  className={`h-12 w-full px-4 bg-slate-900/40 border rounded-xl focus-ring-blue text-[15px] outline-none text-brand-text ${
-                    errors.role_id ? 'border-brand-danger' : 'border-[#334155]'
-                  }`}
-                >
-                  <option value="" className="bg-[#1e293b] text-slate-500">Select Role</option>
-                  <option value="2" className="bg-[#1e293b] text-brand-text">Faculty</option>
-                  <option value="3" className="bg-[#1e293b] text-brand-text">Student</option>
-                  <option value="4" className="bg-[#1e293b] text-brand-text">Parent Visitor</option>
-                  <option value="5" className="bg-[#1e293b] text-brand-text">Guest</option>
-                </select>
-                {errors.role_id && <p className="text-[12px] text-brand-danger font-medium pl-1">{errors.role_id.message}</p>}
-              </div>
+              {/* Role-Specific Fields */}
+              {roleInfo.roleId === 3 && (
+                <>
+                  <Input
+                    label="Student ID (Roll Number)"
+                    inputMode="numeric"
+                    maxLength={10}
+                    placeholder="2400000000"
+                    icon={Building2}
+                    required
+                    error={errors.roll_number}
+                    isValid={Boolean(watch('roll_number') && watch('roll_number').length === 10 && !errors.roll_number)}
+                    {...register('roll_number')}
+                  />
 
-              {/* Conditional Fields */}
-              {selectedRoleId && (
-                <div className="p-4 rounded-xl border border-[#334155]/60 bg-slate-900/20 space-y-4 animate-float-medium">
-                  
-                  {/* Faculty */}
-                  {selectedRoleId === 2 && (
-                    <>
-                      <Input
-                        label="Employee ID"
-                        placeholder="FAC-2098"
-                        icon={Terminal}
-                        error={errors.employee_id}
-                        isValid={watch('employee_id') !== '' && !errors.employee_id}
-                        required
-                        {...register('employee_id')}
-                      />
-                      <div className="space-y-1">
-                        <label className="block text-[13px] font-medium text-brand-secondary uppercase tracking-wider select-none">
-                          Department <span className="text-brand-danger font-bold">*</span>
-                        </label>
-                        <select
-                          {...register('department')}
-                          className="h-12 w-full px-4 bg-slate-900/40 border border-[#334155] rounded-xl focus-ring-blue text-brand-text"
-                        >
-                          <option value="" className="bg-[#1e293b] text-slate-500">Choose Department</option>
-                          {DEPARTMENTS.map((d, i) => (
-                            <option key={i} value={d} className="bg-[#1e293b] text-brand-text">{d}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </>
-                  )}
+                  <div className="space-y-1.5">
+                    <label className="block text-label font-semibold uppercase tracking-wider select-none">
+                      Department <span className="text-red-500 font-bold">*</span>
+                    </label>
+                    <select
+                      className="h-12 w-full border text-input rounded-xl text-body transition-all duration-150 outline-none px-4"
+                      style={{
+                        backgroundColor: 'var(--bg-input)',
+                        color: 'var(--text-main)',
+                        borderColor: errors.department ? '#ef4444' : 'var(--border-color)'
+                      }}
+                      {...register('department')}
+                    >
+                      <option value="">Select Department</option>
+                      {DEPARTMENTS.map((dept) => (
+                        <option key={dept} value={dept}>{dept}</option>
+                      ))}
+                    </select>
+                    {errors.department && <p className="text-sm text-red-500 font-semibold pl-1">{errors.department.message}</p>}
+                  </div>
 
-                  {/* Student */}
-                  {selectedRoleId === 3 && (
-                    <>
-                      <Input
-                        label="Student Roll Number"
-                        placeholder="22CSE1092"
-                        icon={Terminal}
-                        error={errors.roll_number}
-                        isValid={watch('roll_number') !== '' && !errors.roll_number}
-                        required
-                        {...register('roll_number')}
-                      />
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <label className="block text-[13px] font-medium text-brand-secondary uppercase tracking-wider select-none">
-                            Department <span className="text-brand-danger font-bold">*</span>
-                          </label>
-                          <select
-                            {...register('department')}
-                            className="h-12 w-full px-4 bg-slate-900/40 border border-[#334155] rounded-xl focus-ring-blue text-brand-text"
-                          >
-                            <option value="" className="bg-[#1e293b] text-slate-500">Select</option>
-                            {DEPARTMENTS.map((d, i) => (
-                              <option key={i} value={d} className="bg-[#1e293b] text-brand-text">{d}</option>
-                            ))}
-                          </select>
-                        </div>
-                        
-                        <div className="space-y-1">
-                          <label className="block text-[13px] font-medium text-brand-secondary uppercase tracking-wider select-none">
-                            Academic Year <span className="text-brand-danger font-bold">*</span>
-                          </label>
-                          <select
-                            {...register('duration')}
-                            className="h-12 w-full px-4 bg-slate-900/40 border border-[#334155] rounded-xl focus-ring-blue text-brand-text"
-                          >
-                            <option value="" className="bg-[#1e293b] text-slate-500">Year</option>
-                            {STUDENT_YEARS.map((y, i) => (
-                              <option key={i} value={y.value} className="bg-[#1e293b] text-brand-text">{y.label}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Parent Visitor */}
-                  {selectedRoleId === 4 && (
-                    <>
-                      <Input
-                        label="Student Roll Number"
-                        placeholder="22CSE1092"
-                        icon={Terminal}
-                        error={errors.parent_student_roll}
-                        isValid={watch('parent_student_roll') !== '' && !errors.parent_student_roll}
-                        required
-                        {...register('parent_student_roll')}
-                      />
-                      <div className="space-y-1">
-                        <label className="block text-[13px] font-medium text-brand-secondary uppercase tracking-wider select-none">
-                          Relationship Status <span className="text-brand-danger font-bold">*</span>
-                        </label>
-                        <select
-                          {...register('relationship')}
-                          className="h-12 w-full px-4 bg-slate-900/40 border border-[#334155] rounded-xl focus-ring-blue text-brand-text"
-                        >
-                          <option value="" className="bg-[#1e293b] text-slate-500">Select Relationship</option>
-                          {RELATIONSHIPS.map((r, i) => (
-                            <option key={i} value={r} className="bg-[#1e293b] text-brand-text">{r}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Guest */}
-                  {selectedRoleId === 5 && (
-                    <>
-                      <Input
-                        label="Purpose of Visit"
-                        placeholder="Research collaboration meeting"
-                        icon={Building2}
-                        error={errors.purpose}
-                        isValid={watch('purpose') !== '' && !errors.purpose}
-                        required
-                        {...register('purpose')}
-                      />
-                      <div className="space-y-1">
-                        <label className="block text-[13px] font-medium text-brand-secondary uppercase tracking-wider select-none">
-                          Expected Duration <span className="text-brand-danger font-bold">*</span>
-                        </label>
-                        <select
-                          {...register('duration')}
-                          className="h-12 w-full px-4 bg-slate-900/40 border border-[#334155] rounded-xl focus-ring-blue text-brand-text"
-                        >
-                          <option value="" className="bg-[#1e293b] text-slate-500">Choose Duration</option>
-                          {GUEST_DURATIONS.map((g, i) => (
-                            <option key={i} value={g} className="bg-[#1e293b] text-brand-text">{g}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </>
-                  )}
-
-                </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-label font-semibold uppercase tracking-wider select-none">
+                      Academic Year <span className="text-red-500 font-bold">*</span>
+                    </label>
+                    <select
+                      className="h-12 w-full border text-input rounded-xl text-body transition-all duration-150 outline-none px-4"
+                      style={{
+                        backgroundColor: 'var(--bg-input)',
+                        color: 'var(--text-main)',
+                        borderColor: errors.duration ? '#ef4444' : 'var(--border-color)'
+                      }}
+                      {...register('duration')}
+                    >
+                      <option value="">Select Academic Year</option>
+                      {STUDENT_YEARS.map((yr) => (
+                        <option key={yr.value} value={yr.value}>{yr.label}</option>
+                      ))}
+                    </select>
+                    {errors.duration && <p className="text-sm text-red-500 font-semibold pl-1">{errors.duration.message}</p>}
+                  </div>
+                </>
               )}
+
+              {roleInfo.roleId === 2 && (
+                <>
+                  <Input
+                    label="Faculty ID (Employee ID)"
+                    inputMode="numeric"
+                    maxLength={5}
+                    placeholder="1234"
+                    icon={Building2}
+                    required
+                    error={errors.employee_id}
+                    isValid={Boolean(watch('employee_id') && !errors.employee_id)}
+                    {...register('employee_id')}
+                  />
+
+                  <div className="space-y-1.5">
+                    <label className="block text-label font-semibold uppercase tracking-wider select-none">
+                      Department <span className="text-red-500 font-bold">*</span>
+                    </label>
+                    <select
+                      className="h-12 w-full border text-input rounded-xl text-body transition-all duration-150 outline-none px-4"
+                      style={{
+                        backgroundColor: 'var(--bg-input)',
+                        color: 'var(--text-main)',
+                        borderColor: errors.department ? '#ef4444' : 'var(--border-color)'
+                      }}
+                      {...register('department')}
+                    >
+                      <option value="">Select Department</option>
+                      {DEPARTMENTS.map((dept) => (
+                        <option key={dept} value={dept}>{dept}</option>
+                      ))}
+                    </select>
+                    {errors.department && <p className="text-sm text-red-500 font-semibold pl-1">{errors.department.message}</p>}
+                  </div>
+                </>
+              )}
+
+              {roleInfo.roleId === 4 && (
+                <>
+                  <Input
+                    label="Student Roll Number"
+                    inputMode="numeric"
+                    maxLength={10}
+                    placeholder="2400000000"
+                    icon={Building2}
+                    required
+                    error={errors.parent_student_roll}
+                    isValid={Boolean(watch('parent_student_roll') && !errors.parent_student_roll)}
+                    {...register('parent_student_roll')}
+                  />
+
+                  <div className="space-y-1.5">
+                    <label className="block text-label font-semibold uppercase tracking-wider select-none">
+                      Relationship to Student <span className="text-red-500 font-bold">*</span>
+                    </label>
+                    <select
+                      className="h-12 w-full border text-input rounded-xl text-body transition-all duration-150 outline-none px-4"
+                      style={{
+                        backgroundColor: 'var(--bg-input)',
+                        color: 'var(--text-main)',
+                        borderColor: errors.relationship ? '#ef4444' : 'var(--border-color)'
+                      }}
+                      {...register('relationship')}
+                    >
+                      <option value="">Select Relationship</option>
+                      {RELATIONSHIPS.map((rel) => (
+                        <option key={rel} value={rel}>{rel}</option>
+                      ))}
+                    </select>
+                    {errors.relationship && <p className="text-sm text-red-500 font-semibold pl-1">{errors.relationship.message}</p>}
+                  </div>
+                </>
+              )}
+
+              <Button type="button" onClick={nextStep} className="w-full mt-4">
+                <span>Continue to Security Setup</span>
+                <ChevronRight className="w-4 h-4" />
+              </Button>
             </motion.div>
           )}
 
-          {/* Step 3: Security & Credentials */}
-          {step === 3 && (
+          {/* Step 2: Security Setup */}
+          {step === 2 && (
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -489,140 +477,119 @@ export const RegisterPage = () => {
               {/* Password Input */}
               <div className="relative">
                 <Input
-                  label="Access Password"
+                  label="Create Password"
                   type={showPassword ? 'text' : 'password'}
                   icon={Lock}
-                  placeholder="••••••••"
-                  autoComplete="new-password"
-                  error={errors.password}
-                  isValid={password !== '' && !errors.password}
-                  disabled={loading}
                   required
+                  placeholder="••••••••"
+                  error={errors.password}
                   {...register('password')}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-[38px] text-[#94a3b8] focus:outline-none"
-                  tabIndex={-1}
+                  className="absolute right-3 top-[38px] text-slate-400 hover:text-slate-200 transition-colors p-1"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
 
-              {/* Confirm Password Input */}
+              {/* Password Strength Progress Bar & Checklist */}
+              {password && (
+                <div className="space-y-2 p-3 rounded-xl border bg-black/10" style={{ borderColor: 'var(--border-color)' }}>
+                  <div className="flex justify-between items-center text-xs font-semibold">
+                    <span style={{ color: 'var(--text-muted)' }}>Password Strength:</span>
+                    <span className={`font-bold ${textClass}`}>{label}</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-slate-700/50 rounded-full overflow-hidden">
+                    <div className={`h-full transition-all duration-300 ${color}`} style={{ width: `${(score / 5) * 100}%` }} />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-1.5 text-[11px] pt-1.5 font-medium">
+                    <span className={criteria.length ? 'text-emerald-500 font-semibold' : 'text-slate-500'}>
+                      {criteria.length ? '✓' : '•'} Min 8 Characters
+                    </span>
+                    <span className={criteria.upper ? 'text-emerald-500 font-semibold' : 'text-slate-500'}>
+                      {criteria.upper ? '✓' : '•'} 1 Uppercase Letter
+                    </span>
+                    <span className={criteria.lower ? 'text-emerald-500 font-semibold' : 'text-slate-500'}>
+                      {criteria.lower ? '✓' : '•'} 1 Lowercase Letter
+                    </span>
+                    <span className={criteria.number ? 'text-emerald-500 font-semibold' : 'text-slate-500'}>
+                      {criteria.number ? '✓' : '•'} 1 Numeric Digit
+                    </span>
+                    <span className={criteria.special ? 'text-emerald-500 font-semibold' : 'text-slate-500'}>
+                      {criteria.special ? '✓' : '•'} 1 Special Character
+                    </span>
+                    <span className={!password.includes(' ') ? 'text-emerald-500 font-semibold' : 'text-red-500'}>
+                      {!password.includes(' ') ? '✓' : '✗'} No Spaces Allowed
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Confirm Password */}
               <div className="relative">
                 <Input
                   label="Confirm Password"
                   type={showConfirmPassword ? 'text' : 'password'}
                   icon={Lock}
+                  required
                   placeholder="••••••••"
                   error={errors.confirm_password}
-                  isValid={confirmPassword !== '' && isPasswordsMatching}
-                  disabled={loading}
-                  required
+                  isValid={isPasswordsMatching}
                   {...register('confirm_password')}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3.5 top-[38px] text-[#94a3b8] focus:outline-none"
-                  tabIndex={-1}
+                  className="absolute right-3 top-[38px] text-slate-400 hover:text-slate-200 transition-colors p-1"
                 >
                   {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
 
-              {/* Match Indicators */}
-              {confirmPassword && (
-                <p className={`text-[11px] font-bold ${isPasswordsMatching ? 'text-brand-success' : 'text-brand-danger'}`}>
-                  {isPasswordsMatching ? '✓ Passwords Match' : '✗ Passwords Do Not Match'}
-                </p>
-              )}
-
-              {/* Password strength checklist display */}
-              <div className="p-4 rounded-xl border border-[#334155]/60 bg-slate-900/20 space-y-3 select-none">
-                <div className="flex justify-between items-center text-[11px] font-semibold tracking-wider">
-                  <span className="text-brand-secondary">STRENGTH METER:</span>
-                  <span className={`${textClass} font-bold uppercase`}>{label}</span>
-                </div>
-                
-                {/* Strength Bar */}
-                <div className="grid grid-cols-5 gap-1.5">
-                  {[1, 2, 3, 4, 5].map((levelIndex) => (
-                    <div key={levelIndex} className={`h-1.5 rounded-full transition-all duration-300 ${score >= levelIndex ? color : 'bg-[#334155]'}`} />
-                  ))}
-                </div>
-
-                <ul className="space-y-1.5 text-[11px] font-semibold text-brand-secondary pt-2">
-                  <li className={criteria.length ? 'text-brand-success' : ''}>{criteria.length ? '✓' : '•'} Minimum 8 characters</li>
-                  <li className={criteria.upper ? 'text-brand-success' : ''}>{criteria.upper ? '✓' : '•'} Contains uppercase letter</li>
-                  <li className={criteria.lower ? 'text-brand-success' : ''}>{criteria.lower ? '✓' : '•'} Contains lowercase letter</li>
-                  <li className={criteria.number ? 'text-brand-success' : ''}>{criteria.number ? '✓' : '•'} Contains number</li>
-                  <li className={criteria.special ? 'text-brand-success' : ''}>{criteria.special ? '✓' : '•'} Contains special character (@$!%*?&#)</li>
-                </ul>
-              </div>
-
-              {/* File Uploads (Mock) */}
-              <FileUpload
-                label="Upload Profile Photo"
-                maxSizeMB={2}
-                allowedTypes={['image/jpeg', 'image/png']}
-                onFileLoaded={(url) => setValue('profile_image', url, { shouldDirty: true })}
-              />
-              
-              <FileUpload
-                label="Upload College ID / Identification"
-                maxSizeMB={5}
-                allowedTypes={['image/jpeg', 'image/png', 'application/pdf']}
-                onFileLoaded={(url) => setValue('college_id_upload', url, { shouldDirty: true })}
-              />
-
-              {/* Terms checkbox */}
-              <div className="flex items-start select-none pt-2">
+              {/* Terms Checkbox */}
+              <div className="flex items-start gap-2.5 pt-1">
                 <input
-                  id="terms"
                   type="checkbox"
-                  disabled={loading}
+                  id="terms"
+                  className="mt-1 w-4 h-4 rounded border-slate-700 text-brand-primary focus:ring-brand-primary cursor-pointer"
                   {...register('terms')}
-                  className="w-4.5 h-4.5 rounded border-[#334155] text-brand-primary focus:ring-blue-500/40 bg-slate-900/40 mt-0.5 cursor-pointer"
                 />
-                <label htmlFor="terms" className="ml-2.5 text-xs text-brand-secondary font-medium leading-tight cursor-pointer">
-                  I agree to the <span className="text-brand-primary font-bold hover:underline">Terms & Conditions</span> and <span className="text-brand-primary font-bold hover:underline">Privacy Policy</span>.
+                <label htmlFor="terms" className="text-xs select-none cursor-pointer leading-tight" style={{ color: 'var(--text-secondary)' }}>
+                  I agree to the <span className="font-semibold text-brand-primary hover:underline">Terms of Service</span> and Privacy Policy.
                 </label>
+              </div>
+              {errors.terms && <p className="text-xs text-red-500 font-semibold">{errors.terms.message}</p>}
+
+              <div className="flex gap-2 pt-2">
+                <Button type="button" variant="secondary" onClick={prevStep} className="w-1/3">
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Back</span>
+                </Button>
+                <Button 
+                  type="submit" 
+                  loading={loading} 
+                  loadingText="Creating Account..." 
+                  disabled={loading || !isStep2Valid}
+                  className="w-2/3"
+                >
+                  Create Account
+                </Button>
               </div>
             </motion.div>
           )}
 
-          {/* Navigation buttons */}
-          <div className="flex justify-between items-center gap-4 pt-4 border-t border-[#334155]/20 select-none">
-            {step > 1 ? (
-              <Button variant="secondary" onClick={prevStep} disabled={loading} className="w-1/3">
-                <ChevronLeft className="w-4 h-4 inline" /> Prev
-              </Button>
-            ) : (
-              <div className="w-1/3" />
-            )}
-            
-            {step < 3 ? (
-              <Button variant="primary" onClick={nextStep} disabled={step === 1 ? !isStep1Valid : !isStep2Valid} className="w-2/3">
-                Next <ChevronRight className="w-4 h-4 inline" />
-              </Button>
-            ) : (
-              <Button type="submit" variant="primary" loading={loading} loadingText="Creating Account..." disabled={!isFinalStepValid || loading} className="w-2/3">
-                Create Account
-              </Button>
-            )}
+          {/* Footer Link */}
+          <div className="text-center pt-2 select-none border-t" style={{ borderColor: 'var(--border-color)' }}>
+            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+              Already registered?{' '}
+              <Link to={roleInfo.signInPath} className="font-bold hover:underline" style={{ color: 'var(--color-primary)' }}>
+                Sign In to {roleInfo.roleName} Portal
+              </Link>
+            </p>
           </div>
-
-          {/* Sign in footer */}
-          <div className="text-center text-xs text-brand-secondary border-t border-[#334155]/20 pt-4 select-none">
-            Already have an account?{' '}
-            <Link to="/login" className="font-bold text-brand-primary hover:underline">
-              Sign In
-            </Link>
-          </div>
-
         </form>
       </Card>
     </motion.div>

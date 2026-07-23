@@ -25,7 +25,7 @@ from app.repositories.repos import (
 )
 from app.services.juniper_service import JuniperDriver
 from app.schemas.schemas import (
-    UserRegister, UserLogin, VerifyOTPRequest, ResetPasswordRequest,
+    UserRegister, UserLogin, VerifyOTPRequest, ResetPasswordRequest, UserResponse,
     DeviceCreate, SubnetCreate, SecurityPolicyCreate, ReportRequestCreate,
     VisitorRequestCreate, ExamSessionCreate, ExamAccessRequest
 )
@@ -73,7 +73,7 @@ class AuthService:
         if existing_user_email:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="An account with this email already exists. Please Login."
+                detail="This email address is already registered."
             )
 
         # Check duplicate phone
@@ -91,7 +91,7 @@ class AuthService:
             if existing_student:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
-                    detail="This Student ID is already registered."
+                    detail="This ID already exists."
                 )
 
         # Check duplicate Faculty ID (employee_id)
@@ -101,7 +101,7 @@ class AuthService:
             if existing_faculty:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
-                    detail="This Faculty ID is already registered."
+                    detail="This ID already exists."
                 )
 
         # Get system settings for approval mode
@@ -138,7 +138,14 @@ class AuthService:
             ip=ip_address
         )
         
-        # Create initial notification
+        LogRepo.log(
+            db,
+            user_id=created_user.id,
+            action="NOTIFICATION_SENT",
+            description=f"Welcome notification dispatched to user: {created_user.email}",
+            ip=ip_address
+        )
+
         NotificationRepo.create(
             db,
             user_id=created_user.id,
@@ -151,14 +158,59 @@ class AuthService:
 
     @staticmethod
     def login(db: Session, payload: UserLogin, client_ip: str) -> dict:
-        email = payload.email.strip().lower()
-        user = UserRepo.get_by_email(db, email)
-        if not user:
-            LogRepo.log(db, user_id=None, action="LOGIN_FAILED", description=f"Failed login attempt for non-existent email: {email}", ip=client_ip)
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="No account found with this email address."
-            )
+        raw_identifier = payload.email.strip()
+        is_phone = raw_identifier.isdigit() or (raw_identifier.startswith("+") and raw_identifier[1:].isdigit())
+
+        if is_phone:
+            user = UserRepo.get_by_phone(db, raw_identifier)
+            if not user:
+                LogRepo.log(db, user_id=None, action="LOGIN_FAILED", description=f"Failed login attempt for non-existent phone: {raw_identifier}", ip=client_ip)
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Phone number not found."
+                )
+        else:
+            email = raw_identifier.lower()
+            user = UserRepo.get_by_email(db, email)
+            if not user:
+                LogRepo.log(db, user_id=None, action="LOGIN_FAILED", description=f"Failed login attempt for non-existent email: {email}", ip=client_ip)
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Email address not found."
+                )
+
+        # Portal Role Isolation Checks
+        portal = (payload.portal or "").strip()
+        role_name = user.role.role_name if user.role else ""
+
+        if portal in ["Admin", "Super Admin"]:
+            if user.role_id != 1 and role_name != "Super Admin":
+                LogRepo.log(db, user_id=user.id, action="PORTAL_ACCESS_DENIED", description=f"Non-admin user ({user.email}) attempted Admin login portal.", ip=client_ip)
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied. This portal is restricted to SecureCampus administrators."
+                )
+        elif portal == "Student":
+            if user.role_id != 3 and role_name != "Student":
+                LogRepo.log(db, user_id=user.id, action="PORTAL_ACCESS_DENIED", description=f"Non-student user ({user.email}) attempted Student login portal.", ip=client_ip)
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied. This portal is restricted to Students."
+                )
+        elif portal == "Faculty":
+            if user.role_id != 2 and role_name != "Faculty":
+                LogRepo.log(db, user_id=user.id, action="PORTAL_ACCESS_DENIED", description=f"Non-faculty user ({user.email}) attempted Faculty login portal.", ip=client_ip)
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied. This portal is restricted to Faculty members."
+                )
+        elif portal == "Parent":
+            if user.role_id != 4 and role_name != "Parent Visitor":
+                LogRepo.log(db, user_id=user.id, action="PORTAL_ACCESS_DENIED", description=f"Non-parent user ({user.email}) attempted Parent login portal.", ip=client_ip)
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied. This portal is restricted to Parents."
+                )
 
         # Check if account is locked or suspended
         if user.account_status == "Locked" or user.account_locked:
@@ -283,7 +335,7 @@ class AuthService:
         return {
             "access_token": access_token,
             "refresh_token": refresh_token,
-            "user": user
+            "user": UserResponse.model_validate(user)
         }
 
     @staticmethod

@@ -230,7 +230,7 @@ export const LoginPage = ({ roleContext }) => {
 
     setLoading(true);
     try {
-      const res = await login(data.email, data.password, data.rememberMe);
+      const res = await login(data.email, data.password, data.rememberMe, roleContext);
 
       if (res && res.mfa_required) {
         setMfaData(res);
@@ -304,6 +304,13 @@ export const LoginPage = ({ roleContext }) => {
     }
   };
 
+  const handleCreateAccount = () => {
+    if (roleContext === 'Student') navigate('/student/register');
+    else if (roleContext === 'Faculty') navigate('/faculty/register');
+    else if (roleContext === 'Parent') navigate('/parent/register');
+    else navigate('/select-role');
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -318,20 +325,28 @@ export const LoginPage = ({ roleContext }) => {
             <div 
               className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold mb-1 border shadow-xs"
               style={{
-                backgroundColor: 'var(--color-primary-light)',
-                borderColor: 'var(--border-color)',
-                color: 'var(--color-primary)'
+                backgroundColor: roleContext === 'Admin' ? 'rgba(239, 68, 68, 0.1)' : 'var(--color-primary-light)',
+                borderColor: roleContext === 'Admin' ? 'rgba(239, 68, 68, 0.3)' : 'var(--border-color)',
+                color: roleContext === 'Admin' ? '#ef4444' : 'var(--color-primary)'
               }}
             >
-              <span>{roleContext} Portal Sign In</span>
+              <span>{roleContext === 'Admin' ? '🛡️ Administrator Portal' : `${roleContext} Portal Sign In`}</span>
             </div>
           )}
           <h2 className="text-h2 font-extrabold tracking-tight" style={{ color: 'var(--text-main)' }}>
-            {roleContext ? `${roleContext} Sign In` : 'Sign In'}
+            {roleContext === 'Admin' ? 'Admin Portal Sign In' : (roleContext ? `${roleContext} Sign In` : 'Sign In')}
           </h2>
           <p className="text-body text-sm" style={{ color: 'var(--text-secondary)' }}>
-            {roleContext ? `Sign in to access your ${roleContext} portal` : 'Sign in to continue'}
+            {roleContext === 'Admin'
+              ? 'Restricted portal for SecureCampus AI administrators.'
+              : (roleContext ? `Sign in to access your ${roleContext} portal` : 'Sign in to continue')}
           </p>
+          
+          {roleContext === 'Admin' && (
+            <div className="mt-2 px-3 py-1.5 rounded-xl border border-red-500/20 bg-red-500/10 text-red-400 text-xs font-medium max-w-sm">
+              <span className="font-bold">Demo Credentials:</span> <code className="text-white bg-black/30 px-1.5 py-0.5 rounded">admin@securecampus.com</code> / <code className="text-white bg-black/30 px-1.5 py-0.5 rounded">Admin@123</code>
+            </div>
+          )}
         </div>
 
         {/* Error Banner when Account Not Found or Credentials Failed */}
@@ -341,7 +356,7 @@ export const LoginPage = ({ roleContext }) => {
             {loginErrorMessage.includes("No account found") && (
               <button 
                 type="button" 
-                onClick={() => navigate('/register')}
+                onClick={handleCreateAccount}
                 className="px-3 py-1 rounded-lg bg-amber-500 text-white font-bold hover:bg-amber-600 cursor-pointer shrink-0 transition-colors shadow-xs"
               >
                 Create Account
@@ -556,7 +571,7 @@ export const LoginPage = ({ roleContext }) => {
         {/* Create Account Button */}
         <motion.button
           type="button"
-          onClick={() => navigate('/register')}
+          onClick={handleCreateAccount}
           disabled={loading}
           whileHover={{ y: -2, scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -578,7 +593,7 @@ export const LoginPage = ({ roleContext }) => {
             e.currentTarget.style.color = 'var(--color-primary)';
           }}
         >
-          Create Account
+          {roleContext ? `Create ${roleContext} Account` : 'Create Account'}
         </motion.button>
       </Card>
 

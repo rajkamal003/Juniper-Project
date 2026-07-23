@@ -78,8 +78,8 @@ export const RoleSelectionPage = () => {
         animate="animate"
         className="flex flex-col items-center justify-center text-center max-w-4xl mx-auto px-4 my-auto w-full"
       >
-        {/* Back Button */}
-        <motion.div variants={itemVariants} className="w-full flex justify-start mb-4">
+        {/* Back & Admin Portal Bar */}
+        <motion.div variants={itemVariants} className="w-full flex items-center justify-between mb-4">
           <motion.button
             whileHover={{ x: -3 }}
             onClick={() => navigate('/')}
@@ -92,6 +92,15 @@ export const RoleSelectionPage = () => {
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back to Portal Home</span>
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            onClick={() => navigate('/admin/signin')}
+            className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 cursor-pointer transition-colors shadow-xs"
+          >
+            <Shield className="w-3.5 h-3.5" />
+            <span>Administrator Portal</span>
           </motion.button>
         </motion.div>
 

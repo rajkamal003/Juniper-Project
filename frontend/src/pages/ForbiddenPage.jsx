@@ -23,8 +23,8 @@ export const ForbiddenPage = () => {
         <div className="space-y-2">
           <h1 className="text-4xl font-extrabold tracking-tight text-brand-danger">403</h1>
           <h2 className="text-xl font-bold tracking-tight text-brand-text">Access Denied</h2>
-          <p className="text-xs text-brand-secondary leading-relaxed">
-            You do not have permission to access this page. Your current session credentials do not possess the required security level clearances.
+          <p className="text-sm text-brand-secondary leading-relaxed">
+            You do not have permission to access this portal.
           </p>
         </div>
 
@@ -33,10 +33,10 @@ export const ForbiddenPage = () => {
           <Button
             onClick={() => navigate('/dashboard')}
             variant="secondary"
-            className="w-full sm:w-auto px-6 h-11 text-xs flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-6 h-11 text-xs flex items-center justify-center gap-2 cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Dashboard</span>
+            <span>Return to My Dashboard</span>
           </Button>
         </div>
       </div>

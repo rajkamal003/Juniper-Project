@@ -55,18 +55,55 @@ app.include_router(analytics_router)
 @app.on_event("startup")
 def run_db_migrations():
     from app.database import engine
-    from sqlalchemy import text
+    from app.models.models import Base
+    from sqlalchemy import text, inspect
+    
+    # Create all missing tables automatically
+    Base.metadata.create_all(bind=engine)
+    
     with engine.begin() as conn:
         try:
+            inspector = inspect(conn)
+            user_cols = {col['name'] for col in inspector.get_columns("users")} if inspector.has_table("users") else set()
+
             if "mysql" in str(engine.url):
-                conn.execute(text("ALTER TABLE users MODIFY COLUMN profile_image TEXT NULL;"))
-                conn.execute(text("ALTER TABLE users MODIFY COLUMN college_id_upload TEXT NULL;"))
+                if "profile_image" in user_cols:
+                    conn.execute(text("ALTER TABLE users MODIFY COLUMN profile_image TEXT NULL;"))
+                if "college_id_upload" in user_cols:
+                    conn.execute(text("ALTER TABLE users MODIFY COLUMN college_id_upload TEXT NULL;"))
                 print("MySQL schema migrated: profile_image & college_id_upload altered to TEXT.")
-            
+
+            if "mfa_secret" not in user_cols:
+                conn.execute(text("ALTER TABLE users ADD COLUMN mfa_secret VARCHAR(255) NULL;"))
+                print("Migration: Added mfa_secret column to users table.")
+
+            if "is_mfa_enabled" not in user_cols:
+                conn.execute(text("ALTER TABLE users ADD COLUMN is_mfa_enabled BOOLEAN DEFAULT FALSE;"))
+                print("Migration: Added is_mfa_enabled column to users table.")
+
             # Clean up old mock HTTP URLs so they don't render as broken images
             conn.execute(text("UPDATE users SET profile_image = NULL WHERE profile_image LIKE 'http%';"))
             conn.execute(text("UPDATE users SET college_id_upload = NULL WHERE college_id_upload LIKE 'http%';"))
             print("Database cleanup: Reset legacy mock image URLs to NULL.")
+
+            # Seed default Roles and Super Admin user if missing
+            from app.utils.auth_utils import hash_password
+            conn.execute(text("""
+                INSERT IGNORE INTO roles (id, role_name, description) VALUES 
+                (1, 'Super Admin', 'Super Admin'),
+                (2, 'Faculty', 'Faculty'),
+                (3, 'Student', 'Student'),
+                (4, 'Parent Visitor', 'Parent Visitor'),
+                (5, 'Guest', 'Guest');
+            """))
+            admin_check = conn.execute(text("SELECT id FROM users WHERE email = 'admin@securecampus.com';")).fetchone()
+            if not admin_check:
+                admin_hash = hash_password("Admin@123")
+                conn.execute(text(
+                    "INSERT INTO users (fullname, email, phone, password_hash, role_id, account_status, is_verified, is_first_login) "
+                    "VALUES ('Super Admin', 'admin@securecampus.com', '9988776655', :pwd, 1, 'Active', 1, 0);"
+                ), {"pwd": admin_hash})
+                print("Seeded default Super Admin user: admin@securecampus.com")
         except Exception as e:
             print("DB migration warning / ignored:", e)
 

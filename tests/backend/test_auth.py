@@ -82,26 +82,26 @@ def client(db):
 def test_register_student_success(client):
     payload = {
         "fullname": "Student User",
-        "email": "student@securecampus.com",
-        "phone": "+919988776655",
+        "email": "student@kluniversity.in",
+        "phone": "9988776655",
         "role_id": 3, # Student
         "password": "Password123!",
         "confirm_password": "Password123!",
-        "roll_number": "22CSE1042",
+        "roll_number": "2200030042",
         "department": "CSE",
         "duration": "2" # 2nd Year
     }
     response = client.post("/api/auth/register", json=payload)
     assert response.status_code == 201
-    assert response.json()["email"] == "student@securecampus.com"
+    assert response.json()["email"] == "student@kluniversity.in"
     assert response.json()["account_status"] == "Active"
 
 def test_register_missing_fields_by_role(client):
     # Registering Faculty (role_id=2) without employee_id
     payload = {
         "fullname": "Faculty User",
-        "email": "faculty@securecampus.com",
-        "phone": "+919988776655",
+        "email": "faculty@kluniversity.in",
+        "phone": "9988776655",
         "role_id": 2,
         "password": "Password123!",
         "confirm_password": "Password123!",
@@ -114,8 +114,8 @@ def test_register_missing_fields_by_role(client):
 def test_register_password_strength_check(client):
     payload = {
         "fullname": "Weak User",
-        "email": "weak@securecampus.com",
-        "phone": "+919988776655",
+        "email": "weak@kluniversity.in",
+        "phone": "9988776655",
         "role_id": 5, # Guest
         "password": "weak", # No capital, no number, no special, < 8 chars
         "confirm_password": "weak",
@@ -128,12 +128,12 @@ def test_register_password_strength_check(client):
 def test_register_duplicate_email(client):
     payload = {
         "fullname": "Student User",
-        "email": "student@securecampus.com",
-        "phone": "+919988776655",
+        "email": "student@kluniversity.in",
+        "phone": "9988776655",
         "role_id": 3,
         "password": "Password123!",
         "confirm_password": "Password123!",
-        "roll_number": "22CSE1042",
+        "roll_number": "2200030042",
         "department": "CSE",
         "duration": "2"
     }
@@ -141,19 +141,148 @@ def test_register_duplicate_email(client):
     assert response1.status_code == 201
     
     response2 = client.post("/api/auth/register", json=payload)
-    assert response2.status_code == 400
-    assert "already registered" in response2.json()["detail"]
+    assert response2.status_code == 409
+    assert response2.json()["detail"] == "This email address is already registered."
+
+def test_register_duplicate_phone(client):
+    payload1 = {
+        "fullname": "Student User 1",
+        "email": "student1@kluniversity.in",
+        "phone": "9988776655",
+        "role_id": 3,
+        "password": "Password123!",
+        "confirm_password": "Password123!",
+        "roll_number": "2200030041",
+        "department": "CSE",
+        "duration": "2"
+    }
+    payload2 = {
+        "fullname": "Student User 2",
+        "email": "student2@kluniversity.in",
+        "phone": "9988776655",
+        "role_id": 3,
+        "password": "Password123!",
+        "confirm_password": "Password123!",
+        "roll_number": "2200030042",
+        "department": "CSE",
+        "duration": "2"
+    }
+    client.post("/api/auth/register", json=payload1)
+    response2 = client.post("/api/auth/register", json=payload2)
+    assert response2.status_code == 409
+    assert response2.json()["detail"] == "This phone number is already registered."
+
+def test_register_duplicate_student_id(client):
+    payload1 = {
+        "fullname": "Student User 1",
+        "email": "student1@kluniversity.in",
+        "phone": "9988776651",
+        "role_id": 3,
+        "password": "Password123!",
+        "confirm_password": "Password123!",
+        "roll_number": "2200030042",
+        "department": "CSE",
+        "duration": "2"
+    }
+    payload2 = {
+        "fullname": "Student User 2",
+        "email": "student2@kluniversity.in",
+        "phone": "9988776652",
+        "role_id": 3,
+        "password": "Password123!",
+        "confirm_password": "Password123!",
+        "roll_number": "2200030042",
+        "department": "CSE",
+        "duration": "2"
+    }
+    client.post("/api/auth/register", json=payload1)
+    response2 = client.post("/api/auth/register", json=payload2)
+    assert response2.status_code == 409
+    assert response2.json()["detail"] == "This ID already exists."
+
+def test_portal_role_isolation_and_admin_signin(client, db):
+    from app.utils.auth_utils import hash_password
+    admin = User(
+        fullname="Super Admin",
+        email="admin@securecampus.com",
+        phone="9988776655",
+        password_hash=hash_password("Admin@123"),
+        role_id=1,
+        account_status="Active"
+    )
+    db.add(admin)
+    db.commit()
+
+    # 1. Register student
+    student_payload = {
+        "fullname": "Student User",
+        "email": "student@kluniversity.in",
+        "phone": "8877665544",
+        "role_id": 3,
+        "password": "Password123!",
+        "confirm_password": "Password123!",
+        "roll_number": "2200030042",
+        "department": "CSE",
+        "duration": "2"
+    }
+    client.post("/api/auth/register", json=student_payload)
+
+    # 2. Admin logs in via Admin portal -> Success
+    admin_login = client.post("/api/auth/login", json={
+        "email": "admin@securecampus.com",
+        "password": "Admin@123",
+        "portal": "Admin"
+    })
+    assert admin_login.status_code == 200
+    assert admin_login.json()["user"]["email"] == "admin@securecampus.com"
+
+    # 3. Student attempts login via Admin portal -> Blocked with 403
+    student_admin_login = client.post("/api/auth/login", json={
+        "email": "student@kluniversity.in",
+        "password": "Password123!",
+        "portal": "Admin"
+    })
+    assert student_admin_login.status_code == 403
+    assert student_admin_login.json()["detail"] == "Access denied. This portal is restricted to SecureCampus administrators."
+
+    # 4. Student logs in via Student portal -> Success
+    student_login = client.post("/api/auth/login", json={
+        "email": "student@kluniversity.in",
+        "password": "Password123!",
+        "portal": "Student"
+    })
+    assert student_login.status_code == 200
+
+    # 5. Student attempts login via Faculty portal -> Blocked with 403
+    student_fac_login = client.post("/api/auth/login", json={
+        "email": "student@kluniversity.in",
+        "password": "Password123!",
+        "portal": "Faculty"
+    })
+    assert student_fac_login.status_code == 403
+    assert student_fac_login.json()["detail"] == "Access denied. This portal is restricted to Faculty members."
+
+def test_login_validation_error_messages(client):
+    # Non-existent email
+    res_email = client.post("/api/auth/login", json={"email": "nonexistent@kluniversity.in", "password": "Password123!"})
+    assert res_email.status_code == 404
+    assert res_email.json()["detail"] == "Email address not found."
+
+    # Non-existent phone
+    res_phone = client.post("/api/auth/login", json={"email": "9999999999", "password": "Password123!"})
+    assert res_phone.status_code == 404
+    assert res_phone.json()["detail"] == "Phone number not found."
 
 def test_login_success(client):
     # First register user
     register_payload = {
         "fullname": "Student User",
-        "email": "student@securecampus.com",
-        "phone": "+919988776655",
+        "email": "student@kluniversity.in",
+        "phone": "9988776655",
         "role_id": 3,
         "password": "Password123!",
         "confirm_password": "Password123!",
-        "roll_number": "22CSE1042",
+        "roll_number": "2200030042",
         "department": "CSE",
         "duration": "2"
     }
@@ -161,24 +290,24 @@ def test_login_success(client):
 
     # Attempt login
     login_payload = {
-        "email": "student@securecampus.com",
+        "email": "student@kluniversity.in",
         "password": "Password123!"
     }
     response = client.post("/api/auth/login", json=login_payload)
     assert response.status_code == 200
     assert "access_token" in response.json()
     assert "refresh_token" in response.json()
-    assert response.json()["user"]["email"] == "student@securecampus.com"
+    assert response.json()["user"]["email"] == "student@kluniversity.in"
 
 def test_login_locked_after_failed_attempts(client):
     register_payload = {
         "fullname": "Student User",
-        "email": "student@securecampus.com",
-        "phone": "+919988776655",
+        "email": "student@kluniversity.in",
+        "phone": "9988776655",
         "role_id": 3,
         "password": "Password123!",
         "confirm_password": "Password123!",
-        "roll_number": "22CSE1042",
+        "roll_number": "2200030042",
         "department": "CSE",
         "duration": "2"
     }
@@ -186,7 +315,7 @@ def test_login_locked_after_failed_attempts(client):
 
     # Trigger 5 failed login attempts
     login_payload = {
-        "email": "student@securecampus.com",
+        "email": "student@kluniversity.in",
         "password": "WrongPassword123!"
     }
     
@@ -202,44 +331,44 @@ def test_login_locked_after_failed_attempts(client):
 def test_forgot_password_otp_cooldown(client):
     register_payload = {
         "fullname": "Student User",
-        "email": "student@securecampus.com",
-        "phone": "+919988776655",
+        "email": "student@kluniversity.in",
+        "phone": "9988776655",
         "role_id": 3,
         "password": "Password123!",
         "confirm_password": "Password123!",
-        "roll_number": "22CSE1042",
+        "roll_number": "2200030042",
         "department": "CSE",
         "duration": "2"
     }
     client.post("/api/auth/register", json=register_payload)
 
     # 1st OTP Request
-    resp1 = client.post("/api/auth/forgot-password", json={"email": "student@securecampus.com"})
+    resp1 = client.post("/api/auth/forgot-password", json={"email": "student@kluniversity.in"})
     assert resp1.status_code == 200
 
     # Immediate 2nd OTP Request (should hit rate limit cooldown of 60s)
-    resp2 = client.post("/api/auth/forgot-password", json={"email": "student@securecampus.com"})
+    resp2 = client.post("/api/auth/forgot-password", json={"email": "student@kluniversity.in"})
     assert resp2.status_code == 429
     assert "wait 60 seconds" in resp2.json()["detail"]
 
 def test_verify_otp_max_attempts(client, db):
     register_payload = {
         "fullname": "Student User",
-        "email": "student@securecampus.com",
-        "phone": "+919988776655",
+        "email": "student@kluniversity.in",
+        "phone": "9988776655",
         "role_id": 3,
         "password": "Password123!",
         "confirm_password": "Password123!",
-        "roll_number": "22CSE1042",
+        "roll_number": "2200030042",
         "department": "CSE",
         "duration": "2"
     }
     client.post("/api/auth/register", json=register_payload)
-    client.post("/api/auth/forgot-password", json={"email": "student@securecampus.com"})
+    client.post("/api/auth/forgot-password", json={"email": "student@kluniversity.in"})
 
     # 1st attempt: Invalid OTP
     resp1 = client.post("/api/auth/verify-otp", json={
-        "email": "student@securecampus.com",
+        "email": "student@kluniversity.in",
         "otp": "000000"
     })
     assert resp1.status_code == 400
@@ -247,7 +376,7 @@ def test_verify_otp_max_attempts(client, db):
 
     # 2nd attempt: Invalid OTP
     resp2 = client.post("/api/auth/verify-otp", json={
-        "email": "student@securecampus.com",
+        "email": "student@kluniversity.in",
         "otp": "000000"
     })
     assert resp2.status_code == 400
@@ -255,7 +384,7 @@ def test_verify_otp_max_attempts(client, db):
 
     # 3rd attempt: Max attempts exceeded
     resp3 = client.post("/api/auth/verify-otp", json={
-        "email": "student@securecampus.com",
+        "email": "student@kluniversity.in",
         "otp": "000000"
     })
     assert resp3.status_code == 400
@@ -265,26 +394,26 @@ def test_password_reset_flow_success(client, db):
     # 1. Register User
     register_payload = {
         "fullname": "Student User",
-        "email": "student@securecampus.com",
-        "phone": "+919988776655",
+        "email": "student@kluniversity.in",
+        "phone": "9988776655",
         "role_id": 3,
         "password": "Password123!",
         "confirm_password": "Password123!",
-        "roll_number": "22CSE1042",
+        "roll_number": "2200030042",
         "department": "CSE",
         "duration": "2"
     }
     client.post("/api/auth/register", json=register_payload)
 
     # 2. Request OTP
-    resp_forgot = client.post("/api/auth/forgot-password", json={"email": "student@securecampus.com"})
+    resp_forgot = client.post("/api/auth/forgot-password", json={"email": "student@kluniversity.in"})
     assert resp_forgot.status_code == 200
     otp_code = resp_forgot.json()["debug_otp"]
     assert otp_code is not None
 
     # 3. Verify OTP
     resp_verify = client.post("/api/auth/verify-otp", json={
-        "email": "student@securecampus.com",
+        "email": "student@kluniversity.in",
         "otp": otp_code
     })
     assert resp_verify.status_code == 200
@@ -293,7 +422,7 @@ def test_password_reset_flow_success(client, db):
 
     # 4. Reset Password
     resp_reset = client.post("/api/auth/reset-password", json={
-        "email": "student@securecampus.com",
+        "email": "student@kluniversity.in",
         "reset_token": reset_token,
         "new_password": "NewSecurePassword123!",
         "confirm_password": "NewSecurePassword123!"
@@ -302,7 +431,7 @@ def test_password_reset_flow_success(client, db):
 
     # 5. Login with new password
     resp_login = client.post("/api/auth/login", json={
-        "email": "student@securecampus.com",
+        "email": "student@kluniversity.in",
         "password": "NewSecurePassword123!"
     })
     assert resp_login.status_code == 200
@@ -312,12 +441,12 @@ def test_remember_me_functionality(client, db):
     # 1. Register User
     register_payload = {
         "fullname": "Student User",
-        "email": "student@securecampus.com",
-        "phone": "+919988776655",
+        "email": "student@kluniversity.in",
+        "phone": "9988776655",
         "role_id": 3,
         "password": "Password123!",
         "confirm_password": "Password123!",
-        "roll_number": "22CSE1042",
+        "roll_number": "2200030042",
         "department": "CSE",
         "duration": "2"
     }
@@ -325,7 +454,7 @@ def test_remember_me_functionality(client, db):
 
     # 2. Login with Remember Me = True
     resp_remember = client.post("/api/auth/login", json={
-        "email": "student@securecampus.com",
+        "email": "student@kluniversity.in",
         "password": "Password123!",
         "remember_me": True
     })
@@ -343,7 +472,7 @@ def test_remember_me_functionality(client, db):
 
     # 3. Login with Remember Me = False
     resp_no_remember = client.post("/api/auth/login", json={
-        "email": "student@securecampus.com",
+        "email": "student@kluniversity.in",
         "password": "Password123!",
         "remember_me": False
     })

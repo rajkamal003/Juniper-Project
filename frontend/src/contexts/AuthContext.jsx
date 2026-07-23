@@ -95,10 +95,31 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  const login = async (email, password, rememberMe) => {
+const extractErrorMessage = (error, defaultMsg) => {
+  const detail = error.response?.data?.detail;
+  if (!detail) return defaultMsg;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    const messages = detail.map(item => {
+      if (typeof item === 'string') return item;
+      if (item && item.msg) {
+        const field = item.loc && item.loc.length > 1 ? `${item.loc[item.loc.length - 1]}: ` : '';
+        return `${field}${item.msg}`;
+      }
+      return JSON.stringify(item);
+    });
+    return messages.join(', ');
+  }
+  if (typeof detail === 'object' && detail.msg) {
+    return detail.msg;
+  }
+  return defaultMsg;
+};
+
+  const login = async (email, password, rememberMe = false, portal = null) => {
     setLoading(true);
     try {
-      // Gather browser/device info for session auditing (Change 3)
+      // Gather browser/device info for session auditing
       const userAgent = navigator.userAgent;
       let browser = "Unknown Browser";
       let os = "Unknown OS";
@@ -117,11 +138,12 @@ export const AuthProvider = ({ children }) => {
       const loginPayload = {
         email,
         password,
+        portal: portal,
         remember_me: rememberMe,
         device_name: "Desktop Web client",
         browser: browser,
         operating_system: os,
-        ip_address: "127.0.0.1" // Will be overridden by client IP in backend routes
+        ip_address: "127.0.0.1"
       };
 
       const response = await api.post('/api/auth/login', loginPayload);
@@ -153,7 +175,7 @@ export const AuthProvider = ({ children }) => {
       toast.success('Logged in successfully!');
       return userData;
     } catch (error) {
-      const errorMsg = error.response?.data?.detail || 'Login failed. Please try again.';
+      const errorMsg = extractErrorMessage(error, 'Login failed. Please try again.');
       toast.error(errorMsg);
       throw error;
     } finally {
@@ -182,7 +204,7 @@ export const AuthProvider = ({ children }) => {
       toast.success('Faculty Authenticator Verification Successful!');
       return userData;
     } catch (error) {
-      const errorMsg = error.response?.data?.detail || 'Invalid Authenticator Code. Please try again.';
+      const errorMsg = extractErrorMessage(error, 'Invalid Authenticator Code. Please try again.');
       toast.error(errorMsg);
       throw error;
     } finally {
@@ -221,7 +243,7 @@ export const AuthProvider = ({ children }) => {
       toast.success('Registration successful!');
       return response.data;
     } catch (error) {
-      const errorMsg = error.response?.data?.detail || 'Registration failed. Please try again.';
+      const errorMsg = extractErrorMessage(error, 'Registration failed. Please try again.');
       toast.error(errorMsg);
       throw error;
     } finally {
