@@ -1,20 +1,33 @@
 // frontend/src/components/ui/LoadingSkeleton.jsx
 import React from 'react';
+import { motion } from 'framer-motion';
 
 export const LoadingSkeleton = ({ variant = 'card', count = 3, className = '' }) => {
   const items = Array.from({ length: count });
 
+  const skeletonPulse = {
+    animate: {
+      opacity: [0.4, 0.85, 0.4],
+      transition: { duration: 1.5, repeat: Infinity, ease: "easeInOut" }
+    }
+  };
+
   if (variant === 'table') {
     return (
-      <div className={`space-y-4 w-full animate-pulse ${className}`}>
+      <div className={`space-y-3 w-full ${className}`}>
         {items.map((_, i) => (
-          <div key={i} className="flex gap-4 items-center justify-between w-full h-8 px-4 rounded-lg bg-slate-800/40">
-            <div className="h-3 bg-slate-700/60 rounded w-1/12"></div>
-            <div className="h-3 bg-slate-700/60 rounded w-3/12"></div>
-            <div className="h-3 bg-slate-700/60 rounded w-2/12"></div>
-            <div className="h-3 bg-slate-700/60 rounded w-2/12"></div>
-            <div className="h-3 bg-slate-700/60 rounded w-1/12"></div>
-          </div>
+          <motion.div 
+            key={i} 
+            {...skeletonPulse}
+            className="flex gap-4 items-center justify-between w-full h-12 px-5 rounded-xl border"
+            style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-color)' }}
+          >
+            <div className="h-4 rounded w-1/12" style={{ backgroundColor: 'var(--bg-hover)' }} />
+            <div className="h-4 rounded w-3/12" style={{ backgroundColor: 'var(--bg-hover)' }} />
+            <div className="h-4 rounded w-2/12" style={{ backgroundColor: 'var(--bg-hover)' }} />
+            <div className="h-4 rounded w-2/12" style={{ backgroundColor: 'var(--bg-hover)' }} />
+            <div className="h-4 rounded w-1/12" style={{ backgroundColor: 'var(--bg-hover)' }} />
+          </motion.div>
         ))}
       </div>
     );
@@ -22,56 +35,44 @@ export const LoadingSkeleton = ({ variant = 'card', count = 3, className = '' })
 
   if (variant === 'list') {
     return (
-      <div className={`space-y-3 animate-pulse ${className}`}>
+      <div className={`space-y-3 ${className}`}>
         {items.map((_, i) => (
-          <div key={i} className="h-12 bg-slate-800/40 rounded-xl w-full flex items-center justify-between px-4">
-            <div className="h-3 bg-slate-700/60 rounded w-1/3" />
-            <div className="h-3 bg-slate-700/60 rounded w-1/12" />
-          </div>
+          <motion.div 
+            key={i} 
+            {...skeletonPulse}
+            className="h-14 rounded-xl w-full flex items-center justify-between px-5 border"
+            style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-color)' }}
+          >
+            <div className="h-4 rounded w-1/3" style={{ backgroundColor: 'var(--bg-hover)' }} />
+            <div className="h-4 rounded w-1/12" style={{ backgroundColor: 'var(--bg-hover)' }} />
+          </motion.div>
         ))}
-      </div>
-    );
-  }
-
-  if (variant === 'profile') {
-    return (
-      <div className={`space-y-6 animate-pulse p-4 ${className}`}>
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-slate-800" />
-          <div className="space-y-2 flex-1">
-            <div className="h-4 bg-slate-800 rounded w-1/3" />
-            <div className="h-3 bg-slate-800 rounded w-1/4" />
-          </div>
-        </div>
-        <div className="space-y-4 border-t border-[#334155]/20 pt-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="h-8 bg-slate-800/60 rounded-xl" />
-            <div className="h-8 bg-slate-800/60 rounded-xl" />
-            <div className="h-8 bg-slate-800/60 rounded-xl" />
-            <div className="h-8 bg-slate-800/60 rounded-xl" />
-          </div>
-        </div>
       </div>
     );
   }
 
   // Card Variant
   return (
-    <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse ${className}`}>
+    <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${className}`}>
       {items.map((_, i) => (
-        <div key={i} className="glass-panel border border-[#334155]/30 rounded-2xl p-5 space-y-4">
+        <motion.div 
+          key={i} 
+          {...skeletonPulse}
+          className="glass-panel border rounded-2xl p-6 space-y-4"
+          style={{ backgroundColor: 'var(--bg-surface-glass)', borderColor: 'var(--border-color)' }}
+        >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-slate-800 shrink-0" />
+            <div className="w-12 h-12 rounded-xl shrink-0" style={{ backgroundColor: 'var(--bg-hover)' }} />
             <div className="space-y-2 flex-1">
-              <div className="h-3 bg-slate-700 rounded w-2/3" />
-              <div className="h-2.5 bg-slate-800 rounded w-1/3" />
+              <div className="h-4 rounded w-2/3" style={{ backgroundColor: 'var(--bg-hover)' }} />
+              <div className="h-3 rounded w-1/3" style={{ backgroundColor: 'var(--bg-hover)' }} />
             </div>
           </div>
           <div className="space-y-2 pt-2">
-            <div className="h-3 bg-slate-800 rounded w-full" />
-            <div className="h-3 bg-slate-800 rounded w-5/6" />
+            <div className="h-3 rounded w-full" style={{ backgroundColor: 'var(--bg-hover)' }} />
+            <div className="h-3 rounded w-5/6" style={{ backgroundColor: 'var(--bg-hover)' }} />
           </div>
-        </div>
+        </motion.div>
       ))}
     </div>
   );

@@ -1,5 +1,6 @@
 // frontend/src/components/dashboard/DashboardComponents.jsx
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Shield, ArrowRight } from 'lucide-react';
 
 // 1. DashboardCard
@@ -14,32 +15,48 @@ export const DashboardCard = ({
   className = '' 
 }) => {
   return (
-    <div className={`bg-slate-900/40 border border-[#334155]/40 rounded-2xl p-5 backdrop-blur-md transition-all hover:border-[#334155]/80 hover:shadow-lg hover:shadow-slate-950/20 ${className}`}>
+    <motion.div 
+      initial={{ opacity: 0, y: 25 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -5, scale: 1.008 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className={`glass-panel rounded-2xl p-6 border transition-all duration-300 ${className}`}
+      style={{
+        backgroundColor: 'var(--bg-surface-glass)',
+        borderColor: 'var(--border-color)',
+        color: 'var(--text-main)',
+        boxShadow: 'var(--shadow-card)'
+      }}
+    >
       {(title || subtitle) && (
-        <div className="mb-4 border-b border-[#334155]/20 pb-3 select-none">
-          {title && <h3 className="text-sm font-bold text-brand-text uppercase tracking-wider leading-none">{title}</h3>}
-          {subtitle && <p className="text-[10px] text-brand-secondary mt-1">{subtitle}</p>}
+        <div className="mb-4 pb-3 border-b border-gray-200/20 select-none">
+          {title && (
+            <h3 className="text-card-title font-bold tracking-tight text-main">{title}</h3>
+          )}
+          {subtitle && (
+            <p className="text-subheading text-secondary text-sm mt-1">{subtitle}</p>
+          )}
         </div>
       )}
       
       {loading ? (
-        <div className="space-y-3 py-2 animate-pulse">
-          <div className="h-4 bg-slate-800 rounded w-2/3"></div>
-          <div className="h-3 bg-slate-800 rounded w-full"></div>
-          <div className="h-3 bg-slate-800 rounded w-5/6"></div>
+        <div className="space-y-3 py-3 animate-pulse">
+          <div className="h-5 rounded-lg w-2/3" style={{ backgroundColor: 'var(--bg-hover)' }} />
+          <div className="h-4 rounded-lg w-full" style={{ backgroundColor: 'var(--bg-hover)' }} />
+          <div className="h-4 rounded-lg w-5/6" style={{ backgroundColor: 'var(--bg-hover)' }} />
         </div>
       ) : empty ? (
-        <div className="flex flex-col items-center justify-center text-center py-6 select-none">
-          <div className="w-10 h-10 rounded-xl bg-slate-850 border border-slate-800/80 text-brand-secondary flex items-center justify-center mb-3">
-            <Shield className="w-4.5 h-4.5 opacity-60" />
+        <div className="flex flex-col items-center justify-center text-center py-8 select-none">
+          <div className="w-12 h-12 rounded-2xl border flex items-center justify-center mb-3" style={{ backgroundColor: 'var(--bg-hover)', borderColor: 'var(--border-color)' }}>
+            <Shield className="w-6 h-6 opacity-70" style={{ color: 'var(--color-primary)' }} />
           </div>
-          <h4 className="text-xs font-semibold text-brand-text mb-1">{emptyTitle}</h4>
-          <p className="text-[10px] text-brand-secondary max-w-xs">{emptyDescription}</p>
+          <h4 className="text-subheading font-bold text-main mb-1">{emptyTitle}</h4>
+          <p className="text-body text-secondary text-sm max-w-sm">{emptyDescription}</p>
         </div>
       ) : (
         children
       )}
-    </div>
+    </motion.div>
   );
 };
 
@@ -53,37 +70,30 @@ export const StatCard = ({
   loading = false,
   className = '' 
 }) => {
-  const getIconColor = () => {
-    switch (trendType) {
-      case 'success': return 'bg-emerald-500/10 text-brand-success border-emerald-500/20';
-      case 'danger': return 'bg-red-500/10 text-brand-danger border-red-500/20';
-      case 'warning': return 'bg-amber-500/10 text-brand-warning border-amber-500/20';
-      default: return 'bg-blue-500/10 text-brand-primary border-blue-500/20';
-    }
-  };
-
-  const getTrendColor = () => {
-    switch (trendType) {
-      case 'success': return 'text-brand-success bg-emerald-500/5 border-emerald-500/10';
-      case 'danger': return 'text-brand-danger bg-red-500/5 border-red-500/10';
-      case 'warning': return 'text-brand-warning bg-amber-500/5 border-amber-500/10';
-      default: return 'text-brand-secondary bg-slate-800/5 border-slate-700/10';
-    }
-  };
-
   return (
-    <div className={`bg-slate-900/40 border border-[#334155]/40 rounded-2xl p-5 backdrop-blur-md flex items-center justify-between gap-4 transition-all hover:border-[#334155]/80 hover:shadow-lg ${className}`}>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -5, scale: 1.01 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className={`glass-panel rounded-2xl p-6 border flex items-center justify-between gap-4 transition-all duration-300 ${className}`}
+      style={{
+        backgroundColor: 'var(--bg-surface-glass)',
+        borderColor: 'var(--border-color)',
+        boxShadow: 'var(--shadow-card)'
+      }}
+    >
       {loading ? (
         <div className="flex-1 space-y-3 animate-pulse">
-          <div className="h-3 bg-slate-800 rounded w-1/2"></div>
-          <div className="h-6 bg-slate-800 rounded w-3/4"></div>
+          <div className="h-4 rounded w-1/2" style={{ backgroundColor: 'var(--bg-hover)' }} />
+          <div className="h-8 rounded w-3/4" style={{ backgroundColor: 'var(--bg-hover)' }} />
         </div>
       ) : (
         <div className="min-w-0 text-left">
-          <p className="text-[10px] font-bold text-brand-secondary uppercase tracking-wider select-none mb-1">{title}</p>
-          <h4 className="text-xl font-bold text-brand-text leading-none mb-2">{value}</h4>
+          <p className="text-label uppercase tracking-wider select-none mb-1 text-sm font-bold" style={{ color: 'var(--text-secondary)' }}>{title}</p>
+          <h4 className="text-h2 font-extrabold leading-none mb-2" style={{ color: 'var(--text-main)' }}>{value}</h4>
           {trend && (
-            <span className={`inline-flex items-center text-[9px] font-bold border px-1.5 py-0.5 rounded uppercase tracking-wider select-none ${getTrendColor()}`}>
+            <span className="inline-flex items-center text-xs font-bold border px-2 py-0.5 rounded-lg uppercase tracking-wider select-none" style={{ backgroundColor: 'var(--bg-hover)', color: 'var(--color-primary)', borderColor: 'var(--border-color)' }}>
               {trend}
             </span>
           )}
@@ -91,11 +101,20 @@ export const StatCard = ({
       )}
       
       {!loading && Icon && (
-        <div className={`w-11 h-11 rounded-xl border flex items-center justify-center shrink-0 shadow-inner ${getIconColor()}`}>
-          <Icon className="w-5 h-5" />
-        </div>
+        <motion.div 
+          whileHover={{ rotate: 12, scale: 1.1 }}
+          transition={{ duration: 0.2 }}
+          className="w-13 h-13 rounded-2xl border flex items-center justify-center shrink-0 shadow-md"
+          style={{ 
+            backgroundColor: 'var(--bg-hover)', 
+            borderColor: 'var(--border-color)',
+            color: 'var(--color-primary)' 
+          }}
+        >
+          <Icon className="w-6 h-6" />
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 };
 
@@ -109,49 +128,49 @@ export const QuickActionCard = ({
   className = '' 
 }) => {
   return (
-    <button
+    <motion.button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`w-full group text-left bg-slate-950/20 border border-[#334155]/30 rounded-xl p-4 flex items-center justify-between gap-4 transition-all hover:bg-brand-primary/5 hover:border-brand-primary/30 disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:border-[#334155]/30 disabled:cursor-not-allowed ${className}`}
+      whileHover={{ scale: disabled ? 1 : 1.02, x: 4 }}
+      whileTap={{ scale: disabled ? 1 : 0.98 }}
+      transition={{ duration: 0.2 }}
+      className={`w-full group text-left border rounded-xl p-4.5 flex items-center justify-between gap-4 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${className}`}
+      style={{
+        backgroundColor: 'var(--bg-surface)',
+        borderColor: 'var(--border-color)',
+        boxShadow: 'var(--shadow-card)'
+      }}
     >
       <div className="min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <h4 className="text-xs font-bold text-brand-text group-hover:text-brand-primary transition-colors">{title}</h4>
+          <h4 className="text-subheading font-bold transition-colors group-hover:text-primary" style={{ color: 'var(--text-main)' }}>{title}</h4>
           {badge && (
-            <span className="text-[8px] font-extrabold bg-[#334155]/40 text-[#94a3b8] px-1.5 py-0.5 rounded font-mono uppercase tracking-wider">
+            <span className="text-xs font-extrabold px-2 py-0.5 rounded-full font-mono uppercase tracking-wider" style={{ backgroundColor: 'var(--bg-hover)', color: 'var(--text-secondary)' }}>
               {badge}
             </span>
           )}
         </div>
-        <p className="text-[10px] text-brand-secondary mt-1 line-clamp-1">{description}</p>
+        <p className="text-body text-sm mt-1 line-clamp-1" style={{ color: 'var(--text-secondary)' }}>{description}</p>
       </div>
-      <div className="w-7 h-7 rounded-lg bg-[#334155]/20 text-[#94a3b8] group-hover:bg-brand-primary/10 group-hover:text-brand-primary flex items-center justify-center shrink-0 transition-all select-none">
-        <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+      <div className="w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 transition-all select-none group-hover:bg-primary group-hover:text-white" style={{ backgroundColor: 'var(--bg-hover)', borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}>
+        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
       </div>
-    </button>
+    </motion.button>
   );
 };
 
 // 4. RoleBadge
 export const RoleBadge = ({ role }) => {
-  const getBadgeStyle = () => {
-    switch (role) {
-      case 'Super Admin':
-        return 'from-rose-500/20 to-amber-500/10 text-rose-400 border-rose-500/30';
-      case 'Faculty':
-        return 'from-blue-500/20 to-cyan-500/10 text-blue-400 border-blue-500/30';
-      case 'Student':
-        return 'from-emerald-500/20 to-teal-500/10 text-emerald-400 border-emerald-500/30';
-      case 'Parent Visitor':
-        return 'from-purple-500/20 to-pink-500/10 text-purple-400 border-purple-500/30';
-      default:
-        return 'from-slate-600/20 to-slate-700/10 text-slate-400 border-slate-600/30';
-    }
-  };
-
   return (
-    <span className={`inline-flex items-center text-[9px] font-extrabold bg-gradient-to-r border px-2 py-0.5 rounded-md uppercase tracking-wider select-none ${getBadgeStyle()}`}>
+    <span 
+      className="inline-flex items-center text-xs font-bold border px-2.5 py-1 rounded-lg uppercase tracking-wider select-none shadow-xs"
+      style={{
+        backgroundColor: 'var(--bg-hover)',
+        color: 'var(--color-primary)',
+        borderColor: 'var(--border-color)'
+      }}
+    >
       {role || 'Guest'}
     </span>
   );
@@ -164,12 +183,14 @@ export const EmptyWidget = ({
   className = '' 
 }) => {
   return (
-    <div className={`border border-dashed border-[#334155]/40 rounded-xl p-5 flex flex-col items-center justify-center text-center select-none bg-slate-950/10 ${className}`}>
-      <div className="w-8 h-8 rounded-lg bg-[#334155]/10 text-brand-secondary flex items-center justify-center mb-2.5 opacity-65">
-        <Shield className="w-4 h-4" />
+    <div className={`border border-dashed rounded-2xl p-6 flex flex-col items-center justify-center text-center select-none ${className}`} style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-hover)' }}>
+      <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 opacity-80" style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--color-primary)' }}>
+        <Shield className="w-5 h-5" />
       </div>
-      <h4 className="text-[11px] font-semibold text-brand-text leading-tight">{title}</h4>
-      <p className="text-[9px] text-brand-secondary font-semibold uppercase tracking-wider mt-1">{description}</p>
+      <h4 className="text-subheading font-semibold leading-tight" style={{ color: 'var(--text-main)' }}>{title}</h4>
+      <p className="text-body text-xs font-bold uppercase tracking-wider mt-1" style={{ color: 'var(--text-muted)' }}>{description}</p>
     </div>
   );
 };
+
+export default DashboardCard;

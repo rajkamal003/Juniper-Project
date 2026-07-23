@@ -1,41 +1,80 @@
 // frontend/src/components/ui/Button.jsx
 import React from 'react';
-import { Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Loader2, CheckCircle2 } from 'lucide-react';
 
 export const Button = ({
   variant = 'primary',
   loading = false,
+  success = false,
   loadingText = 'Processing...',
+  successText = 'Success!',
   disabled = false,
   onClick,
   type = 'button',
   children,
-  className = ''
+  className = '',
+  ...props
 }) => {
-  const baseStyle = "h-12 w-full px-6 rounded-xl font-bold text-[15px] flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-blue-500/40";
+  const baseStyle = "h-13 px-7 rounded-xl font-semibold text-btn flex items-center justify-center gap-2.5 transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus-ring-dynamic select-none cursor-pointer shadow-md";
   
   const variants = {
-    primary: "bg-brand-primary hover:bg-blue-700 text-white shadow-lg shadow-blue-600/15",
-    secondary: "bg-[#334155] hover:bg-[#475569] text-brand-text border border-[#475569]/30",
-    danger: "bg-brand-danger hover:bg-red-600 text-white shadow-lg shadow-red-600/15",
-    success: "bg-brand-success hover:bg-green-600 text-white shadow-lg shadow-green-600/15",
-    ghost: "bg-transparent hover:bg-slate-800/50 text-[#94a3b8] hover:text-[#f8fafc]"
+    primary: "text-white shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30",
+    secondary: "border shadow-sm",
+    danger: "bg-red-600 hover:bg-red-700 text-white shadow-red-500/20 hover:shadow-lg",
+    success: "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20 hover:shadow-lg",
+    ghost: "bg-transparent hover:bg-black/5 dark:hover:bg-white/10 shadow-none"
+  };
+
+  const getCustomStyle = () => {
+    if (variant === 'primary') {
+      return {
+        backgroundColor: 'var(--color-primary)',
+        color: '#ffffff'
+      };
+    }
+    if (variant === 'secondary') {
+      return {
+        backgroundColor: 'var(--bg-surface)',
+        borderColor: 'var(--border-color)',
+        color: 'var(--text-main)'
+      };
+    }
+    if (variant === 'ghost') {
+      return {
+        color: 'var(--text-secondary)'
+      };
+    }
+    return {};
   };
 
   return (
-    <button
+    <motion.button
       type={type}
       onClick={onClick}
       disabled={disabled || loading}
+      whileHover={{ scale: disabled || loading ? 1 : 1.05 }}
+      whileTap={{ scale: disabled || loading ? 1 : 0.97 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      style={getCustomStyle()}
       className={`${baseStyle} ${variants[variant]} ${className}`}
+      {...props}
     >
       {loading ? (
         <>
-          <Loader2 className="w-5 h-5 animate-spin" />
+          <Loader2 className="w-5 h-5 animate-spin shrink-0" />
           <span>{loadingText}</span>
         </>
-      ) : children}
-    </button>
+      ) : success ? (
+        <>
+          <CheckCircle2 className="w-5 h-5 text-white animate-bounce shrink-0" />
+          <span>{successText}</span>
+        </>
+      ) : (
+        children
+      )}
+    </motion.button>
   );
 };
+
 export default Button;

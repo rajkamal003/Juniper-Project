@@ -272,9 +272,9 @@ export const LoginPage = () => {
     >
       <Card>
         {/* Card Header */}
-        <div className="flex flex-col items-center gap-1.5 mb-8 text-center select-none">
-          <h2 className="text-xl font-bold tracking-tight text-brand-text">Sign In</h2>
-          <p className="text-xs text-brand-secondary">Sign in to continue</p>
+        <div className="flex flex-col items-center gap-2 mb-8 text-center select-none">
+          <h2 className="text-h2 font-extrabold tracking-tight" style={{ color: 'var(--text-main)' }}>Sign In</h2>
+          <p className="text-body text-sm" style={{ color: 'var(--text-secondary)' }}>Sign in to continue</p>
         </div>
 
         {/* Form */}

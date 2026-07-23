@@ -11,30 +11,43 @@ export const DataTable = ({
   emptyState 
 }) => {
   return (
-    <div className="w-full overflow-x-auto rounded-2xl border border-[#334155]/40 bg-slate-900/10 backdrop-blur-md">
-      <table className="w-full border-collapse text-left text-xs font-sans">
+    <div 
+      className="w-full overflow-x-auto rounded-2xl border backdrop-blur-md shadow-md"
+      style={{
+        backgroundColor: 'var(--bg-surface)',
+        borderColor: 'var(--border-color)'
+      }}
+    >
+      <table className="w-full border-collapse text-left font-sans">
         <thead>
-          <tr className="border-b border-[#334155]/30 bg-slate-900/50 select-none">
+          <tr 
+            className="border-b select-none"
+            style={{
+              backgroundColor: 'var(--bg-hover)',
+              borderColor: 'var(--border-color)'
+            }}
+          >
             {headers.map((h, idx) => (
               <th 
                 key={idx} 
-                className="px-5 py-3.5 font-bold text-brand-secondary uppercase tracking-wider text-[10px]"
+                className="px-6 py-4 text-th font-bold uppercase tracking-wider"
+                style={{ color: 'var(--text-secondary)' }}
               >
                 {h}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y" style={{ borderColor: 'var(--border-color)' }}>
           {loading ? (
             <tr className="border-0">
-              <td colSpan={headers.length} className="px-5 py-8">
+              <td colSpan={headers.length} className="px-6 py-8">
                 <LoadingSkeleton variant="table" count={4} />
               </td>
             </tr>
           ) : rows.length === 0 ? (
             <tr className="border-0 animate-in fade-in duration-200">
-              <td colSpan={headers.length} className="px-5 py-8">
+              <td colSpan={headers.length} className="px-6 py-8">
                 {emptyState || (
                   <EmptyState 
                     title="No logs available" 
@@ -47,7 +60,11 @@ export const DataTable = ({
             rows.map((row, idx) => (
               <tr 
                 key={idx} 
-                className="border-b border-[#334155]/15 hover:bg-[#334155]/10 last:border-b-0 transition-colors animate-in fade-in duration-150"
+                className="border-b transition-colors hover:bg-black/5 dark:hover:bg-white/5 animate-in fade-in duration-150 text-td"
+                style={{
+                  borderColor: 'var(--border-color)',
+                  color: 'var(--text-main)'
+                }}
               >
                 {renderRow(row, idx)}
               </tr>
