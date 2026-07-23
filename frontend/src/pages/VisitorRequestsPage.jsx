@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Plus, RefreshCw, X, AlertTriangle, Key } from 'lucide-react';
 import { PageHeader } from '../components/ui/PageHeader';
+import { RefreshButton } from '../components/ui/RefreshButton';
 import { Breadcrumb } from '../components/ui/Breadcrumb';
 import { SearchBar } from '../components/ui/SearchBar';
 import { ActionToolbar } from '../components/ui/ActionToolbar';
@@ -18,6 +19,7 @@ export const VisitorRequestsPage = () => {
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [createdPass, setCreatedPass] = useState(null);
 
   // Form parameters
@@ -140,13 +142,12 @@ export const VisitorRequestsPage = () => {
         subtitle="Manage and request temp physical entries and scheduled visitation permits"
       >
         <div className="flex gap-2">
-          <button
-            onClick={fetchRequests}
-            className="flex items-center justify-center p-2 rounded-lg border border-[#334155] bg-slate-900/50 hover:bg-slate-800 text-brand-secondary hover:text-brand-text transition-colors"
-            title="Refresh logs"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </button>
+          <RefreshButton
+            isRefreshing={isRefreshing}
+            setIsRefreshing={setIsRefreshing}
+            onRefresh={fetchRequests}
+            pageName="Visitor Requests"
+          />
           <Button
             variant="primary"
             onClick={() => setIsModalOpen(true)}
@@ -158,6 +159,7 @@ export const VisitorRequestsPage = () => {
         </div>
       </PageHeader>
 
+      <div className={`space-y-6 transition-opacity duration-300 ${isRefreshing ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
       <ActionToolbar
         searchBar={
           <SearchBar
@@ -298,6 +300,7 @@ export const VisitorRequestsPage = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

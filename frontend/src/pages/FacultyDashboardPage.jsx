@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { useAuth } from '../contexts/AuthContext';
+import { RefreshButton } from '../components/ui/RefreshButton';
 import { AppUsageGrid } from '../components/dashboard/AppUsageGrid';
 import { generateAppUsage } from '../utils/appDataGenerator';
 
@@ -108,17 +109,16 @@ export const FacultyDashboardPage = () => {
           <h1 className="text-xl font-extrabold text-brand-text tracking-tight">Faculty Console</h1>
           <p className="text-xs text-brand-secondary mt-1">Mist AI-Powered Smart Campus Academic Oversight & Security Console</p>
         </div>
-        <button
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800 transition-colors text-xs font-semibold cursor-pointer"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-          <span>Refresh Telemetry</span>
-        </button>
+        <RefreshButton
+          isRefreshing={isRefreshing}
+          setIsRefreshing={setIsRefreshing}
+          onRefresh={handleRefresh}
+          pageName="Faculty Dashboard"
+        />
       </div>
 
-      {/* Row 1: KPI Telemetry Cards */}
+      <div className={`space-y-6 transition-opacity duration-300 ${isRefreshing ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
+        {/* Row 1: KPI Telemetry Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Research Usage */}
         <Card className="p-4 relative overflow-hidden">
@@ -355,6 +355,7 @@ export const FacultyDashboardPage = () => {
         </div>
       </Card>
 
+      </div>
     </div>
   );
 };

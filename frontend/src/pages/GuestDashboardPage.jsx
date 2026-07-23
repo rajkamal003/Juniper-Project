@@ -8,6 +8,7 @@ import api from '../services/api';
 import { toast } from 'sonner';
 import { AppUsageGrid } from '../components/dashboard/AppUsageGrid';
 import { generateAppUsage } from '../utils/appDataGenerator';
+import { RefreshButton } from '../components/ui/RefreshButton';
 
 export const GuestDashboardPage = () => {
   const { user } = useAuth();
@@ -17,6 +18,7 @@ export const GuestDashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [appUsage, setAppUsage] = useState([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const fetchGuestAccess = async () => {
     setLoading(true);
@@ -62,17 +64,15 @@ export const GuestDashboardPage = () => {
           <h1 className="text-xl font-extrabold text-brand-text tracking-tight">Guest Access Portal</h1>
           <p className="text-xs text-brand-secondary mt-1">Smart Campus Visitor Access Telemetry</p>
         </div>
-        <button
-          onClick={fetchGuestAccess}
-          disabled={loading}
-          className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800 transition-colors text-xs font-semibold cursor-pointer"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-          <span>Refresh lease</span>
-        </button>
+        <RefreshButton
+          isRefreshing={isRefreshing}
+          setIsRefreshing={setIsRefreshing}
+          onRefresh={fetchGuestAccess}
+          pageName="Guest Dashboard"
+        />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-left">
+      <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6 text-left transition-opacity duration-300 ${isRefreshing ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
         {/* Left Column: Identity details & Actions */}
         <div className="lg:col-span-1 space-y-6">
           <DashboardCard title="Guest Information" subtitle="Active visitor clearance record">

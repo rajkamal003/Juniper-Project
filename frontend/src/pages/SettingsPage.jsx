@@ -4,6 +4,7 @@ import { Settings, User, Sliders, Shield, Users, Clock, Database, Save, RefreshC
 import { toast } from 'sonner';
 import api from '../services/api';
 import { PageHeader } from '../components/ui/PageHeader';
+import { RefreshButton } from '../components/ui/RefreshButton';
 import { Breadcrumb } from '../components/ui/Breadcrumb';
 import { Card } from '../components/ui/Card';
 import { SectionTitle } from '../components/ui/SectionTitle';
@@ -12,6 +13,7 @@ import { Button } from '../components/ui/Button';
 export const SettingsPage = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [config, setConfig] = useState({
     account_approval_mode: 'AUTO',
@@ -23,12 +25,15 @@ export const SettingsPage = () => {
     session_timeout: 900
   });
 
-  const fetchSettings = async () => {
+  const fetchSettings = async (showToast = false) => {
     setLoading(true);
     try {
       const response = await api.get('/api/settings/config');
       if (response.data && response.data.success) {
         setConfig(response.data.data);
+        if (showToast) {
+          toast.success('System settings reloaded successfully.');
+        }
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to load system settings.');
@@ -67,14 +72,12 @@ export const SettingsPage = () => {
         subtitle="Manage campus network configurations, user session parameters, security presets, and platform layouts"
       >
         <div className="flex gap-2">
-          <button
-            onClick={fetchSettings}
-            disabled={loading}
-            className="h-10 w-10 flex items-center justify-center rounded-xl bg-white border-2 border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-slate-400 hover:text-slate-800 transition-all shadow-sm cursor-pointer disabled:opacity-50"
-            title="Refresh Settings"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </button>
+          <RefreshButton
+            isRefreshing={isRefreshing}
+            setIsRefreshing={setIsRefreshing}
+            onRefresh={() => fetchSettings(false)}
+            pageName="Settings"
+          />
           <Button
             variant="primary"
             onClick={handleSaveSettings}
@@ -87,6 +90,7 @@ export const SettingsPage = () => {
         </div>
       </PageHeader>
 
+      <div className={`transition-opacity duration-300 ${isRefreshing ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
       <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 p-4 rounded-xl text-xs text-left select-none mb-6">
         <p className="font-semibold">Enterprise Live Config Mode</p>
         <p className="mt-0.5 opacity-80">All configuration parameters below persist live across session validation rules and registration controllers.</p>
@@ -235,6 +239,7 @@ export const SettingsPage = () => {
             </div>
           </div>
         </Card>
+      </div>
       </div>
     </div>
   );

@@ -10,12 +10,28 @@ import { StatCard, DashboardCard, QuickActionCard } from '../components/dashboar
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { Button } from '../components/ui/Button';
 import api from '../services/api';
+import { RefreshButton } from '../components/ui/RefreshButton';
 
 export const AdminDashboardPage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [juniperDevices, setJuniperDevices] = useState([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    // Regenerate simulated stats
+    setStats({
+      totalUsers: '248',
+      activeSessions: String(Math.floor(Math.random() * 30) + 130),
+      totalTraffic: `${(Math.random() * 0.8 + 1.2).toFixed(2)} TB`,
+      mitigatedThreats: Math.floor(Math.random() * 400 + 2100).toLocaleString()
+    });
+    setChartData(Array.from({ length: 10 }, () => Math.floor(Math.random() * 50) + 30));
+    setAlertIndex(Math.floor(Math.random() * 5));
+    // Fetch latest hardware from API
+    await fetchDashboardData();
+  };
   
   // Simulation Mode state
   const [isSimulated, setIsSimulated] = useState(() => localStorage.getItem('simulation_mode') !== 'false');
@@ -393,11 +409,18 @@ export const AdminDashboardPage = () => {
             <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
             <span>Sync Hardware</span>
           </Button>
+
+          <RefreshButton 
+            isRefreshing={isRefreshing} 
+            setIsRefreshing={setIsRefreshing} 
+            onRefresh={handleRefresh} 
+            pageName="Dashboard" 
+          />
         </div>
       </div>
 
       {/* Grid: StatCards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 transition-opacity duration-300 ${isRefreshing ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
         <StatCard
           title="Active WiFi Sessions"
           value={stats.activeSessions}
@@ -453,7 +476,7 @@ export const AdminDashboardPage = () => {
         {/* Network Bandwidth Live Chart (2 Cols) */}
         <div className="lg:col-span-2">
           <DashboardCard title="Live Bandwidth Utilization" subtitle="Real-time campus throughput tracking (Gbps)">
-            <div className="pt-2 relative flex flex-col justify-between h-48">
+            <div className={`pt-2 relative flex flex-col justify-between h-48 transition-opacity duration-300 ${isRefreshing ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
               {/* SVG Area & Line Chart */}
               <svg className="w-full h-32 overflow-visible" viewBox={`0 0 ${svgWidth} ${svgHeight}`} preserveAspectRatio="none">
                 <defs>

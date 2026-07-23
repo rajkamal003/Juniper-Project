@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Network, ShieldAlert, Key, RefreshCw, Clock } from 'lucide-react';
 import { PageHeader } from '../components/ui/PageHeader';
+import { RefreshButton } from '../components/ui/RefreshButton';
 import { Breadcrumb } from '../components/ui/Breadcrumb';
 import { Card } from '../components/ui/Card';
 import { SectionTitle } from '../components/ui/SectionTitle';
@@ -14,6 +15,7 @@ export const VisitorAccessPage = () => {
   const [access, setAccess] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const fetchGuestAccess = async () => {
     setLoading(true);
@@ -58,16 +60,15 @@ export const VisitorAccessPage = () => {
         title="Visitor Access & Wi-Fi Management"
         subtitle="Manage temporary Wi-Fi logins, MAC address settings, and guest network access leases"
       >
-        <button
-          onClick={fetchGuestAccess}
-          disabled={loading}
-          className="flex items-center justify-center p-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
-          title="Refresh Wi-Fi Status"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-        </button>
+        <RefreshButton
+          isRefreshing={isRefreshing}
+          setIsRefreshing={setIsRefreshing}
+          onRefresh={fetchGuestAccess}
+          pageName="Visitor Access"
+        />
       </PageHeader>
 
+      <div className={`transition-opacity duration-300 ${isRefreshing ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
       {loading ? (
         <div className="p-12 text-center border border-slate-200 bg-slate-50 rounded-2xl flex flex-col items-center justify-center gap-3">
           <RefreshCw className="w-8 h-8 text-blue-600 animate-spin" />
@@ -147,6 +148,7 @@ export const VisitorAccessPage = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

@@ -4,6 +4,7 @@ import { FileSpreadsheet, Plus, RefreshCw, Download, FileText, Settings, ShieldA
 import { toast } from 'sonner';
 import api from '../services/api';
 import { PageHeader } from '../components/ui/PageHeader';
+import { RefreshButton } from '../components/ui/RefreshButton';
 import { Breadcrumb } from '../components/ui/Breadcrumb';
 import { EmptyState } from '../components/feedback/EmptyState';
 import { Card } from '../components/ui/Card';
@@ -16,6 +17,7 @@ export const ReportsPage = () => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
 
@@ -147,16 +149,15 @@ export const ReportsPage = () => {
         title="Audit Reports Console"
         subtitle="Compile, configure, and export rule-based campus analytics and security logs"
       >
-        <button
-          onClick={fetchReports}
-          className="h-10 w-10 flex items-center justify-center rounded-xl bg-white border-2 border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-slate-400 hover:text-slate-800 transition-all shadow-sm cursor-pointer"
-          title="Refresh Reports"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-        </button>
+        <RefreshButton
+          isRefreshing={isRefreshing}
+          setIsRefreshing={setIsRefreshing}
+          onRefresh={fetchReports}
+          pageName="Reports"
+        />
       </PageHeader>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6 transition-opacity duration-300 ${isRefreshing ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
         {/* Left Side: Parameters Form */}
         <div className="lg:col-span-1 space-y-6">
           <Card className="p-5 select-none text-left">

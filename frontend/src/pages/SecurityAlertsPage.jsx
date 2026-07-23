@@ -10,10 +10,12 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { DataTable } from '../components/ui/DataTable';
 import { StatusBadge } from '../components/ui/StatusBadge';
+import { RefreshButton } from '../components/ui/RefreshButton';
 
 export const SecurityAlertsPage = () => {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
@@ -138,16 +140,16 @@ export const SecurityAlertsPage = () => {
         title="AI Security Alerts Log"
         subtitle="Review, audit, and resolve heuristically generated infrastructure security events"
       >
-        <Button
-          variant="secondary"
-          onClick={fetchAlerts}
-          className="h-10 w-10 p-0 flex items-center justify-center"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-        </Button>
+        <RefreshButton 
+          isRefreshing={isRefreshing} 
+          setIsRefreshing={setIsRefreshing} 
+          onRefresh={fetchAlerts} 
+          pageName="Security Alerts" 
+        />
       </PageHeader>
-      {/* Filter Row */}
-      <Card className="p-4 flex flex-col md:flex-row items-center gap-4 justify-between bg-white border border-slate-200 shadow-xs">
+      <div className={`space-y-6 transition-opacity duration-300 ${isRefreshing ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
+        {/* Filter Row */}
+        <Card className="p-4 flex flex-col md:flex-row items-center gap-4 justify-between bg-white border border-slate-200 shadow-xs">
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           {/* Status filter */}
           <div>
@@ -328,6 +330,7 @@ export const SecurityAlertsPage = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

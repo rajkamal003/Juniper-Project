@@ -12,6 +12,28 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     ENABLE_MFA: bool = False
 
+    # SMTP Configurations
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM: str = ""
+
+    # Brevo Configurations
+    BREVO_SMTP_HOST: str = "smtp-relay.brevo.com"
+    BREVO_SMTP_PORT: int = 587
+    BREVO_SMTP_USER: str = ""
+    BREVO_SMTP_PASSWORD: str = ""
+    BREVO_FROM: str = ""
+
+    # Gmail Configurations
+    GMAIL_SMTP_HOST: str = "smtp.gmail.com"
+    GMAIL_SMTP_PORT: int = 587
+    GMAIL_SMTP_USER: str = ""
+    GMAIL_SMTP_PASSWORD: str = ""
+    GMAIL_FROM: str = ""
+
+
     # Juniper Infrastructure Settings
     JUNIPER_SRX300_HOST: str = "192.168.1.1"
     JUNIPER_EX2300_HOST: str = "192.168.1.2"

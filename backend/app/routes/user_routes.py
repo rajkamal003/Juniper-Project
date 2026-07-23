@@ -299,7 +299,7 @@ def update_user_status(
     client_ip = request.client.host if request.client else "127.0.0.1"
     LogRepo.log(db, user_id=user_id, action=f"STATUS_{target_status.upper()}", description=f"Status set to {target_status} by Admin", ip=client_ip)
     
-    # Notify target user
+    # Notify target user via in-app notification
     NotificationRepo.create(
         db,
         user_id=user_id,
@@ -308,6 +308,38 @@ def update_user_status(
         type="Info"
     )
     
+    # Send email notification about status change
+    try:
+        from app.services.email_service import EmailService
+        status_colors = {
+            "Active": "#16a34a",
+            "Suspended": "#dc2626",
+            "Rejected": "#dc2626",
+            "Locked": "#f59e0b",
+            "Pending": "#2563eb"
+        }
+        color = status_colors.get(target_status, "#2563eb")
+        status_messages = {
+            "Active": "Your account has been approved and is now active. You may now log in to SecureCampus AI.",
+            "Suspended": "Your account has been temporarily suspended by an administrator. Please contact support.",
+            "Rejected": "Your account registration has been rejected. Please contact your administrator for assistance.",
+            "Locked": "Your account has been locked by an administrator. Use Forgot Password to regain access."
+        }
+        body_msg = status_messages.get(target_status, f"Your account status has been updated to: {target_status}.")
+        EmailService.send_email(
+            to_email=user.email,
+            subject=f"SecureCampus AI - Account {target_status}",
+            text_content=f"Hello {user.fullname},\n\n{body_msg}\n\nSecureCampus AI Administration",
+            html_content=f"""<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;border:1px solid #e2e8f0;border-radius:12px">
+  <h2 style="color:{color};text-align:center">Account {target_status}</h2>
+  <p>Hello <strong>{user.fullname}</strong>,</p>
+  <p>{body_msg}</p>
+  <p style="font-size:12px;color:#64748b">SecureCampus AI Administration</p>
+</div>"""
+        )
+    except Exception as e:
+        print(f"[EmailService] Admin approval notification failed: {e}")
+
     # If blocked state, force terminate all sessions
     if target_status in ["Suspended", "Rejected", "Locked", "Deleted"]:
         SessionRepo.revoke_all_for_user(db, user_id)

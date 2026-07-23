@@ -12,6 +12,9 @@ import { Button } from '../components/ui/Button';
 import { UserTable } from '../components/ui/UserTable';
 import { ConfirmationDialog } from '../components/ui/ConfirmationDialog';
 import { DEPARTMENTS } from '../constants/constants';
+import { PageHeader } from '../components/ui/PageHeader';
+import { RefreshButton } from '../components/ui/RefreshButton';
+import { UserNetworkAnalyticsDashboard } from '../components/ui/UserNetworkAnalyticsDashboard';
 
 export const UserManagementPage = () => {
   const { user: currentUser } = useAuth();
@@ -33,6 +36,7 @@ export const UserManagementPage = () => {
   const [loading, setLoading] = useState(false);
   const [systemSettings, setSystemSettings] = useState(null);
   const [loadingSettings, setLoadingSettings] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Filters State
   const [search, setSearch] = useState('');
@@ -50,6 +54,7 @@ export const UserManagementPage = () => {
 
   // Admin Overwrite Password Form state
   const [tempPassword, setTempPassword] = useState('');
+  const [selectedUserForAnalytics, setSelectedUserForAnalytics] = useState(null);
 
   useEffect(() => {
     document.title = "SecureCampus AI | User Management";
@@ -242,6 +247,19 @@ export const UserManagementPage = () => {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto text-left">
+      <PageHeader
+        title="User & Operator Directory"
+        subtitle="Manage secure campus user identities, roles, departments, and account authorization states"
+      >
+        <RefreshButton
+          isRefreshing={isRefreshing}
+          setIsRefreshing={setIsRefreshing}
+          onRefresh={fetchUsers}
+          pageName="Users"
+        />
+      </PageHeader>
+
+      <div className={`space-y-6 transition-opacity duration-300 ${isRefreshing ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
       
       {/* Settings Panel & Mode Toggler */}
       <motion.div
@@ -325,26 +343,25 @@ export const UserManagementPage = () => {
               </select>
             </div>
 
-            {/* Submit & Refresh Row */}
+            {/* Submit & Reset Row */}
             <div className="flex gap-2">
               <Button type="submit" variant="primary" className="h-10 text-xs font-bold grow">
                 Apply Search
               </Button>
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={() => {
                   setSearch('');
                   setRoleId('');
                   setStatusFilter('');
                   setDeptFilter('');
                   setPage(1);
-                  fetchUsers();
                 }}
-                className="h-10 w-10 border border-slate-200 bg-white text-slate-500 hover:text-slate-800 rounded-xl flex items-center justify-center transition-colors focus:outline-none shrink-0 cursor-pointer"
-                title="Reset Filters"
+                className="h-10 px-4 text-xs font-bold shrink-0"
               >
-                <RefreshCw className="w-4 h-4" />
-              </button>
+                Reset Filters
+              </Button>
             </div>
 
           </form>
@@ -425,6 +442,7 @@ export const UserManagementPage = () => {
             onSuspend={triggerSuspend}
             onActivate={triggerActivate}
             onResetPassword={triggerResetPassword}
+            onViewDetails={(u) => setSelectedUserForAnalytics(u)}
             currentUserRole={currentUser?.role?.role_name}
           />
 
@@ -487,6 +505,31 @@ export const UserManagementPage = () => {
         )}
       </ConfirmationDialog>
 
+      {/* Slide-out Analytics Panel */}
+      {selectedUserForAnalytics && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          {/* Backdrop */}
+          <div 
+            onClick={() => setSelectedUserForAnalytics(null)}
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+          />
+          {/* Panel Container */}
+          <motion.div 
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 30, stiffness: 250 }}
+            className="relative w-full max-w-5xl h-full bg-white shadow-2xl z-10 overflow-hidden"
+          >
+            <UserNetworkAnalyticsDashboard 
+              user={selectedUserForAnalytics} 
+              onClose={() => setSelectedUserForAnalytics(null)} 
+            />
+          </motion.div>
+        </div>
+      )}
+
+      </div>
     </div>
   );
 };

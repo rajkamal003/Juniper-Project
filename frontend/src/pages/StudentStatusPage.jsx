@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, CheckCircle2, RefreshCw, Shield, Users, Mail, Phone, BookOpen } from 'lucide-react';
 import { PageHeader } from '../components/ui/PageHeader';
+import { RefreshButton } from '../components/ui/RefreshButton';
 import { Breadcrumb } from '../components/ui/Breadcrumb';
 import { Card } from '../components/ui/Card';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,6 +12,7 @@ export const StudentStatusPage = () => {
   const { user } = useAuth();
   const [studentStatus, setStudentStatus] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const fetchStudentStatus = async () => {
     setLoading(true);
@@ -43,16 +45,15 @@ export const StudentStatusPage = () => {
         title="Student Status Information"
         subtitle="Review associated student authorization profile details and relationship status"
       >
-        <button
-          onClick={fetchStudentStatus}
-          disabled={loading}
-          className="flex items-center justify-center p-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
-          title="Refresh Telemetry"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-        </button>
+        <RefreshButton
+          isRefreshing={isRefreshing}
+          setIsRefreshing={setIsRefreshing}
+          onRefresh={fetchStudentStatus}
+          pageName="Student Status"
+        />
       </PageHeader>
 
+      <div className={`transition-opacity duration-300 ${isRefreshing ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
       {loading ? (
         <div className="p-12 text-center border border-slate-200 bg-slate-50 rounded-2xl flex flex-col items-center justify-center gap-3">
           <RefreshCw className="w-8 h-8 text-blue-600 animate-spin" />
@@ -178,6 +179,7 @@ export const StudentStatusPage = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

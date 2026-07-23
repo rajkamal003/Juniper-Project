@@ -7,6 +7,7 @@ import {
 import { toast } from 'sonner';
 import api from '../services/api';
 import { PageHeader } from '../components/ui/PageHeader';
+import { RefreshButton } from '../components/ui/RefreshButton';
 import { Breadcrumb } from '../components/ui/Breadcrumb';
 import { SearchBar } from '../components/ui/SearchBar';
 import { ActionToolbar } from '../components/ui/ActionToolbar';
@@ -19,6 +20,7 @@ export const DevicesPage = () => {
   const [syncing, setSyncing] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [viewMode, setViewMode] = useState('front'); // 'front' | 'rear'
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   // Search and filter states
   const [search, setSearch] = useState('');
@@ -188,6 +190,28 @@ export const DevicesPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRefresh = async () => {
+    const randomizedInventory = defaultJuniperInventory.map(dev => {
+      const isOnline = dev.status === 'Online';
+      return {
+        ...dev,
+        cpu: isOnline ? Math.floor(Math.random() * 25) + 5 : 0,
+        ram: isOnline ? Math.floor(Math.random() * 30) + 20 : 0,
+        temp: isOnline ? Math.floor(Math.random() * 15) + 30 : 0,
+        clients: isOnline ? (dev.device_type === 'Access Point' ? Math.floor(Math.random() * 50) + 10 : dev.clients) : 0,
+        throughput: isOnline ? `${Math.floor(Math.random() * 400) + 100} Mbps` : '0 Mbps'
+      };
+    });
+    setDevices(randomizedInventory);
+    if (selectedDevice) {
+      const match = randomizedInventory.find(d => d.id === selectedDevice.id);
+      if (match) {
+        setSelectedDevice(match);
+      }
+    }
+    await fetchDevices();
   };
 
   useEffect(() => {
@@ -516,10 +540,16 @@ export const DevicesPage = () => {
             <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
             <span>Sync Hardware Telemetry</span>
           </Button>
+          <RefreshButton
+            isRefreshing={isRefreshing}
+            setIsRefreshing={setIsRefreshing}
+            onRefresh={handleRefresh}
+            pageName="Devices"
+          />
         </div>
       </PageHeader>
 
-      {/* Toolbar */}
+      <div className={`transition-opacity duration-300 ${isRefreshing ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
       <ActionToolbar
         searchBar={
           <SearchBar
@@ -554,8 +584,9 @@ export const DevicesPage = () => {
           </div>
         }
       />
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6 transition-opacity duration-300 ${isRefreshing ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
         {/* Left Side: Inventory Catalog list (1 Col) */}
         <div className="lg:col-span-1 space-y-4">
           <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider pl-1">Hardware Directory</h3>

@@ -2,11 +2,15 @@
 import pymysql
 import bcrypt
 
-DB_HOST = "127.0.0.1"
-DB_PORT = 3306
-DB_USER = "root"
-DB_PASS = "root"
-DB_NAME = "securecampus_db"
+from app.config.config import settings
+from sqlalchemy.engine.url import make_url
+
+db_url = make_url(settings.DATABASE_URL)
+DB_HOST = db_url.host or "127.0.0.1"
+DB_PORT = db_url.port or 3306
+DB_USER = db_url.username or "root"
+DB_PASS = db_url.password or "root"
+DB_NAME = db_url.database or "securecampus_db"
 
 def seed_admin():
     print("Connecting to securecampus_db to seed system settings and default Admin...")

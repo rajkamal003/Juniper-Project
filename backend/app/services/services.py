@@ -288,6 +288,23 @@ class AuthService:
                 updates["account_status"] = "Locked"
                 updates["account_locked"] = True
                 LogRepo.log(db, user_id=user.id, action="ACCOUNT_LOCK", description="Account locked after 5 failed login attempts", ip=client_ip)
+                # Send account locked notification email
+                try:
+                    from app.services.email_service import EmailService
+                    EmailService.send_email(
+                        to_email=user.email,
+                        subject="SecureCampus AI - Account Locked",
+                        text_content=f"Hello {user.fullname},\n\nYour SecureCampus AI account has been locked after 5 failed login attempts from IP {client_ip}.\n\nTo regain access, please use the Forgot Password option to reset your password.",
+                        html_content=f"""<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;border:1px solid #e2e8f0;border-radius:12px">
+  <h2 style="color:#dc2626;text-align:center">&#x26A0; Account Locked</h2>
+  <p>Hello <strong>{user.fullname}</strong>,</p>
+  <p>Your SecureCampus AI account has been <strong style="color:#dc2626">locked</strong> after 5 consecutive failed login attempts from IP <code>{client_ip}</code>.</p>
+  <p>To regain access, please use the <strong>Forgot Password</strong> option on the login page to reset your password.</p>
+  <p style="font-size:12px;color:#64748b">If this was not you, your account credentials may be compromised. Contact your administrator immediately.</p>
+</div>"""
+                    )
+                except Exception as e:
+                    print(f"[EmailService] Account locked notification failed: {e}")
             else:
                 LogRepo.log(db, user_id=user.id, action="LOGIN_FAILED", description=f"Incorrect password attempt {failed_attempts}/5", ip=client_ip)
             
@@ -580,17 +597,53 @@ class AuthService:
         
         LogRepo.log(db, user_id=user.id, action="OTP_REQUEST", description="Password reset OTP generated", ip=client_ip)
 
-        # Send Brevo email / mock log
-        try:
-            AuthService.send_brevo_email_otp(clean_email, otp_code, user.fullname)
-        except Exception as e:
-            print(f"[Brevo Email Log] Could not send via API: {e}. OTP Code: {otp_code}")
+        # Send via EmailService (Brevo primary, Gmail fallback)
+        from app.services.email_service import EmailService
+        text_content = f"Hello {user.fullname},\n\nYour OTP for resetting your SecureCampus AI password is: {otp_code}\nThis code is valid for 5 minutes.\n\nIf you did not request this, please ignore this email."
+        html_content = f"""
+        <html>
+          <body style="font-family: Arial, sans-serif; color: #333;">
+            <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+              <h2 style="color: #2563eb; text-align: center;">SecureCampus AI Security Portal</h2>
+              <p>Hello <strong>{user.fullname}</strong>,</p>
+              <p>We received a request to reset your password. Use the following One-Time Password (OTP) to proceed:</p>
+              <div style="background-color: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 8px; padding: 15px; text-align: center; font-size: 28px; font-weight: bold; letter-spacing: 6px; color: #1e3a8a; margin: 20px 0;">
+                {otp_code}
+              </div>
+              <p style="font-size: 12px; color: #64748b;">This OTP is valid for 5 minutes. Maximum 5 attempts allowed. If you did not request a reset, please contact your administrator immediately.</p>
+              <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+              <p style="font-size: 11px; text-align: center; color: #94a3b8;">&copy; 2026 SecureCampus AI. Powered by Juniper Networks Integration.</p>
+            </div>
+          </body>
+        </html>
+        """
+        sent = EmailService.send_email(
+            to_email=clean_email,
+            subject="SecureCampus AI - Password Reset OTP",
+            text_content=text_content,
+            html_content=html_content
+        )
+        if not sent:
+            print(f"[EmailService] Both providers failed. OTP Code (debug): {otp_code}")
 
         return {
-            "message": "OTP sent successfully to your email address.",
+            "message": "Verification code sent successfully.",
             "debug_otp": otp_code,
             "email": clean_email
         }
+
+    @staticmethod
+    def send_brevo_email_otp(email: str, otp_code: str, fullname: str):
+        """Legacy wrapper — now delegates to EmailService (Brevo primary, Gmail fallback)."""
+        from app.services.email_service import EmailService
+        text_content = f"Hello {fullname},\n\nYour OTP is: {otp_code}\nValid for 5 minutes."
+        html_content = f"<p>Hello <b>{fullname}</b>,</p><p>Your OTP: <b>{otp_code}</b></p><p>Valid for 5 minutes.</p>"
+        EmailService.send_email(
+            to_email=email,
+            subject="SecureCampus AI - Password Reset OTP",
+            text_content=text_content,
+            html_content=html_content
+        )
 
     @staticmethod
     def verify_otp(db: Session, email: str, otp: str, client_ip: str) -> dict:
@@ -608,10 +661,10 @@ class AuthService:
                 detail="No active password reset request found. Please request a new OTP."
             )
 
-        # Brute Force Protection: Max 3 attempts
-        if reset_entry.otp_attempts >= 3:
+        # Brute Force Protection: Max 5 attempts
+        if reset_entry.otp_attempts >= 5:
             ResetRepo.mark_used(db, reset_entry)
-            LogRepo.log(db, user_id=user.id, action="OTP_FAILED_LIMIT", description="OTP disabled due to exceeding 3 attempts", ip=client_ip)
+            LogRepo.log(db, user_id=user.id, action="OTP_FAILED_LIMIT", description="OTP disabled due to exceeding 5 attempts", ip=client_ip)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Maximum OTP attempts exceeded. Please request a new OTP."
@@ -620,10 +673,10 @@ class AuthService:
         # Verify OTP code
         if not verify_otp_hash(otp, reset_entry.otp_hash):
             ResetRepo.increment_attempts(db, reset_entry)
-            LogRepo.log(db, user_id=user.id, action="OTP_FAILED_ATTEMPT", description=f"Incorrect OTP attempt {reset_entry.otp_attempts + 1}/3", ip=client_ip)
+            LogRepo.log(db, user_id=user.id, action="OTP_FAILED_ATTEMPT", description=f"Incorrect OTP attempt {reset_entry.otp_attempts + 1}/5", ip=client_ip)
             
             # Check if now exceeded
-            if reset_entry.otp_attempts >= 3:
+            if reset_entry.otp_attempts >= 5:
                 ResetRepo.mark_used(db, reset_entry)
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -632,15 +685,21 @@ class AuthService:
             
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid OTP code"
+                detail="Invalid OTP code. Please check and try again."
             )
 
         # Success: Generate short-lived reset token (valid for 10 minutes)
-        # Using a signed access token containing claims: sub: user.id, action: reset_password
         reset_token_data = {"sub": str(user.id), "action": "reset_password", "reset_id": reset_entry.id}
         reset_token = create_access_token(data=reset_token_data, expires_delta=timedelta(minutes=10))
 
-        LogRepo.log(db, user_id=user.id, action="OTP_VERIFIED", description="OTP verification successful", ip=client_ip)
+        # Delete OTP record after successful verification
+        try:
+            db.delete(reset_entry)
+            db.commit()
+        except Exception:
+            db.rollback()
+
+        LogRepo.log(db, user_id=user.id, action="OTP_VERIFIED", description="OTP verification successful. Record deleted.", ip=client_ip)
         return {
             "message": "OTP verified successfully.",
             "reset_token": reset_token
@@ -704,6 +763,23 @@ class AuthService:
             message="Your account password was updated. All active sessions have been terminated for security.",
             type="Info"
         )
+
+        # Email confirmation of successful password reset
+        try:
+            from app.services.email_service import EmailService
+            EmailService.send_email(
+                to_email=user.email,
+                subject="SecureCampus AI - Password Reset Successful",
+                text_content=f"Hello {user.fullname},\n\nYour SecureCampus AI password has been reset successfully. If you did not perform this action, please contact your administrator immediately.",
+                html_content=f"""<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;border:1px solid #e2e8f0;border-radius:12px">
+  <h2 style="color:#2563eb;text-align:center">SecureCampus AI</h2>
+  <p>Hello <strong>{user.fullname}</strong>,</p>
+  <p>Your password has been <strong style="color:#16a34a">reset successfully</strong>. All active sessions have been terminated for your security.</p>
+  <p style="font-size:12px;color:#64748b">If you did not perform this action, contact your administrator immediately.</p>
+</div>"""
+            )
+        except Exception as e:
+            print(f"[EmailService] Password reset confirmation email failed: {e}")
 
         return {"message": "Password reset completed successfully. You can now login with your new credentials."}
 

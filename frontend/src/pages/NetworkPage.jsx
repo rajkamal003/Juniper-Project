@@ -4,6 +4,7 @@ import { Globe, Plus, Search, Trash2, RefreshCw, X } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../services/api';
 import { PageHeader } from '../components/ui/PageHeader';
+import { RefreshButton } from '../components/ui/RefreshButton';
 import { Breadcrumb } from '../components/ui/Breadcrumb';
 import { SearchBar } from '../components/ui/SearchBar';
 import { ActionToolbar } from '../components/ui/ActionToolbar';
@@ -18,6 +19,7 @@ export const NetworkPage = () => {
   const [subnets, setSubnets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
   const [limit] = useState(10);
@@ -164,29 +166,36 @@ export const NetworkPage = () => {
           <Plus className="w-4 h-4" />
           <span>Provision subnet</span>
         </Button>
+        <RefreshButton
+          isRefreshing={isRefreshing}
+          setIsRefreshing={setIsRefreshing}
+          onRefresh={fetchSubnets}
+          pageName="Network"
+        />
       </PageHeader>
 
-      {/* Real-time Network Operations Center Overview Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 select-none">
-        <div className="p-4 bg-slate-900 border border-[#334155]/40 rounded-2xl">
-          <span className="text-[10px] font-extrabold uppercase text-slate-500 font-mono block">Network Health</span>
-          <span className="text-lg font-extrabold text-emerald-400 font-mono mt-1 block">99.85%</span>
-          <span className="text-[9px] text-brand-secondary mt-1 block">Excellent Link Integrity</span>
+      <div className={`space-y-6 transition-opacity duration-300 ${isRefreshing ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
+        {/* Real-time Network Operations Center Overview Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 select-none">
+        <div className="p-4 bg-white border border-slate-200/80 shadow-sm rounded-2xl">
+          <span className="text-[10px] font-extrabold uppercase text-slate-400 font-mono block">Network Health</span>
+          <span className="text-lg font-extrabold text-emerald-600 font-mono mt-1 block">99.85%</span>
+          <span className="text-[9px] text-slate-500 mt-1 block">Excellent Link Integrity</span>
         </div>
-        <div className="p-4 bg-slate-900 border border-[#334155]/40 rounded-2xl">
-          <span className="text-[10px] font-extrabold uppercase text-slate-500 font-mono block">Network Latency</span>
-          <span className="text-lg font-extrabold text-brand-primary font-mono mt-1 block">4.2 ms</span>
-          <span className="text-[9px] text-brand-secondary mt-1 block">Standard Gateway Ping RTT</span>
+        <div className="p-4 bg-white border border-slate-200/80 shadow-sm rounded-2xl">
+          <span className="text-[10px] font-extrabold uppercase text-slate-400 font-mono block">Network Latency</span>
+          <span className="text-lg font-extrabold text-blue-600 font-mono mt-1 block">4.2 ms</span>
+          <span className="text-[9px] text-slate-500 mt-1 block">Standard Gateway Ping RTT</span>
         </div>
-        <div className="p-4 bg-slate-900 border border-[#334155]/40 rounded-2xl">
-          <span className="text-[10px] font-extrabold uppercase text-slate-500 font-mono block">Packet Loss Rate</span>
-          <span className="text-lg font-extrabold text-brand-text font-mono mt-1 block">0.002%</span>
-          <span className="text-[9px] text-emerald-400 mt-1 block">Highly Secure Shield Link</span>
+        <div className="p-4 bg-white border border-slate-200/80 shadow-sm rounded-2xl">
+          <span className="text-[10px] font-extrabold uppercase text-slate-400 font-mono block">Packet Loss Rate</span>
+          <span className="text-lg font-extrabold text-slate-800 font-mono mt-1 block">0.002%</span>
+          <span className="text-[9px] text-emerald-600 mt-1 block">Highly Secure Shield Link</span>
         </div>
-        <div className="p-4 bg-slate-900 border border-[#334155]/40 rounded-2xl">
-          <span className="text-[10px] font-extrabold uppercase text-slate-500 font-mono block">Mist Wireless Clients</span>
-          <span className="text-lg font-extrabold text-purple-400 font-mono mt-1 block">142</span>
-          <span className="text-[9px] text-brand-secondary mt-1 block">Load-Balanced across APs</span>
+        <div className="p-4 bg-white border border-slate-200/80 shadow-sm rounded-2xl">
+          <span className="text-[10px] font-extrabold uppercase text-slate-400 font-mono block">Mist Wireless Clients</span>
+          <span className="text-lg font-extrabold text-purple-600 font-mono mt-1 block">142</span>
+          <span className="text-[9px] text-slate-500 mt-1 block">Load-Balanced across APs</span>
         </div>
       </div>
 
@@ -205,14 +214,7 @@ export const NetworkPage = () => {
             />
           }
           actions={
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={fetchSubnets}
-              className="h-10 w-10 p-0 flex items-center justify-center"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            </Button>
+            <div />
           }
         />
       </form>
@@ -281,6 +283,8 @@ export const NetworkPage = () => {
           </div>
         </div>
       )}
+
+      </div>
 
       {/* Provision Subnet Modal */}
       {isModalOpen && (

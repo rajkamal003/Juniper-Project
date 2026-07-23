@@ -26,6 +26,7 @@ export const UserTable = ({
   onSuspend,
   onActivate,
   onResetPassword,
+  onViewDetails,
   currentUserRole
 }) => {
   const navigate = useNavigate();
@@ -149,7 +150,7 @@ export const UserTable = ({
                 <td className="py-4 px-6">
                   <div className="flex items-center justify-center gap-2">
                     <button
-                      onClick={() => navigate(`/users/${u.id}`)}
+                      onClick={() => onViewDetails ? onViewDetails(u) : navigate(`/users/${u.id}`)}
                       className="p-2 rounded-xl transition-colors focus:outline-none hover:bg-black/5 dark:hover:bg-white/10"
                       style={{ color: 'var(--color-primary)' }}
                       title="View Details"

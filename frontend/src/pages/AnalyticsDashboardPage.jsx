@@ -8,12 +8,14 @@ import { Breadcrumb } from '../components/ui/Breadcrumb';
 import { Card } from '../components/ui/Card';
 import { SectionTitle } from '../components/ui/SectionTitle';
 import { Button } from '../components/ui/Button';
+import { RefreshButton } from '../components/ui/RefreshButton';
 
 export const AnalyticsDashboardPage = () => {
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [recsPage, setRecsPage] = useState(1);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const fetchDashboardMetrics = async () => {
     setLoading(true);
@@ -177,18 +179,17 @@ export const AnalyticsDashboardPage = () => {
             <Play className="w-3.5 h-3.5" />
             <span>Trigger AI Scan</span>
           </Button>
-          <Button
-            variant="secondary"
-            onClick={fetchDashboardMetrics}
-            className="h-10 w-10 p-0 flex items-center justify-center"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </Button>
+          <RefreshButton 
+            isRefreshing={isRefreshing} 
+            setIsRefreshing={setIsRefreshing} 
+            onRefresh={fetchDashboardMetrics} 
+            pageName="Security Analytics" 
+          />
         </div>
       </PageHeader>
 
       {/* Grid: 4 Metric Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className={`grid grid-cols-1 md:grid-cols-4 gap-6 transition-opacity duration-300 ${isRefreshing ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
         <Card className="p-5 flex items-center justify-between border-slate-200 bg-white shadow-xs">
           <div className="space-y-1">
             <div className="text-xs font-medium text-slate-500 uppercase tracking-wider">Security Score</div>
@@ -235,7 +236,7 @@ export const AnalyticsDashboardPage = () => {
       </div>
 
       {/* Main Content Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6 transition-opacity duration-300 ${isRefreshing ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
         {/* Left Column: Security Score Gauge & Heuristic Recs */}
         <div className="lg:col-span-1 space-y-6">
           {/* Security Score Circular Gauge Card */}

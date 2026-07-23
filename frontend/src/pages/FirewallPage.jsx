@@ -4,6 +4,7 @@ import { Shield, Plus, RefreshCw, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../services/api';
 import { PageHeader } from '../components/ui/PageHeader';
+import { RefreshButton } from '../components/ui/RefreshButton';
 import { Breadcrumb } from '../components/ui/Breadcrumb';
 import { SearchBar } from '../components/ui/SearchBar';
 import { ActionToolbar } from '../components/ui/ActionToolbar';
@@ -18,6 +19,7 @@ export const FirewallPage = () => {
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [pages, setPages] = useState(1);
   const [limit] = useState(10);
 
@@ -201,10 +203,17 @@ export const FirewallPage = () => {
           <Plus className="w-4 h-4" />
           <span>Add Traffic Rule</span>
         </Button>
+        <RefreshButton
+          isRefreshing={isRefreshing}
+          setIsRefreshing={setIsRefreshing}
+          onRefresh={fetchRules}
+          pageName="Firewall"
+        />
       </PageHeader>
 
-      {/* Live Threat Shield Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 select-none">
+      <div className={`space-y-6 transition-opacity duration-300 ${isRefreshing ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
+        {/* Live Threat Shield Metrics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 select-none">
         <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs">
           <span className="text-[10px] font-extrabold uppercase text-slate-400 font-mono block">IDS/IPS Shield</span>
           <span className="text-sm font-extrabold text-emerald-600 font-mono mt-1 block">ACTIVE & ENFORCED</span>
@@ -258,14 +267,7 @@ export const FirewallPage = () => {
             </button>
           }
           actions={
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={fetchRules}
-              className="h-10 w-10 p-0 flex items-center justify-center"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            </Button>
+            <div />
           }
         />
       </form>
@@ -391,6 +393,8 @@ export const FirewallPage = () => {
           </div>
         </div>
       )}
+
+      </div>
 
       {/* Modal */}
       {isModalOpen && (
