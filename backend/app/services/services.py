@@ -36,6 +36,23 @@ from app.config.config import settings
 class AuthService:
     @staticmethod
     def register(db: Session, payload: UserRegister, ip_address: str) -> User:
+        # Guarantee roles are seeded dynamically if missing
+        try:
+            from app.models.models import Role
+            if db.query(Role).count() == 0:
+                for rid, name, desc in [
+                    (1, 'Super Admin', 'Super Admin'),
+                    (2, 'Faculty', 'Faculty'),
+                    (3, 'Student', 'Student'),
+                    (4, 'Parent Visitor', 'Parent Visitor'),
+                    (5, 'Guest', 'Guest')
+                ]:
+                    db.add(Role(id=rid, role_name=name, description=desc))
+                db.commit()
+                print("Dynamic Roles Seeding: Success")
+        except Exception as re_err:
+            print("Dynamic Roles Seeding Warning:", re_err)
+
         # Sanitize email & phone
         email = payload.email.strip().lower()
         phone = payload.phone.strip()
