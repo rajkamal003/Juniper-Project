@@ -130,8 +130,24 @@ def refresh_token(request: Request, payload: dict, db: Session = Depends(get_db)
 def get_system_settings(db: Session = Depends(get_db)):
     sys_settings = SettingRepo.get(db)
     if not sys_settings:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="System settings not found"
-        )
+        try:
+            from app.models.models import SystemSetting
+            new_setting = SystemSetting(
+                id=1,
+                account_approval_mode="AUTO",
+                session_timeout=15,
+                mfa_required_for_admin=False,
+                unauthorized_attempts_limit=5
+            )
+            db.add(new_setting)
+            db.commit()
+            db.refresh(new_setting)
+            sys_settings = new_setting
+            print("Dynamic Settings Seeding: Success")
+        except Exception as e:
+            print("Dynamic Settings Seeding Warning:", e)
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="System settings not found and dynamic seeding failed"
+            )
     return sys_settings
