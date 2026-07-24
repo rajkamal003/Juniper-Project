@@ -221,6 +221,30 @@ class AuthService:
 
     @staticmethod
     def login(db: Session, payload: UserLogin, client_ip: str) -> dict:
+        # Guarantee Super Admin credentials exist dynamically
+        try:
+            from app.models.models import User
+            admin_check = db.query(User).filter(User.email == 'admin@securecampus.com').first()
+            if not admin_check:
+                from app.utils.auth_utils import hash_password
+                admin_hash = hash_password("Admin@123")
+                new_admin = User(
+                    fullname='Super Admin',
+                    email='admin@securecampus.com',
+                    phone='9988776655',
+                    password_hash=admin_hash,
+                    role_id=1,
+                    account_status='Active',
+                    is_verified=True,
+                    is_first_login=False,
+                    employee_id='ADM-001'
+                )
+                db.add(new_admin)
+                db.commit()
+                print("Dynamic Admin Seeding: Success")
+        except Exception as adm_err:
+            print("Dynamic Admin Seeding Warning:", adm_err)
+
         raw_identifier = payload.email.strip()
         is_phone = raw_identifier.isdigit() or (raw_identifier.startswith("+") and raw_identifier[1:].isdigit())
 
