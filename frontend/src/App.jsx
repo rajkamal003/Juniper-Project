@@ -3,7 +3,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { Toaster } from 'sonner';
+import { Toaster, toast } from 'sonner';
 
 import AuthLayout from './components/layout/AuthLayout';
 import DashboardLayout from './components/layout/DashboardLayout';
@@ -81,6 +81,13 @@ const PublicOnlyRoute = ({ children }) => {
   return children;
 };
 
+const UnauthorizedRedirect = () => {
+  React.useEffect(() => {
+    toast.error("You do not have permission to access this page.");
+  }, []);
+  return <Navigate to="/dashboard" replace />;
+};
+
 const RoleGuard = ({ children, allowedRoles }) => {
   const { user, isAuthenticated, loading } = useAuth();
   
@@ -98,7 +105,7 @@ const RoleGuard = ({ children, allowedRoles }) => {
   
   const role = user?.role?.role_name || 'Guest';
   if (!allowedRoles.includes(role)) {
-    return <ForbiddenPage />;
+    return <UnauthorizedRedirect />;
   }
   
   return children;
@@ -420,30 +427,12 @@ const AppContent = () => {
       } />
 
       {/* Faculty Modules */}
-      <Route path="/students" element={
-        <RoleGuard allowedRoles={['Faculty']}>
-          <DashboardLayout>
-            <StudentsPage />
-          </DashboardLayout>
-        </RoleGuard>
-      } />
+      <Route path="/students" element={<Navigate to="/dashboard" replace />} />
 
-      <Route path="/attendance" element={
-        <RoleGuard allowedRoles={['Faculty']}>
-          <DashboardLayout>
-            <AttendancePage />
-          </DashboardLayout>
-        </RoleGuard>
-      } />
+      <Route path="/attendance" element={<Navigate to="/dashboard" replace />} />
 
       {/* Shared Courses Module Route */}
-      <Route path="/courses" element={
-        <RoleGuard allowedRoles={['Faculty', 'Student']}>
-          <DashboardLayout>
-            <CourseRouteResolver />
-          </DashboardLayout>
-        </RoleGuard>
-      } />
+      <Route path="/courses" element={<Navigate to="/dashboard" replace />} />
 
       {/* Student Modules */}
       <Route path="/campus-access" element={
@@ -465,13 +454,7 @@ const AppContent = () => {
         </RoleGuard>
       } />
 
-      <Route path="/visitor-requests" element={
-        <RoleGuard allowedRoles={['Parent Visitor']}>
-          <DashboardLayout>
-            <VisitorRequestsPage />
-          </DashboardLayout>
-        </RoleGuard>
-      } />
+      <Route path="/visitor-requests" element={<Navigate to="/dashboard" replace />} />
 
       {/* Guest Modules */}
       <Route path="/visitor-access" element={
@@ -492,6 +475,16 @@ const AppContent = () => {
 
       {/* Forbidden Access Route */}
       <Route path="/403" element={<ForbiddenPage />} />
+
+      {/* Faculty Manual URL Redirections */}
+      <Route path="/faculty/network" element={<Navigate to="/faculty" replace />} />
+      <Route path="/faculty/devices" element={<Navigate to="/faculty" replace />} />
+      <Route path="/faculty/website-usage" element={<Navigate to="/faculty" replace />} />
+      <Route path="/faculty/application-usage" element={<Navigate to="/faculty" replace />} />
+      <Route path="/faculty/notifications" element={<Navigate to="/faculty" replace />} />
+      <Route path="/faculty/reports" element={<Navigate to="/faculty" replace />} />
+      <Route path="/faculty/profile" element={<Navigate to="/faculty" replace />} />
+      <Route path="/faculty/settings" element={<Navigate to="/faculty" replace />} />
 
       {/* Redirects */}
       <Route path="/login" element={<Navigate to="/" replace />} />

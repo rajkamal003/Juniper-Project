@@ -58,15 +58,7 @@ export const DashboardLayout = ({ children }) => {
         ];
       case 'Faculty':
         return [
-          { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-          { name: 'Network Status', icon: Globe, path: '/network' },
-          { name: 'Connected Devices', icon: Cpu, path: '/devices' },
-          { name: 'Website Usage', icon: Globe, path: '/website-usage' },
-          { name: 'Application Usage', icon: Cpu, path: '/application-usage' },
-          { name: 'Notifications', icon: Bell, path: '/notifications' },
-          { name: 'Reports', icon: FileSpreadsheet, path: '/reports' },
-          { name: 'Profile', icon: User, path: '/profile' },
-          { name: 'Settings', icon: Settings, path: '/settings' }
+          { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' }
         ];
       case 'Student':
         return [
