@@ -26,15 +26,7 @@ app = FastAPI(
 # Enable CORS for frontend requests
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-    ],
-    allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:[0-9]+)?",
+    allow_origin_regex=r"https?://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -70,11 +62,11 @@ def run_db_migrations():
     except Exception as e:
         print("DB drop user_sessions warning / ignored:", e)
 
-    # Create all missing tables automatically
-    Base.metadata.create_all(bind=engine)
-    
-    with engine.begin() as conn:
-        try:
+    try:
+        # Create all missing tables automatically
+        Base.metadata.create_all(bind=engine)
+        
+        with engine.begin() as conn:
             inspector = inspect(conn)
             user_cols = {col['name'] for col in inspector.get_columns("users")} if inspector.has_table("users") else set()
 
@@ -100,14 +92,33 @@ def run_db_migrations():
 
             # Seed default Roles and Super Admin user if missing
             from app.utils.auth_utils import hash_password
-            conn.execute(text("""
-                INSERT IGNORE INTO roles (id, role_name, description) VALUES 
-                (1, 'Super Admin', 'Super Admin'),
-                (2, 'Faculty', 'Faculty'),
-                (3, 'Student', 'Student'),
-                (4, 'Parent Visitor', 'Parent Visitor'),
-                (5, 'Guest', 'Guest');
-            """))
+            
+            # Check if role is mysql or postgres to execute insertion
+            is_mysql = "mysql" in str(engine.url)
+            
+            if is_mysql:
+                conn.execute(text("""
+                    INSERT IGNORE INTO roles (id, role_name, description) VALUES 
+                    (1, 'Super Admin', 'Super Admin'),
+                    (2, 'Faculty', 'Faculty'),
+                    (3, 'Student', 'Student'),
+                    (4, 'Parent Visitor', 'Parent Visitor'),
+                    (5, 'Guest', 'Guest');
+                """))
+            else:
+                # PostgreSQL insert ignores
+                for role_id, name, desc in [
+                    (1, 'Super Admin', 'Super Admin'),
+                    (2, 'Faculty', 'Faculty'),
+                    (3, 'Student', 'Student'),
+                    (4, 'Parent Visitor', 'Parent Visitor'),
+                    (5, 'Guest', 'Guest')
+                ]:
+                    conn.execute(text(
+                        "INSERT INTO roles (id, role_name, description) VALUES (:rid, :name, :desc) "
+                        "ON CONFLICT (id) DO NOTHING;"
+                    ), {"rid": role_id, "name": name, "desc": desc})
+
             admin_check = conn.execute(text("SELECT id, employee_id FROM users WHERE email = 'admin@securecampus.com';")).fetchone()
             if not admin_check:
                 admin_hash = hash_password("Admin@123")
@@ -119,8 +130,8 @@ def run_db_migrations():
             elif not admin_check[1]:
                 conn.execute(text("UPDATE users SET employee_id = 'ADM-001' WHERE email = 'admin@securecampus.com';"))
                 print("Updated existing Super Admin user with employee_id ADM-001")
-        except Exception as e:
-            print("DB migration warning / ignored:", e)
+    except Exception as e:
+        print("DB migration / setup warning (server still starting):", e)
 
 @app.get("/")
 def read_root():
