@@ -66,31 +66,45 @@ def run_db_migrations():
         # Create all missing tables automatically
         Base.metadata.create_all(bind=engine)
         
+        # 1. Run migrations in isolated checks
         with engine.begin() as conn:
             inspector = inspect(conn)
             user_cols = {col['name'] for col in inspector.get_columns("users")} if inspector.has_table("users") else set()
 
-            if "mysql" in str(engine.url):
-                if "profile_image" in user_cols:
-                    conn.execute(text("ALTER TABLE users MODIFY COLUMN profile_image TEXT NULL;"))
-                if "college_id_upload" in user_cols:
-                    conn.execute(text("ALTER TABLE users MODIFY COLUMN college_id_upload TEXT NULL;"))
-                print("MySQL schema migrated: profile_image & college_id_upload altered to TEXT.")
+            try:
+                if "mysql" in str(engine.url):
+                    if "profile_image" in user_cols:
+                        conn.execute(text("ALTER TABLE users MODIFY COLUMN profile_image TEXT NULL;"))
+                    if "college_id_upload" in user_cols:
+                        conn.execute(text("ALTER TABLE users MODIFY COLUMN college_id_upload TEXT NULL;"))
+                    print("MySQL schema migrated: profile_image & college_id_upload altered to TEXT.")
+            except Exception as e:
+                print("MySQL text column alter warning:", e)
 
-            if "mfa_secret" not in user_cols:
-                conn.execute(text("ALTER TABLE users ADD COLUMN mfa_secret VARCHAR(255) NULL;"))
-                print("Migration: Added mfa_secret column to users table.")
+            try:
+                if "mfa_secret" not in user_cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN mfa_secret VARCHAR(255) NULL;"))
+                    print("Migration: Added mfa_secret column to users table.")
+            except Exception as e:
+                print("mfa_secret column migration warning:", e)
 
-            if "is_mfa_enabled" not in user_cols:
-                conn.execute(text("ALTER TABLE users ADD COLUMN is_mfa_enabled BOOLEAN DEFAULT FALSE;"))
-                print("Migration: Added is_mfa_enabled column to users table.")
+            try:
+                if "is_mfa_enabled" not in user_cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN is_mfa_enabled BOOLEAN DEFAULT FALSE;"))
+                    print("Migration: Added is_mfa_enabled column to users table.")
+            except Exception as e:
+                print("is_mfa_enabled column migration warning:", e)
 
-            # Clean up old mock HTTP URLs so they don't render as broken images
-            conn.execute(text("UPDATE users SET profile_image = NULL WHERE profile_image LIKE 'http%';"))
-            conn.execute(text("UPDATE users SET college_id_upload = NULL WHERE college_id_upload LIKE 'http%';"))
-            print("Database cleanup: Reset legacy mock image URLs to NULL.")
+            try:
+                # Clean up old mock HTTP URLs so they don't render as broken images
+                conn.execute(text("UPDATE users SET profile_image = NULL WHERE profile_image LIKE 'http%';"))
+                conn.execute(text("UPDATE users SET college_id_upload = NULL WHERE college_id_upload LIKE 'http%';"))
+                print("Database cleanup: Reset legacy mock image URLs to NULL.")
+            except Exception as e:
+                print("Database url cleanup warning:", e)
 
-            # Seed default Roles and Super Admin user if missing
+        # 2. Run seeding in an independent transaction
+        with engine.begin() as conn:
             from app.utils.auth_utils import hash_password
             
             # Check if role is mysql or postgres to execute insertion
@@ -106,7 +120,7 @@ def run_db_migrations():
                     (5, 'Guest', 'Guest');
                 """))
             else:
-                # PostgreSQL insert ignores
+                # PostgreSQL/SQLite insert ignores
                 for role_id, name, desc in [
                     (1, 'Super Admin', 'Super Admin'),
                     (2, 'Faculty', 'Faculty'),
@@ -118,6 +132,7 @@ def run_db_migrations():
                         "INSERT INTO roles (id, role_name, description) VALUES (:rid, :name, :desc) "
                         "ON CONFLICT (id) DO NOTHING;"
                     ), {"rid": role_id, "name": name, "desc": desc})
+            print("Database Roles seeding complete.")
 
             admin_check = conn.execute(text("SELECT id, employee_id FROM users WHERE email = 'admin@securecampus.com';")).fetchone()
             if not admin_check:
@@ -130,8 +145,17 @@ def run_db_migrations():
             elif not admin_check[1]:
                 conn.execute(text("UPDATE users SET employee_id = 'ADM-001' WHERE email = 'admin@securecampus.com';"))
                 print("Updated existing Super Admin user with employee_id ADM-001")
+            
+            # Seed system settings
+            setting_check = conn.execute(text("SELECT id FROM system_settings LIMIT 1;")).fetchone()
+            if not setting_check:
+                conn.execute(text("""
+                    INSERT INTO system_settings (id, account_approval_mode, session_timeout, mfa_required_for_admin, unauthorized_attempts_limit)
+                    VALUES (1, 'AUTO', 15, 0, 5);
+                """))
+                print("Seeded default system settings.")
     except Exception as e:
-        print("DB migration / setup warning (server still starting):", e)
+        print("DB migration / seeding warning:", e)
 
 @app.get("/")
 def read_root():
