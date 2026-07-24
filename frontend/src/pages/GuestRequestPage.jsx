@@ -17,6 +17,10 @@ export const GuestRequestPage = () => {
   const [loading, setLoading] = useState(false);
   const [approvedCredentials, setApprovedCredentials] = useState(null);
 
+  // Access Duration states
+  const [durationUnit, setDurationUnit] = useState('Hours'); // 'Hours' or 'Days'
+  const [durationValue, setDurationValue] = useState('8'); // Default value for Hours is 8
+
   useEffect(() => {
     document.title = "SecureCampus AI | Guest Access Request";
   }, []);
@@ -38,7 +42,7 @@ export const GuestRequestPage = () => {
       username,
       password,
       ssid: 'SecureCampus-Guest',
-      validity: 'Until manually revoked',
+      validity: `${durationValue} ${durationUnit}`,
       created_at: new Date().toLocaleString()
     };
   };
@@ -197,6 +201,79 @@ Please keep your temporary credentials secure.`;
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
               />
+
+              {/* Access Duration Selection Field */}
+              <div className="space-y-3.5">
+                <label className="block text-[13px] font-bold text-slate-500 uppercase tracking-wider">
+                  Access Duration
+                </label>
+                <div className="flex items-center gap-6 select-none">
+                  <label className="flex items-center gap-2 text-sm font-semibold text-slate-800 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="durationUnit"
+                      value="Hours"
+                      checked={durationUnit === 'Hours'}
+                      onChange={() => {
+                        setDurationUnit('Hours');
+                        setDurationValue('8'); // Default value for hours is 8
+                      }}
+                      className="w-4 h-4 accent-blue-600 cursor-pointer"
+                    />
+                    <span>Hours</span>
+                  </label>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-slate-800 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="durationUnit"
+                      value="Days"
+                      checked={durationUnit === 'Days'}
+                      onChange={() => {
+                        setDurationUnit('Days');
+                        setDurationValue('3'); // Default value for days is 3
+                      }}
+                      className="w-4 h-4 accent-blue-600 cursor-pointer"
+                    />
+                    <span>Days</span>
+                  </label>
+                </div>
+
+                {/* Conditional Dropdown list */}
+                {durationUnit === 'Hours' ? (
+                  <div className="space-y-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                    <label className="block text-xs font-semibold text-slate-500">Number of Hours</label>
+                    <select
+                      value={durationValue}
+                      onChange={(e) => setDurationValue(e.target.value)}
+                      className="w-full h-11 px-3.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    >
+                      <option value="1">1 Hour</option>
+                      <option value="2">2 Hours</option>
+                      <option value="4">4 Hours</option>
+                      <option value="8">8 Hours</option>
+                      <option value="12">12 Hours</option>
+                      <option value="24">24 Hours</option>
+                    </select>
+                  </div>
+                ) : (
+                  <div className="space-y-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                    <label className="block text-xs font-semibold text-slate-500">Number of Days</label>
+                    <select
+                      value={durationValue}
+                      onChange={(e) => setDurationValue(e.target.value)}
+                      className="w-full h-11 px-3.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    >
+                      <option value="1">1 Day</option>
+                      <option value="2">2 Days</option>
+                      <option value="3">3 Days</option>
+                      <option value="5">5 Days</option>
+                      <option value="7">7 Days</option>
+                      <option value="14">14 Days</option>
+                      <option value="30">30 Days</option>
+                    </select>
+                  </div>
+                )}
+              </div>
 
               <div className="pt-2">
                 <Button type="submit" loading={loading} loadingText="Generating Credentials..." disabled={loading}>

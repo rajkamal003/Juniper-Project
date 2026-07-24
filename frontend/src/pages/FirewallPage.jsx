@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Plus, RefreshCw, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
-import api from '../services/api';
 import { PageHeader } from '../components/ui/PageHeader';
 import { RefreshButton } from '../components/ui/RefreshButton';
 import { Breadcrumb } from '../components/ui/Breadcrumb';
@@ -13,6 +12,7 @@ import { EmptyState } from '../components/feedback/EmptyState';
 import { Button } from '../components/ui/Button';
 import { ConfirmationDialog } from '../components/ui/ConfirmationDialog';
 import { Input } from '../components/ui/Input';
+import { simulationEngine } from '../services/simulationEngine';
 
 export const FirewallPage = () => {
   const [rules, setRules] = useState([]);
@@ -23,16 +23,13 @@ export const FirewallPage = () => {
   const [pages, setPages] = useState(1);
   const [limit] = useState(10);
 
-  const mockRules = [
-    { id: 1, priority: 10, source_ip: '192.168.10.0/24', destination: 'any', protocol: 'TCP', policy: 'ALLOW', logs_count: 1420, status: 'Active', created_at: new Date(Date.now() - 3600000).toISOString() },
-    { id: 2, priority: 20, source_ip: '192.168.20.0/24', destination: 'any', protocol: 'UDP', policy: 'ALLOW', logs_count: 890, status: 'Active', created_at: new Date(Date.now() - 3200000).toISOString() },
-    { id: 3, priority: 30, source_ip: 'any', destination: '192.168.30.0/24', protocol: 'ANY', policy: 'DENY', logs_count: 142, status: 'Active', created_at: new Date(Date.now() - 2800000).toISOString() },
-    { id: 4, priority: 40, source_ip: '192.168.1.189', destination: 'any', protocol: 'TCP', policy: 'REJECT', logs_count: 56, status: 'Active', created_at: new Date(Date.now() - 2400000).toISOString() },
-    { id: 5, priority: 50, source_ip: 'any', destination: '10.0.0.0/8', protocol: 'ICMP', policy: 'DENY', logs_count: 210, status: 'Active', created_at: new Date(Date.now() - 1800000).toISOString() },
-    { id: 6, priority: 60, source_ip: '192.168.40.0/24', destination: '8.8.8.8', protocol: 'UDP', policy: 'ALLOW', logs_count: 4500, status: 'Active', created_at: new Date(Date.now() - 1200000).toISOString() },
-    { id: 7, priority: 70, source_ip: '192.168.10.15', destination: 'any', protocol: 'ANY', policy: 'DENY', logs_count: 89, status: 'Active', created_at: new Date(Date.now() - 600000).toISOString() },
-    { id: 8, priority: 80, source_ip: 'any', destination: 'https://instagram.com', protocol: 'TCP', policy: 'DENY', logs_count: 1240, status: 'Active', created_at: new Date(Date.now() - 300000).toISOString() }
-  ];
+  // Dynamic metrics state
+  const [stats, setStats] = useState({
+    activeRules: 0,
+    blockCount: 0,
+    threatScore: 0,
+    blockedDomains: 0
+  });
 
   // Search and Filters
   const [search, setSearch] = useState('');
@@ -61,37 +58,49 @@ export const FirewallPage = () => {
   });
   const [deleting, setDeleting] = useState(false);
 
-  const headers = ["Priority", "Source IP", "Destination", "Protocol", "Action Policy", "Status", "Time Created", "Allowed Logs", "Blocked Logs", "Actions"];
+  const headers = ["Rule Name", "Priority", "Source (IP:Port)", "Destination (IP:Port)", "Protocol", "Action Policy", "Status", "Time Created", "Allowed Logs", "Blocked Logs", "Actions"];
 
+  // Reordered Flow: clear -> generate -> validate -> set state -> render
   const fetchRules = async () => {
     setLoading(true);
     try {
-      const params = {
-        page,
-        limit,
-        search: search || undefined,
-        protocol: protocolFilter || undefined,
-        policy_action: policyFilter || undefined
-      };
-      const response = await api.get('/api/firewall/rules', { params });
-      if (response.data && response.data.success) {
-        let fetched = response.data.data.items;
-        if (!fetched || fetched.length === 0) {
-          fetched = mockRules;
-        }
-        setRules(fetched);
-        setTotal(response.data.data.total || fetched.length);
-        setPages(response.data.data.pages || 1);
-      } else {
-        setRules(mockRules);
-        setTotal(mockRules.length);
-        setPages(1);
+      // 1. Clear previous
+      setRules([]);
+
+      // 2. Generate dynamic simulated firewall rules
+      const allRules = simulationEngine.generateFirewallRules();
+
+      // 3. Filter rules locally
+      let filtered = allRules;
+      if (search.trim()) {
+        const query = search.toLowerCase();
+        filtered = filtered.filter(r => 
+          r.source_ip.toLowerCase().includes(query) ||
+          r.destination.toLowerCase().includes(query) ||
+          r.reason?.toLowerCase().includes(query)
+        );
       }
+      if (protocolFilter) {
+        filtered = filtered.filter(r => r.protocol === protocolFilter);
+      }
+      if (policyFilter) {
+        filtered = filtered.filter(r => r.policy === policyFilter);
+      }
+
+      // 4. Update React state
+      const startIndex = (page - 1) * limit;
+      const paginated = filtered.slice(startIndex, startIndex + limit);
+
+      setRules(paginated);
+      setTotal(filtered.length);
+      setPages(Math.ceil(filtered.length / limit) || 1);
+
+      // Recalculate stats based on simulated rules
+      const calculatedStats = simulationEngine.calculateFirewallStats(filtered);
+      setStats(calculatedStats);
+
     } catch (err) {
-      console.warn("FastAPI rules endpoint unavailable, falling back to dynamic simulated rules.");
-      setRules(mockRules);
-      setTotal(mockRules.length);
-      setPages(1);
+      toast.error("Failed to load simulated firewall rules.");
     } finally {
       setLoading(false);
     }
@@ -100,7 +109,7 @@ export const FirewallPage = () => {
   useEffect(() => {
     document.title = "SecureCampus AI | Firewall";
     fetchRules();
-  }, [page, protocolFilter, policyFilter]);
+  }, [page, protocolFilter, policyFilter, search]);
 
   const handleSearchSubmit = (e) => {
     if (e) e.preventDefault();
@@ -137,23 +146,27 @@ export const FirewallPage = () => {
     setSubmitting(true);
 
     try {
-      const payload = {
+      const newRule = {
+        id: `rule-custom-${Date.now()}`,
         priority: parseInt(formData.priority, 10),
         source_ip: formData.source_ip,
         destination: formData.destination,
         protocol: formData.protocol,
         policy: formData.policy,
-        status: formData.status
+        status: formData.status,
+        created_at: new Date().toISOString(),
+        allowed_logs: formData.policy === 'ALLOW' ? Math.floor(Math.random() * 200) + 1 : 0,
+        blocked_logs: formData.policy !== 'ALLOW' ? Math.floor(Math.random() * 200) + 1 : 0,
+        threat_score: Math.floor(Math.random() * 30)
       };
-      const response = await api.post('/api/firewall/rules', payload);
-      if (response.data && response.data.success) {
-        toast.success(response.data.message || 'Traffic policy rule created.');
-        setIsModalOpen(false);
-        setFormData({ priority: '', source_ip: '', destination: '', protocol: 'TCP', policy: 'ALLOW', status: 'Active' });
-        fetchRules();
-      }
+
+      setRules(prev => [newRule, ...prev].sort((a, b) => a.priority - b.priority));
+      setTotal(prev => prev + 1);
+      toast.success('Traffic policy rule created.');
+      setIsModalOpen(false);
+      setFormData({ priority: '', source_ip: '', destination: '', protocol: 'TCP', policy: 'ALLOW', status: 'Active' });
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to create traffic rule.');
+      toast.error('Failed to create traffic rule.');
     } finally {
       setSubmitting(false);
     }
@@ -162,14 +175,18 @@ export const FirewallPage = () => {
   const handleConfirmDelete = async () => {
     setDeleting(true);
     try {
-      const response = await api.delete(`/api/firewall/rules/${deleteDialog.ruleId}`);
-      if (response.data && response.data.success) {
-        toast.success('Security policy rule soft-deleted successfully.');
-        setDeleteDialog({ isOpen: false, ruleId: null, priority: '' });
-        fetchRules();
-      }
+      const updated = rules.filter(r => r.id !== deleteDialog.ruleId);
+      setRules(updated);
+      setTotal(prev => Math.max(0, prev - 1));
+
+      // Recalculate totals
+      const calculatedStats = simulationEngine.calculateFirewallStats(updated);
+      setStats(calculatedStats);
+
+      toast.success('Security policy rule soft-deleted successfully.');
+      setDeleteDialog({ isOpen: false, ruleId: null, priority: '' });
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to delete traffic rule.');
+      toast.error('Failed to delete traffic rule.');
     } finally {
       setDeleting(false);
     }
@@ -182,6 +199,7 @@ export const FirewallPage = () => {
       description="Create traffic inspection rules (Allow/Deny/Reject) to filter incoming campus network requests."
     />
   );
+
 
   return (
     <div className="space-y-6 text-left">
@@ -212,29 +230,29 @@ export const FirewallPage = () => {
       </PageHeader>
 
       <div className={`space-y-6 transition-opacity duration-300 ${isRefreshing ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
-        {/* Live Threat Shield Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 select-none">
-        <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs">
-          <span className="text-[10px] font-extrabold uppercase text-slate-400 font-mono block">IDS/IPS Shield</span>
-          <span className="text-sm font-extrabold text-emerald-600 font-mono mt-1 block">ACTIVE & ENFORCED</span>
-          <span className="text-[9px] text-slate-500 mt-1 block">Junos Security Engined</span>
+        {/* Live Threat Shield Metrics Grid - Responsive support */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 select-none">
+          <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs">
+            <span className="text-[10px] font-extrabold uppercase text-slate-400 font-mono block">Active Rules</span>
+            <span className="text-sm font-extrabold text-emerald-600 font-mono mt-1 block">{stats.activeRules} ENFORCED</span>
+            <span className="text-[9px] text-slate-500 mt-1 block">Simulation Engine Shield</span>
+          </div>
+          <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs">
+            <span className="text-[10px] font-extrabold uppercase text-slate-400 font-mono block">Threat Block Timeline</span>
+            <span className="text-sm font-extrabold text-blue-600 font-mono mt-1 block">{stats.blockCount.toLocaleString()} Blocks</span>
+            <span className="text-[9px] text-slate-500 mt-1 block">Mitigated overall logs</span>
+          </div>
+          <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs">
+            <span className="text-[10px] font-extrabold uppercase text-slate-400 font-mono block">Max Threat Score</span>
+            <span className="text-sm font-extrabold text-red-600 font-mono mt-1 block">{stats.threatScore} / 100</span>
+            <span className="text-[9px] text-slate-500 mt-1 block">Highest threat index logged</span>
+          </div>
+          <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs">
+            <span className="text-[10px] font-extrabold uppercase text-slate-400 font-mono block">Blocked Domains</span>
+            <span className="text-sm font-extrabold text-purple-600 font-mono mt-1 block">{stats.blockedDomains} Domains</span>
+            <span className="text-[9px] text-slate-500 mt-1 block">Filtered Category Policies</span>
+          </div>
         </div>
-        <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs">
-          <span className="text-[10px] font-extrabold uppercase text-slate-400 font-mono block">Threat Block Timeline</span>
-          <span className="text-sm font-extrabold text-blue-600 font-mono mt-1 block">156 Blocks</span>
-          <span className="text-[9px] text-slate-500 mt-1 block">Mitigated in last 1 hour</span>
-        </div>
-        <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs">
-          <span className="text-[10px] font-extrabold uppercase text-slate-400 font-mono block">Active Blocks (IPs)</span>
-          <span className="text-sm font-extrabold text-red-600 font-mono mt-1 block">42 IPs Blacklisted</span>
-          <span className="text-[9px] text-slate-500 mt-1 block">Malicious signatures detected</span>
-        </div>
-        <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs">
-          <span className="text-[10px] font-extrabold uppercase text-slate-400 font-mono block">Blocked Domains</span>
-          <span className="text-sm font-extrabold text-purple-600 font-mono mt-1 block">38 Domains</span>
-          <span className="text-[9px] text-slate-500 mt-1 block">Filtered Category Policies</span>
-        </div>
-      </div>
 
       <form onSubmit={handleSearchSubmit}>
         <ActionToolbar
@@ -318,14 +336,17 @@ export const FirewallPage = () => {
         emptyState={customEmptyState}
         renderRow={(rule) => (
           <>
+            <td className="px-5 py-3 font-semibold text-slate-800 text-[11px] truncate max-w-[120px]" title={rule.rule_name}>
+              {rule.rule_name || 'GEN_RULE'}
+            </td>
             <td className="px-5 py-3 font-semibold text-slate-800 font-mono text-[11px]">
               #{rule.priority}
             </td>
             <td className="px-5 py-3 font-medium text-slate-600 font-mono text-[11px]">
-              {rule.source_ip}
+              {rule.source_ip}:{rule.source_port || 'any'}
             </td>
             <td className="px-5 py-3 font-medium text-slate-600 font-mono text-[11px]">
-              {rule.destination}
+              {rule.destination}:{rule.port || 'any'}
             </td>
             <td className="px-5 py-3 font-semibold text-blue-600 text-[11px] uppercase">
               {rule.protocol}
@@ -349,10 +370,10 @@ export const FirewallPage = () => {
               {rule.created_at ? new Date(rule.created_at).toLocaleTimeString() : '12:45:00'}
             </td>
             <td className="px-5 py-3 font-semibold text-emerald-600 font-mono text-[11px]">
-              {rule.policy === 'ALLOW' || rule.policy === 'Allow' ? (rule.logs_count || 1420).toLocaleString() : '0'}
+              {rule.policy === 'ALLOW' || rule.policy === 'Allow' ? (rule.allowed_logs || 0).toLocaleString() : '0'}
             </td>
             <td className="px-5 py-3 font-semibold text-red-600 font-mono text-[11px]">
-              {rule.policy !== 'ALLOW' && rule.policy !== 'Allow' ? (rule.logs_count || 142).toLocaleString() : '0'}
+              {rule.policy !== 'ALLOW' && rule.policy !== 'Allow' ? (rule.blocked_logs || 0).toLocaleString() : '0'}
             </td>
             <td className="px-5 py-3">
               <button
@@ -369,7 +390,7 @@ export const FirewallPage = () => {
 
       {/* Pagination */}
       {pages > 1 && (
-        <div className="flex items-center justify-between border-t border-[#334155]/15 pt-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#334155]/15 pt-4">
           <span className="text-[11px] font-semibold text-brand-secondary">
             Showing Page {page} of {pages} ({total} policy rules total)
           </span>
