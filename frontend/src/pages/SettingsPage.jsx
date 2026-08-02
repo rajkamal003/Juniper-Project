@@ -115,36 +115,6 @@ export const SettingsPage = () => {
           </div>
         </Card>
 
-        {/* Appearance Options Card */}
-        <Card className="p-5 select-none text-left space-y-4">
-          <div className="flex items-center gap-2 text-brand-primary">
-            <Sliders className="w-4 h-4" />
-            <SectionTitle className="mb-0 pb-0 border-b-0">Appearance & Maintenance</SectionTitle>
-          </div>
-          <div className="space-y-4 pt-2 text-xs">
-            <div>
-              <label className="block text-[9px] font-bold text-brand-secondary uppercase tracking-wider mb-1">Theme Mode</label>
-              <select
-                value={config.theme}
-                onChange={(e) => setConfig({ ...config, theme: e.target.value })}
-                className="w-full h-9 px-3 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 outline-none focus:border-blue-400"
-              >
-                <option value="dark">Dark Theme</option>
-                <option value="light">Light Theme</option>
-              </select>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="font-medium text-brand-text">System Maintenance Mode</span>
-              <input
-                type="checkbox"
-                checked={config.maintenance_mode}
-                onChange={(e) => setConfig({ ...config, maintenance_mode: e.target.checked })}
-                className="w-4 h-4 rounded accent-brand-primary cursor-pointer"
-              />
-            </div>
-          </div>
-        </Card>
-
         {/* Security Parameters Card */}
         <Card className="p-5 select-none text-left space-y-4">
           <div className="flex items-center gap-2 text-brand-primary">
