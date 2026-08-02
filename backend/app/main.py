@@ -51,68 +51,74 @@ def run_db_migrations():
     from app.database import engine
     from app.models.models import Base
     from sqlalchemy import text, inspect
-    
-    # Drop user_sessions if it exists to force refresh schema
-    try:
-        with engine.begin() as conn:
-            inspector = inspect(conn)
-            if inspector.has_table("user_sessions"):
-                conn.execute(text("DROP TABLE user_sessions;"))
-                print("Migration: Dropped old user_sessions table to force schema refresh.")
-    except Exception as e:
-        print("DB drop user_sessions warning / ignored:", e)
 
+    # ── Step 1: Create all missing tables ─────────────────────────────────────
     try:
-        # Create all missing tables automatically
         Base.metadata.create_all(bind=engine)
-        
-        # 1. Run migrations in isolated checks
+        print("DB: Schema sync complete.")
+    except Exception as e:
+        print("DB schema create_all warning:", e)
+
+    # ── Step 2: Column migrations (idempotent ALTERs) ─────────────────────────
+    try:
         with engine.begin() as conn:
             inspector = inspect(conn)
             user_cols = {col['name'] for col in inspector.get_columns("users")} if inspector.has_table("users") else set()
 
-            try:
-                if "mysql" in str(engine.url):
+            is_mysql = "mysql" in str(engine.url)
+            if is_mysql:
+                try:
                     if "profile_image" in user_cols:
                         conn.execute(text("ALTER TABLE users MODIFY COLUMN profile_image TEXT NULL;"))
                     if "college_id_upload" in user_cols:
                         conn.execute(text("ALTER TABLE users MODIFY COLUMN college_id_upload TEXT NULL;"))
-                    print("MySQL schema migrated: profile_image & college_id_upload altered to TEXT.")
-            except Exception as e:
-                print("MySQL text column alter warning:", e)
+                except Exception as e:
+                    print("MySQL text column alter warning:", e)
 
             try:
                 if "mfa_secret" not in user_cols:
                     conn.execute(text("ALTER TABLE users ADD COLUMN mfa_secret VARCHAR(255) NULL;"))
-                    print("Migration: Added mfa_secret column to users table.")
+                    print("Migration: Added mfa_secret column.")
             except Exception as e:
-                print("mfa_secret column migration warning:", e)
+                print("mfa_secret migration warning:", e)
 
             try:
                 if "is_mfa_enabled" not in user_cols:
                     conn.execute(text("ALTER TABLE users ADD COLUMN is_mfa_enabled BOOLEAN DEFAULT FALSE;"))
-                    print("Migration: Added is_mfa_enabled column to users table.")
+                    print("Migration: Added is_mfa_enabled column.")
             except Exception as e:
-                print("is_mfa_enabled column migration warning:", e)
+                print("is_mfa_enabled migration warning:", e)
+
+            # ── Guest-specific columns ─────────────────────────────────────────
+            try:
+                if "host_faculty" not in user_cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN host_faculty VARCHAR(255) NULL;"))
+                    print("Migration: Added host_faculty column.")
+            except Exception as e:
+                print("host_faculty migration warning:", e)
 
             try:
-                # Clean up old mock HTTP URLs so they don't render as broken images
+                if "visit_date" not in user_cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN visit_date DATE NULL;"))
+                    print("Migration: Added visit_date column.")
+            except Exception as e:
+                print("visit_date migration warning:", e)
+
+            try:
                 conn.execute(text("UPDATE users SET profile_image = NULL WHERE profile_image LIKE 'http%';"))
                 conn.execute(text("UPDATE users SET college_id_upload = NULL WHERE college_id_upload LIKE 'http%';"))
-                print("Database cleanup: Reset legacy mock image URLs to NULL.")
             except Exception as e:
-                print("Database url cleanup warning:", e)
+                print("Image URL cleanup warning:", e)
+    except Exception as e:
+        print("DB column migration warning:", e)
 
-        # 2. Run seeding in an independent transaction
+    # ── Step 3: Seed roles ─────────────────────────────────────────────────────
+    try:
         with engine.begin() as conn:
-            from app.utils.auth_utils import hash_password
-            
-            # Check if role is mysql or postgres to execute insertion
             is_mysql = "mysql" in str(engine.url)
-            
             if is_mysql:
                 conn.execute(text("""
-                    INSERT IGNORE INTO roles (id, role_name, description) VALUES 
+                    INSERT IGNORE INTO roles (id, role_name, description) VALUES
                     (1, 'Super Admin', 'Super Admin'),
                     (2, 'Faculty', 'Faculty'),
                     (3, 'Student', 'Student'),
@@ -120,7 +126,6 @@ def run_db_migrations():
                     (5, 'Guest', 'Guest');
                 """))
             else:
-                # PostgreSQL/SQLite insert ignores
                 for role_id, name, desc in [
                     (1, 'Super Admin', 'Super Admin'),
                     (2, 'Faculty', 'Faculty'),
@@ -132,30 +137,51 @@ def run_db_migrations():
                         "INSERT INTO roles (id, role_name, description) VALUES (:rid, :name, :desc) "
                         "ON CONFLICT (id) DO NOTHING;"
                     ), {"rid": role_id, "name": name, "desc": desc})
-            print("Database Roles seeding complete.")
+            print("DB: Roles seeded.")
+    except Exception as e:
+        print("Roles seeding warning:", e)
 
-            admin_check = conn.execute(text("SELECT id, employee_id FROM users WHERE email = 'admin@securecampus.com';")).fetchone()
+    # ── Step 4: Seed Super Admin user ─────────────────────────────────────────
+    try:
+        with engine.begin() as conn:
+            from app.utils.auth_utils import hash_password
+            admin_check = conn.execute(text(
+                "SELECT id, employee_id FROM users WHERE email = 'admin@securecampus.com';"
+            )).fetchone()
             if not admin_check:
                 admin_hash = hash_password("Admin@123")
                 conn.execute(text(
-                    "INSERT INTO users (fullname, email, phone, password_hash, role_id, account_status, is_verified, is_first_login, employee_id) "
-                    "VALUES ('Super Admin', 'admin@securecampus.com', '9988776655', :pwd, 1, 'Active', 1, 0, 'ADM-001');"
+                    "INSERT INTO users (fullname, email, phone, password_hash, role_id, "
+                    "account_status, is_verified, is_first_login, employee_id) "
+                    "VALUES ('Super Admin', 'admin@securecampus.com', '9988776655', :pwd, "
+                    "1, 'Active', 1, 0, 'ADM-001');"
                 ), {"pwd": admin_hash})
-                print("Seeded default Super Admin user: admin@securecampus.com with employee_id ADM-001")
-            elif not admin_check[1]:
-                conn.execute(text("UPDATE users SET employee_id = 'ADM-001' WHERE email = 'admin@securecampus.com';"))
-                print("Updated existing Super Admin user with employee_id ADM-001")
-            
-            # Seed system settings
+                print("DB: Super Admin seeded (admin@securecampus.com / Admin@123).")
+            else:
+                if not admin_check[1]:
+                    conn.execute(text(
+                        "UPDATE users SET employee_id = 'ADM-001' WHERE email = 'admin@securecampus.com';"
+                    ))
+                print(f"DB: Super Admin already exists (id={admin_check[0]}).")
+    except Exception as e:
+        print("Admin seeding warning:", e)
+
+    # ── Step 5: Seed system settings with all required columns ────────────────
+    try:
+        with engine.begin() as conn:
             setting_check = conn.execute(text("SELECT id FROM system_settings LIMIT 1;")).fetchone()
             if not setting_check:
-                conn.execute(text("""
-                    INSERT INTO system_settings (id, account_approval_mode, session_timeout, mfa_required_for_admin, unauthorized_attempts_limit)
-                    VALUES (1, 'AUTO', 15, 0, 5);
-                """))
-                print("Seeded default system settings.")
+                conn.execute(text(
+                    "INSERT INTO system_settings "
+                    "(account_approval_mode, theme, maintenance_mode, allow_guest_registration, "
+                    "exam_mode, otp_expiry, session_timeout) "
+                    "VALUES ('AUTO', 'dark', 0, 1, 0, 300, 900);"
+                ))
+                print("DB: System settings seeded.")
+            else:
+                print("DB: System settings already exist.")
     except Exception as e:
-        print("DB migration / seeding warning:", e)
+        print("System settings seeding warning:", e)
 
 @app.get("/")
 def read_root():

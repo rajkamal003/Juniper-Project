@@ -483,6 +483,40 @@ export const UserNetworkAnalyticsDashboard = ({ user, onClose }) => {
               </div>
             </div>
 
+            {/* Guest Info Card — only shown for Guest users */}
+            {(user?.role_id === 5 || user?.role?.role_name === 'Guest') && (
+              <div className="space-y-3 text-xs bg-violet-50 p-4 rounded-2xl border border-violet-200 shadow-sm">
+                <p className="text-[9px] font-extrabold text-violet-600 uppercase tracking-wider">🪪 Guest Visit Details</p>
+                {user?.host_faculty && (
+                  <div className="space-y-0.5">
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Host Faculty</span>
+                    <p className="font-semibold text-slate-800">{user.host_faculty}</p>
+                  </div>
+                )}
+                {user?.purpose && (
+                  <div className="space-y-0.5">
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Purpose of Visit</span>
+                    <p className="font-semibold text-slate-800">{user.purpose}</p>
+                  </div>
+                )}
+                {user?.visit_date && (
+                  <div className="space-y-0.5">
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Visit Date</span>
+                    <p className="font-semibold text-slate-800">
+                      {new Date(user.visit_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </p>
+                  </div>
+                )}
+                {user?.duration && (
+                  <div className="space-y-0.5">
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Stay Duration</span>
+                    <p className="font-semibold text-slate-800">{user.duration}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+
           </div>
 
           {/* Quick Stats */}

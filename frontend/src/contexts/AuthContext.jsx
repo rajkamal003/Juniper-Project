@@ -29,6 +29,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Ping the backend root endpoint (no DB required) to verify reachability
+  const checkBackendHealth = async () => {
+    try {
+      const baseURL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+      await fetch(`${baseURL}/`, { method: 'GET' });
+      setIsBackendOffline(false);
+    } catch {
+      setIsBackendOffline(true);
+    }
+  };
+
   const checkAuth = async () => {
     const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
     if (!token) {
@@ -55,14 +66,16 @@ export const AuthProvider = ({ children }) => {
           }
         } catch (e) {
           if (!e.response) {
-            setIsBackendOffline(true);
+            // Network-level failure on /api/users/sessions — run health check
+            await checkBackendHealth();
           }
           setSessionMetadata({ session_id: sessId, browser: 'Web Client', operating_system: 'Terminal', ip_address: '127.0.0.1' });
         }
       }
     } catch (err) {
       if (!err.response) {
-        setIsBackendOffline(true);
+        // Network-level failure — verify via health check before marking offline
+        await checkBackendHealth();
       } else {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
@@ -82,10 +95,14 @@ export const AuthProvider = ({ children }) => {
       if (response.data && response.data.session_timeout) {
         setSessionTimeout(response.data.session_timeout);
       }
+      // Settings loaded — backend is clearly reachable
       setIsBackendOffline(false);
     } catch (error) {
+      // A settings endpoint failure (e.g. DB error returning 500) does NOT mean
+      // the backend process is down. Only mark offline on a true network failure
+      // AND only after confirming the root health endpoint is also unreachable.
       if (!error.response) {
-        setIsBackendOffline(true);
+        await checkBackendHealth();
       }
       console.warn("Failed to fetch dynamic session timeout settings, using default 15 minutes.", error);
     }
@@ -93,11 +110,14 @@ export const AuthProvider = ({ children }) => {
 
   const retryConnection = async () => {
     setLoading(true);
+    setIsBackendOffline(false);
+    await checkBackendHealth();
     await checkAuth();
     await fetchSystemSettings();
   };
 
   useEffect(() => {
+    checkBackendHealth();
     checkAuth();
     fetchSystemSettings();
     

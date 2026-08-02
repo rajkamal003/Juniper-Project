@@ -188,6 +188,8 @@ class AuthService:
             relationship=payload.relationship,
             purpose=payload.purpose,
             duration=payload.duration, # Stores Student Year or Guest Duration
+            host_faculty=payload.host_faculty if payload.role_id == 5 else None,
+            visit_date=payload.visit_date if payload.role_id == 5 else None,
             profile_image=payload.profile_image,
             college_id_upload=payload.college_id_upload
         )

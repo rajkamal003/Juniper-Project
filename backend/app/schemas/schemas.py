@@ -30,6 +30,10 @@ class UserRegister(UserBase):
     relationship: Optional[str] = None
     purpose: Optional[str] = None
     duration: Optional[str] = None # Stores Year for students, Expected Duration for guests
+
+    # Guest-specific fields
+    host_faculty: Optional[str] = None
+    visit_date: Optional[date] = None
     
     profile_image: Optional[str] = None
     college_id_upload: Optional[str] = None
@@ -53,65 +57,119 @@ class UserRegister(UserBase):
 
     @model_validator(mode='after')
     def validate_role_fields_and_passwords(self) -> 'UserRegister':
-        # 1. Check passwords match
+        # ── Validation constants (mirrors frontend) ────────────────────────────
+        # Student ID  : exactly 10 digits         e.g. 2300030000
+        # Faculty ID  : exactly 4-5 digits        e.g. 1234 or 12345
+        # Student email: starts with digits       e.g. 2300030000@kluniversity.in
+        # Faculty email: starts with letters      e.g. john.doe@kluniversity.in
+        STUDENT_ID_RE   = re.compile(r'^[0-9]{10}$')
+        FACULTY_ID_RE   = re.compile(r'^[0-9]{4,5}$')
+        KLU_EMAIL_RE    = re.compile(r'^.+@kluniversity\.in$', re.IGNORECASE)
+        STUDENT_EMAIL_RE = re.compile(r'^[0-9]+@kluniversity\.in$', re.IGNORECASE)
+        FACULTY_EMAIL_RE = re.compile(r'^[a-zA-Z][a-zA-Z0-9._-]*@kluniversity\.in$', re.IGNORECASE)
+
+        # 1. Passwords must match
         if self.password != self.confirm_password:
             raise ValueError("Passwords do not match")
 
-        # 2. Email domain restriction for Student & Faculty
         clean_email = str(self.email).strip().lower()
-        is_klu = clean_email.endswith('@kluniversity.in') or '.kluniversity.in' in clean_email
+        emp_id  = (self.employee_id or '').strip()
+        roll_no = (self.roll_number or '').strip()
 
-        if self.role_id == 3 and not is_klu:
-            raise ValueError("Students must register using their official KL University email.")
-        if self.role_id == 2 and not is_klu:
-            raise ValueError("Faculty must register using their official KL University email.")
+        # 2. Admin self-registration is disabled
+        if self.role_id == 1:
+            raise ValueError(
+                "Admin accounts cannot be self-registered. "
+                "Please contact your system administrator."
+            )
 
-        # 3. Check conditional fields and formats by role_id
-        # 2: Faculty, 3: Student, 4: Parent Visitor, 5: Guest
-        if self.role_id == 1: # Admin
-            if self.employee_id and self.employee_id.strip():
-                emp_clean = self.employee_id.strip()
-                if not re.match(r'^ADM-[0-9]{3}$', emp_clean):
-                    raise ValueError("Admin ID must match ADM-XXX format (e.g. ADM-001).")
+        # 3. Faculty validation
+        elif self.role_id == 2:
+            # Email must be @kluniversity.in and start with LETTERS
+            if not KLU_EMAIL_RE.match(clean_email):
+                raise ValueError("Faculty must register using their official KL University email (@kluniversity.in).")
+            if STUDENT_EMAIL_RE.match(clean_email):
+                raise ValueError(
+                    "This looks like a Student email (starts with digits). "
+                    "Faculty emails must start with your name, e.g. john.doe@kluniversity.in."
+                )
+            if not FACULTY_EMAIL_RE.match(clean_email):
+                raise ValueError("Faculty email must start with your name, e.g. john.doe@kluniversity.in.")
 
-        elif self.role_id == 2: # Faculty
-            if not self.employee_id or not self.employee_id.strip():
-                raise ValueError("Faculty ID is required for Faculty")
-            emp_clean = self.employee_id.strip()
-            if not re.match(r'^[0-9]{4,5}$', emp_clean):
-                raise ValueError("Faculty ID must be exactly 4 or 5 digits numbers only.")
+            # Faculty ID must be 4-5 digits — explicitly block 10-digit Student IDs
+            if not emp_id:
+                raise ValueError("Faculty ID (4–5 digits) is required for Faculty registration.")
+            if STUDENT_ID_RE.match(emp_id):
+                raise ValueError(
+                    "This is a Student ID (10 digits) and cannot be used for Faculty registration. "
+                    "Faculty IDs are 4–5 digits only (e.g. 1234)."
+                )
+            if not FACULTY_ID_RE.match(emp_id):
+                raise ValueError(
+                    "Faculty ID must be exactly 4 or 5 digits (e.g. 1234 or 12345). "
+                    "Other ID formats are not accepted."
+                )
             if not self.department or not self.department.strip():
-                raise ValueError("Department is required for Faculty")
+                raise ValueError("Department is required for Faculty.")
 
-        elif self.role_id == 3: # Student
-            if not self.roll_number or not self.roll_number.strip():
-                raise ValueError("Student ID is required for Students")
-            roll_clean = self.roll_number.strip()
-            if not re.match(r'^[0-9]{10}$', roll_clean):
-                raise ValueError("Student ID must be exactly 10 digits numbers only.")
+        # 4. Student validation
+        elif self.role_id == 3:
+            # Email must be @kluniversity.in and start with DIGITS
+            if not KLU_EMAIL_RE.match(clean_email):
+                raise ValueError("Students must register using their official KL University email (@kluniversity.in).")
+            if FACULTY_EMAIL_RE.match(clean_email) and not STUDENT_EMAIL_RE.match(clean_email):
+                raise ValueError(
+                    "This looks like a Faculty email (starts with letters). "
+                    "Student emails must start with your roll number, e.g. 2300030000@kluniversity.in."
+                )
+            if not STUDENT_EMAIL_RE.match(clean_email):
+                raise ValueError(
+                    "Student email must start with your roll number, "
+                    "e.g. 2300030000@kluniversity.in."
+                )
+
+            # Student ID must be exactly 10 digits — explicitly block 4-5 digit Faculty IDs
+            if not roll_no:
+                raise ValueError("Student ID (10-digit roll number) is required.")
+            if FACULTY_ID_RE.match(roll_no) and not STUDENT_ID_RE.match(roll_no):
+                raise ValueError(
+                    "This looks like a Faculty ID (4–5 digits). "
+                    "Student IDs are exactly 10 digits (e.g. 2300030000)."
+                )
+            if not STUDENT_ID_RE.match(roll_no):
+                raise ValueError(
+                    "Student ID must be exactly 10 digits (e.g. 2300030000). "
+                    "Faculty and Admin IDs are not accepted here."
+                )
             if not self.department or not self.department.strip():
-                raise ValueError("Department is required for Students")
+                raise ValueError("Department is required for Students.")
             if not self.duration or not self.duration.strip() or self.duration not in ['1', '2', '3', '4']:
-                raise ValueError("Year must be 1, 2, 3, or 4 for Students")
+                raise ValueError("Academic Year must be 1, 2, 3, or 4 for Students.")
 
-        elif self.role_id == 4: # Parent Visitor
-            if not self.parent_student_roll or not self.parent_student_roll.strip():
-                raise ValueError("Student Roll Number is required for Parents")
-            parent_roll_clean = self.parent_student_roll.strip()
-            if not re.match(r'^[0-9]{10}$', parent_roll_clean):
-                raise ValueError("Linked Student Roll Number must be exactly 10 digits numbers only.")
+        # 5. Parent Visitor validation
+        elif self.role_id == 4:
+            parent_roll = (self.parent_student_roll or '').strip()
+            if not parent_roll:
+                raise ValueError("Your child's Student Roll Number is required.")
+            if not STUDENT_ID_RE.match(parent_roll):
+                raise ValueError(
+                    "The linked Student Roll Number must be exactly 10 digits (e.g. 2300030000)."
+                )
             if not self.relationship or not self.relationship.strip():
-                raise ValueError("Relationship is required for Parents")
+                raise ValueError("Relationship to student is required.")
 
-        elif self.role_id == 5: # Guest
-            if self.roll_number and self.roll_number.strip():
-                roll_clean = self.roll_number.strip()
-                if not re.match(r'^GST-[0-9]{4}$', roll_clean):
-                    raise ValueError("Guest ID must match GST-XXXX format (e.g. GST-9021).")
+        # 6. Guest validation
+        elif self.role_id == 5:
+            if roll_no and not re.match(r'^GST-[0-9]{4}$', roll_no):
+                raise ValueError("Guest ID must match GST-XXXX format (e.g. GST-9021).")
             if not self.purpose or not self.purpose.strip():
-                raise ValueError("Purpose of visit is required for Guests")
-            if not self.duration or not self.duration.strip() or self.duration not in ['2 Hours', '4 Hours', '8 Hours', '1 Day']:
-                raise ValueError("Expected Duration must be '2 Hours', '4 Hours', '8 Hours', or '1 Day' for Guests")
+                raise ValueError("Purpose of visit is required for Guests.")
+            valid_durations = ['2 Hours', '4 Hours', '8 Hours', '1 Day']
+            if not self.duration or not self.duration.strip() or self.duration not in valid_durations:
+                raise ValueError(
+                    f"Expected Duration must be one of: {', '.join(valid_durations)}."
+                )
+
         return self
 
 class UserLogin(BaseModel):
@@ -184,12 +242,14 @@ class UserResponse(BaseModel):
     email: EmailStr
     phone: str
     role_id: int
-    role: RoleResponse
+    role: Optional[RoleResponse] = None  # Made optional to prevent 500 if role FK missing
     account_status: str
     profile_image: Optional[str] = None
     college_id_upload: Optional[str] = None
     is_verified: bool
     is_first_login: bool
+    last_login: Optional[datetime] = None
+    created_at: Optional[datetime] = None
     
     department: Optional[str] = None
     roll_number: Optional[str] = None
@@ -198,6 +258,10 @@ class UserResponse(BaseModel):
     relationship: Optional[str] = None
     purpose: Optional[str] = None
     duration: Optional[str] = None
+
+    # Guest-specific fields
+    host_faculty: Optional[str] = None
+    visit_date: Optional[date] = None
     
     class Config:
         from_attributes = True
@@ -209,14 +273,14 @@ class TokenResponse(BaseModel):
     user: UserResponse
 
 class SystemSettingsResponse(BaseModel):
-    account_approval_mode: str
-    theme: str
-    maintenance_mode: bool
-    allow_guest_registration: bool
-    exam_mode: bool
-    otp_expiry: int
-    session_timeout: int
-    
+    account_approval_mode: Optional[str] = "AUTO"
+    theme: Optional[str] = "dark"
+    maintenance_mode: Optional[bool] = False
+    allow_guest_registration: Optional[bool] = True
+    exam_mode: Optional[bool] = False
+    otp_expiry: Optional[int] = 300
+    session_timeout: Optional[int] = 900
+
     class Config:
         from_attributes = True
 
@@ -230,6 +294,8 @@ class UserUpdate(BaseModel):
     relationship: Optional[str] = None
     purpose: Optional[str] = None
     duration: Optional[str] = None
+    host_faculty: Optional[str] = None
+    visit_date: Optional[date] = None
     profile_image: Optional[str] = None
     college_id_upload: Optional[str] = None
 
@@ -237,12 +303,14 @@ class UserUpdate(BaseModel):
     def validate_id_formats(self) -> 'UserUpdate':
         if self.employee_id is not None:
             emp_clean = self.employee_id.strip()
-            if emp_clean and not re.match(r'^[0-9]{4,5}$', emp_clean):
+            # Allow standard Faculty IDs (4-5 digits) or Admin IDs (ADM-XXX)
+            if emp_clean and not re.match(r'^([0-9]{4,5}|ADM-[0-9]{3})$', emp_clean):
                 raise ValueError("Faculty ID must be exactly 4 or 5 digits numbers only.")
         if self.roll_number is not None:
             roll_clean = self.roll_number.strip()
-            if roll_clean and not re.match(r'^[0-9]{10}$', roll_clean):
-                raise ValueError("Student ID must be exactly 10 digits numbers only.")
+            # Allow Student IDs (10 digits) OR Guest IDs (GST-XXXX format)
+            if roll_clean and not re.match(r'^([0-9]{10}|GST-[0-9]{4})$', roll_clean):
+                raise ValueError("ID must be a 10-digit Student ID or GST-XXXX Guest ID.")
         if self.parent_student_roll is not None:
             parent_roll_clean = self.parent_student_roll.strip()
             if parent_roll_clean and not re.match(r'^[0-9]{10}$', parent_roll_clean):
@@ -362,6 +430,8 @@ class UserCreateByAdmin(BaseModel):
     relationship: Optional[str] = None
     purpose: Optional[str] = None
     duration: Optional[str] = None
+    host_faculty: Optional[str] = None
+    visit_date: Optional[date] = None
     profile_image: Optional[str] = None
     college_id_upload: Optional[str] = None
     account_status: Optional[str] = "Active"

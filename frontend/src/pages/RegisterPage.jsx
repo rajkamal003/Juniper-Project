@@ -13,6 +13,19 @@ import { Button } from '../components/ui/Button';
 import { StepIndicator } from '../components/ui/StepIndicator';
 import { DEPARTMENTS, STUDENT_YEARS, RELATIONSHIPS } from '../constants/constants';
 
+// ── Validation Rules (single source of truth, mirrored on backend) ────────────
+// Student ID  : exactly 10 digits          e.g. 2300030000
+// Faculty ID  : exactly 4-5 digits         e.g. 1234 or 12345
+// Student email: starts with digits        e.g. 2300030000@kluniversity.in
+// Faculty email: starts with letters       e.g. john.doe@kluniversity.in
+// Both must end with @kluniversity.in
+
+const STUDENT_ID_RE   = /^[0-9]{10}$/;
+const FACULTY_ID_RE   = /^[0-9]{4,5}$/;
+const STUDENT_EMAIL_RE = /^[0-9]+@kluniversity\.in$/i;
+const FACULTY_EMAIL_RE = /^[a-zA-Z][a-zA-Z0-9._-]*@kluniversity\.in$/i;
+const KLU_EMAIL_RE    = /^.+@kluniversity\.in$/i;
+
 const registerSchema = z.object({
   fullname: z.string().min(3, 'Full name must be at least 3 characters'),
   email: z.string().min(1, 'Email is required').email('Invalid email address'),
@@ -27,7 +40,7 @@ const registerSchema = z.object({
     .regex(/^\S*$/, 'Password cannot contain spaces'),
   confirm_password: z.string(),
   terms: z.boolean().refine(val => val === true, 'You must accept the terms'),
-  
+
   // Conditional fields
   department: z.string().optional(),
   roll_number: z.string().optional(),
@@ -36,53 +49,85 @@ const registerSchema = z.object({
   relationship: z.string().optional(),
   duration: z.string().optional(),
 }).superRefine((data, ctx) => {
+  // ── Passwords ───────────────────────────────────────────────────────────────
   if (data.password !== data.confirm_password) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Passwords do not match",
-      path: ["confirm_password"]
-    });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Passwords do not match', path: ['confirm_password'] });
   }
 
-  const roleId = parseInt(data.role_id, 10);
-  const cleanEmail = (data.email || '').trim().toLowerCase();
-  const isKluEmail = cleanEmail.endsWith('@kluniversity.in') || cleanEmail.includes('.kluniversity.in');
+  const roleId     = parseInt(data.role_id, 10);
+  const rawEmail   = (data.email || '').trim().toLowerCase();
+  const rawEmpId   = (data.employee_id || '').trim();
+  const rawRollNum = (data.roll_number || '').trim();
 
+  // ── Admin registration is disabled ────────────────────────────────────────
+  if (roleId === 1) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Admin accounts cannot be self-registered. Please contact your system administrator.', path: ['role_id'] });
+    return;
+  }
+
+  // ── Faculty (role_id = 2) ──────────────────────────────────────────────────
   if (roleId === 2) {
-    if (!isKluEmail) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Faculty must register using their official KL University email (@kluniversity.in).", path: ["email"] });
+    // Email: must be @kluniversity.in and start with LETTERS (not digits)
+    if (!KLU_EMAIL_RE.test(rawEmail)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Faculty must use their official KL University email (@kluniversity.in).', path: ['email'] });
+    } else if (STUDENT_EMAIL_RE.test(rawEmail)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'This looks like a Student email (starts with digits). Faculty emails must start with your name, e.g. john.doe@kluniversity.in.', path: ['email'] });
+    } else if (!FACULTY_EMAIL_RE.test(rawEmail)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Faculty email must start with your name, e.g. john.doe@kluniversity.in.', path: ['email'] });
     }
-    if (!data.employee_id || !data.employee_id.trim()) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Faculty ID is required", path: ["employee_id"] });
-    } else if (!/^[0-9]{4,5}$/.test(data.employee_id.trim())) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Faculty ID must be 4 or 5 digits numbers only", path: ["employee_id"] });
+
+    // Faculty ID: must be 4-5 digits — explicitly reject 10-digit Student IDs
+    if (!rawEmpId) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Faculty ID (4–5 digits) is required for Faculty registration.', path: ['employee_id'] });
+    } else if (STUDENT_ID_RE.test(rawEmpId)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'This is a Student ID (10 digits) and cannot be used for Faculty registration. Faculty IDs are 4–5 digits only (e.g. 1234).', path: ['employee_id'] });
+    } else if (!FACULTY_ID_RE.test(rawEmpId)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Faculty ID must be exactly 4 or 5 digits (e.g. 1234 or 12345). Other ID formats are not accepted.', path: ['employee_id'] });
     }
+
     if (!data.department || !data.department.trim()) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Department is required", path: ["department"] });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Department is required.', path: ['department'] });
     }
-  } else if (roleId === 3) {
-    if (!isKluEmail) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Students must register using their official KL University email (@kluniversity.in).", path: ["email"] });
+  }
+
+  // ── Student (role_id = 3) ──────────────────────────────────────────────────
+  else if (roleId === 3) {
+    // Email: must be @kluniversity.in and start with DIGITS (roll number)
+    if (!KLU_EMAIL_RE.test(rawEmail)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Students must use their official KL University email (@kluniversity.in).', path: ['email'] });
+    } else if (FACULTY_EMAIL_RE.test(rawEmail) && !STUDENT_EMAIL_RE.test(rawEmail)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'This looks like a Faculty email (starts with letters). Student emails must start with your roll number, e.g. 2300030000@kluniversity.in.', path: ['email'] });
+    } else if (!STUDENT_EMAIL_RE.test(rawEmail)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Student email must start with your roll number, e.g. 2300030000@kluniversity.in.', path: ['email'] });
     }
-    if (!data.roll_number || !data.roll_number.trim()) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Student ID is required", path: ["roll_number"] });
-    } else if (!/^[0-9]{10}$/.test(data.roll_number.trim())) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Student ID must be exactly 10 digits numbers only", path: ["roll_number"] });
+
+    // Student ID: must be exactly 10 digits — reject 4-5 digit Faculty IDs
+    if (!rawRollNum) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Student ID (10-digit roll number) is required.', path: ['roll_number'] });
+    } else if (FACULTY_ID_RE.test(rawRollNum) && !STUDENT_ID_RE.test(rawRollNum)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'This looks like a Faculty ID (4–5 digits). Student IDs are exactly 10 digits (e.g. 2300030000).', path: ['roll_number'] });
+    } else if (!STUDENT_ID_RE.test(rawRollNum)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Student ID must be exactly 10 digits (e.g. 2300030000). Faculty and Admin IDs are not accepted here.', path: ['roll_number'] });
     }
+
     if (!data.department || !data.department.trim()) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Department is required", path: ["department"] });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Department is required.', path: ['department'] });
     }
     if (!data.duration || !data.duration.trim()) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Academic Year is required", path: ["duration"] });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Academic Year is required.', path: ['duration'] });
     }
-  } else if (roleId === 4) {
-    if (!data.parent_student_roll || !data.parent_student_roll.trim()) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Student Roll Number is required", path: ["parent_student_roll"] });
-    } else if (!/^[0-9]{10}$/.test(data.parent_student_roll.trim())) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Student Roll Number must be exactly 10 digits numbers only", path: ["parent_student_roll"] });
+  }
+
+  // ── Parent Visitor (role_id = 4) ───────────────────────────────────────────
+  else if (roleId === 4) {
+    const rawParentRoll = (data.parent_student_roll || '').trim();
+    if (!rawParentRoll) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Your child's Student Roll Number is required.", path: ['parent_student_roll'] });
+    } else if (!STUDENT_ID_RE.test(rawParentRoll)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "The linked Student Roll Number must be exactly 10 digits (e.g. 2300030000).", path: ['parent_student_roll'] });
     }
     if (!data.relationship || !data.relationship.trim()) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Relationship status is required", path: ["relationship"] });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Relationship to student is required.', path: ['relationship'] });
     }
   }
 });

@@ -56,7 +56,8 @@ class UserRepo:
         skip: int = 0,
         limit: int = 50
     ):
-        query = db.query(User)
+        from sqlalchemy.orm import joinedload
+        query = db.query(User).options(joinedload(User.role))
         if search:
             search_pattern = f"%{search}%"
             # Support search by Name, Email, Phone, Roll Number, Employee ID
@@ -78,6 +79,20 @@ class UserRepo:
         total = query.count()
         users = query.order_by(desc(User.created_at)).offset(skip).limit(limit).all()
         return users, total
+
+    @staticmethod
+    def delete_permanent(db: Session, user: User) -> None:
+        """Permanently delete a user and all cascade-related records.
+        
+        Cascade map (from models.py):
+          user_sessions    → cascade="all, delete-orphan"   → deleted automatically
+          password_reset   → cascade="all, delete-orphan"   → deleted automatically
+          notifications    → cascade="all, delete-orphan"   → deleted automatically
+          activity_logs    → ondelete="SET NULL"             → user_id set to NULL (preserved for audit)
+        """
+        db.delete(user)
+        db.commit()
+
 
 class SessionRepo:
     @staticmethod

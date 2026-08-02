@@ -64,6 +64,10 @@ class User(Base):
     purpose = Column(Text, nullable=True)
     duration = Column(String(100), nullable=True)
 
+    # Guest-specific fields (persisted alongside purpose/duration for Guest role_id=5)
+    host_faculty = Column(String(255), nullable=True)
+    visit_date = Column(Date, nullable=True)
+
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 

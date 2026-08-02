@@ -33,6 +33,8 @@ const adminCreateSchema = z.object({
   relationship: z.string().optional(),
   purpose: z.string().optional(),
   duration: z.string().optional(),
+  host_faculty: z.string().optional(),
+  visit_date: z.string().optional(),
   profile_image: z.string().optional(),
   college_id_upload: z.string().optional(),
   account_status: z.string().default('Active')
@@ -145,6 +147,8 @@ export const AdminCreateUserPage = () => {
       relationship: '',
       purpose: '',
       duration: '',
+      host_faculty: '',
+      visit_date: '',
       profile_image: '',
       college_id_upload: '',
       account_status: 'Active'
@@ -158,9 +162,10 @@ export const AdminCreateUserPage = () => {
   const onSubmit = async (data) => {
     setLoading(true);
     try {
+      const roleId = parseInt(data.role_id, 10);
       const payload = {
         ...data,
-        role_id: parseInt(data.role_id, 10),
+        role_id: roleId,
         // Exclude empty strings
         department: data.department || undefined,
         employee_id: data.employee_id || undefined,
@@ -169,6 +174,8 @@ export const AdminCreateUserPage = () => {
         relationship: data.relationship || undefined,
         purpose: data.purpose || undefined,
         duration: data.duration || undefined,
+        host_faculty: roleId === 5 ? (data.host_faculty || undefined) : undefined,
+        visit_date: roleId === 5 ? (data.visit_date || undefined) : undefined,
         profile_image: data.profile_image || undefined,
         college_id_upload: data.college_id_upload || undefined
       };
@@ -383,20 +390,53 @@ export const AdminCreateUserPage = () => {
                 className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl border border-brand-primary/10 bg-brand-primary/5 select-none"
               >
                 <Input
-                  label="Visit Purpose"
-                  placeholder="e.g. Lab Seminar"
+                  label="Visit Purpose *"
+                  placeholder="e.g. Research collaboration"
                   error={errors.purpose}
                   disabled={loading}
                   {...register('purpose')}
                 />
-                
+
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-bold text-brand-secondary uppercase tracking-wider">
+                    Stay Duration
+                  </label>
+                  <select
+                    disabled={loading}
+                    {...register('duration')}
+                    className="h-10 w-full px-3.5 bg-slate-900 border border-[#334155] rounded-xl focus-ring-blue text-xs text-brand-text outline-none font-semibold"
+                  >
+                    <option value="">Select Duration</option>
+                    <option value="2 Hours">2 Hours</option>
+                    <option value="4 Hours">4 Hours</option>
+                    <option value="8 Hours">8 Hours</option>
+                    <option value="1 Day">1 Day</option>
+                  </select>
+                  {errors.duration && (
+                    <p className="text-[10px] text-brand-danger font-semibold mt-1">{errors.duration.message}</p>
+                  )}
+                </div>
+
                 <Input
-                  label="Stay Duration (Hours/Days)"
-                  placeholder="e.g. 4 Hours"
-                  error={errors.duration}
+                  label="Host Faculty / Contact Person"
+                  placeholder="Dr. K. Prasad (optional)"
+                  error={errors.host_faculty}
                   disabled={loading}
-                  {...register('duration')}
+                  {...register('host_faculty')}
                 />
+
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-bold text-brand-secondary uppercase tracking-wider">
+                    Visit Date
+                  </label>
+                  <input
+                    type="date"
+                    min={new Date().toISOString().split('T')[0]}
+                    disabled={loading}
+                    {...register('visit_date')}
+                    className="h-10 w-full px-3.5 bg-slate-900 border border-[#334155] rounded-xl text-xs text-brand-text outline-none font-semibold"
+                  />
+                </div>
               </motion.div>
             )}
 

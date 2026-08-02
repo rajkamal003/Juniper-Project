@@ -56,6 +56,10 @@ CREATE TABLE IF NOT EXISTS users (
     relationship VARCHAR(100) NULL,
     purpose TEXT NULL,
     duration VARCHAR(100) NULL,
+
+    -- Guest-specific fields
+    host_faculty VARCHAR(255) NULL,
+    visit_date DATE NULL,
     
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
